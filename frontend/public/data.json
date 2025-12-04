@@ -1,0 +1,8 @@
+{
+  "soilTemp": 23,
+  "soilMoisture": 55,
+  "airTemp": 21,
+  "airHumidity": 60,
+  "pressure": 1012,
+  "light": 800
+}
