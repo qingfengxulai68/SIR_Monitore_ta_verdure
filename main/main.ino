@@ -9,12 +9,16 @@ BH1750 lightMeter; // luminosité
 bool lightMeterIsActivated = true;
 
 // Config
-int PERIOD = 1000; // in miliseconds
+int PERIOD = 500; // in miliseconds
+
+// Variables
+int t0 = 0;
 
 
 void setup() {
   Serial.begin(115200);
   delay(200);
+  t0 = millis();
 
   if (lightMeterIsActivated) {
     Wire.begin(21, 22);   // SDA=21, SCL=22
@@ -26,14 +30,22 @@ void setup() {
       lightMeterIsActivated = false;
     }
   }
+
 }
 
 void loop() {
-  if (lightMeterIsActivated) {
-    float lux = lightMeter.readLightLevel();
-    Serial.print("Lux: ");
-    Serial.println(lux);
+  if (millis() - t0 >= PERIOD) {
+    // Code inside is executed every period
+    t0 = millis();
+    // Light meter measurement
+    if (lightMeterIsActivated) {
+      float lux = lightMeter.readLightLevel();
+      Serial.print("Lux: ");
+      Serial.println(lux);
+    }
   }
 
-  delay(PERIOD);
+  // Code bellow is executed every time the arduino loops
+
+
 }
