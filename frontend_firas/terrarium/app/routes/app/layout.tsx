@@ -2,7 +2,7 @@ import { Outlet, redirect } from "react-router"
 import type { Route } from "./+types/layout"
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  const isLoggedIn = true // Replace with real authentication check
+  const isLoggedIn = false // Replace with real authentication check
 
   if (!isLoggedIn) {
     throw redirect("/")
