@@ -1,8 +1,9 @@
 import { Outlet, redirect } from "react-router"
 import type { Route } from "./+types/layout"
+import { useAuthStore } from "~/store/auth"
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  const isLoggedIn = false // Replace with real authentication check
+  const isLoggedIn = useAuthStore.getState().isAuthenticated
 
   if (!isLoggedIn) {
     throw redirect("/")

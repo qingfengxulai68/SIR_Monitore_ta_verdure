@@ -81,12 +81,33 @@ let nextPlantId = 4
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Mock API functions
-export async function mockLogin(username: string, password: string): Promise<{ success: boolean; error?: string }> {
+export interface LoginResponse {
+  success: boolean
+  error?: string
+  token?: string
+  user?: {
+    id: string
+    username: string
+    email: string
+    name: string
+  }
+}
+
+export async function mockLogin(username: string, password: string): Promise<LoginResponse> {
   await delay(800)
 
   // Only accept the correct admin credentials
   if (username === "admin" && password === "demo123") {
-    return { success: true }
+    return {
+      success: true,
+      token: "mock-jwt-token-" + Date.now(),
+      user: {
+        id: "1",
+        username: "admin",
+        email: "admin@terrarium.com",
+        name: "Admin User"
+      }
+    }
   }
 
   return { success: false, error: "Invalid credentials" }
