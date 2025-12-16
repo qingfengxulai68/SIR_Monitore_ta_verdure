@@ -1,4 +1,7 @@
+import { useEffect } from "react"
 import type { Route } from "./+types/monitoring"
+import { useParams } from "react-router"
+import { useHeader } from "~/hooks/use-header"
 
 export function meta({ params }: Route.MetaArgs) {
   return [
@@ -7,10 +10,19 @@ export function meta({ params }: Route.MetaArgs) {
   ]
 }
 
-import { useParams } from "react-router"
-
 export default function PlantMonitoring() {
   const { id } = useParams()
+  const { setHeaderContent } = useHeader()
+
+  useEffect(() => {
+    setHeaderContent({
+      breadcrumbs: [
+        { label: "Plants", href: "/app/plants" },
+        { label: `${id}`, href: `/app/plants/${id}` },
+        { label: "Monitoring" }
+      ]
+    })
+  }, [setHeaderContent, id])
 
   return (
     <div>

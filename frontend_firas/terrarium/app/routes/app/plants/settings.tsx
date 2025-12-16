@@ -1,13 +1,21 @@
+import { useEffect } from "react"
 import type { Route } from "./+types/settings"
+import { useParams } from "react-router"
+import { useHeader } from "~/hooks/use-header"
 
 export function meta({ params }: Route.MetaArgs) {
   return [{ title: `Plant: ${params.id} - Terrarium` }, { name: "description", content: "Edit plant configuration." }]
 }
 
-import { useParams } from "react-router"
-
 export default function PlantSettings() {
   const { id } = useParams()
+  const { setHeaderContent } = useHeader()
+
+  useEffect(() => {
+    setHeaderContent({
+      breadcrumbs: [{ label: "Plants", href: "/app/plants" }, { label: `${id}` }]
+    })
+  }, [setHeaderContent, id])
 
   return (
     <div>

@@ -3,7 +3,7 @@ import { useState } from "react"
 import { redirect, useNavigate } from "react-router"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Leaf, Loader2 } from "lucide-react"
+import { Sprout } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
@@ -67,7 +67,7 @@ export default function SignInPage() {
       <div className="flex w-full max-w-sm flex-col gap-6">
         <a href="#" className="flex items-center gap-2 self-center font-medium">
           <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
-            <Leaf className="size-4" />
+            <Sprout className="size-4" />
           </div>
           Terrarium
         </a>
