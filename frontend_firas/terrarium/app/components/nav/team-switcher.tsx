@@ -15,7 +15,7 @@ export function TeamSwitcher({
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton size="lg" className="bg-sidebar-accent text-sidebar-accent-foreground">
+        <SidebarMenuButton size="lg">
           <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
             <app.logo className="size-4" />
           </div>
