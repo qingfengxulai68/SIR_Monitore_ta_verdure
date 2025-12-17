@@ -4,6 +4,7 @@ export interface Module {
   id: string
   coupled: boolean
   plantId?: number
+  plantName?: string
 }
 
 export interface Plant {
@@ -141,12 +142,20 @@ export async function mockChangePassword(
 export async function mockGetModules(onlyAvailable: boolean = false): Promise<Module[]> {
   await delay(300)
 
+  // Enrich modules with plant names
+  const enrichedModules = modules.map((module) => {
+    if (module.coupled && module.plantId) {
+      const plant = plants.find((p) => p.id === module.plantId)
+      return { ...module, plantName: plant?.name }
+    }
+    return module
+  })
+
   if (onlyAvailable) {
-    return modules.filter((m) => !m.coupled)
+    return enrichedModules.filter((m) => !m.coupled)
   }
 
-  // If no filter, return all modules
-  return [...modules]
+  return enrichedModules
 }
 
 export async function mockGetPlants(): Promise<Plant[]> {

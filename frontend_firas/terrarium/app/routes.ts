@@ -10,13 +10,13 @@ export default [
     index("routes/app/dashboard/page.tsx"),
 
     // Modules
-    route("modules", "routes/app/modules/list.tsx"),
+    route("modules", "routes/app/modules/list/page.tsx"),
 
     // Plants
     ...prefix("plants", [
-      index("routes/app/plants/list.tsx"),
-      route(":id", "routes/app/plants/settings.tsx"),
-      route(":id/monitoring", "routes/app/plants/monitoring.tsx")
+      index("routes/app/plants/list/page.tsx"),
+      route(":id", "routes/app/plants/settings/page.tsx"),
+      route(":id/monitoring", "routes/app/plants/monitoring/page.tsx")
     ])
   ])
 ] satisfies RouteConfig

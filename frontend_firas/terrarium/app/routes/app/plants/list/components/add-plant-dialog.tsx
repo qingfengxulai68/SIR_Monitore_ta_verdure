@@ -11,6 +11,7 @@ import { Button } from "~/components/ui/button"
 import { toast } from "sonner"
 import { mockCreatePlant, mockGetModules, type Module } from "~/lib/mocks"
 import { plantSchema, type PlantFormData } from "~/lib/validation"
+import { Spinner } from "~/components/ui/spinner"
 
 interface CreatePlantDialogProps {
   open: boolean
@@ -331,14 +332,7 @@ export function CreatePlantDialog({ open, onOpenChange, onCreated }: CreatePlant
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  "Create Plant"
-                )}
+                {isLoading ? <Spinner /> : "Create Plant"}
               </Button>
             </div>
           </FieldGroup>

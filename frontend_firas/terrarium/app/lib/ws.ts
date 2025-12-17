@@ -15,10 +15,10 @@ const subscriptions: Map<string, Subscription> = new Map()
 function generateSensorData(): SensorData {
   return {
     timestamp: new Date(),
-    moisture: Math.round(30 + Math.random() * 50), // 30-80%
-    humidity: Math.round(40 + Math.random() * 40), // 40-80%
-    temperature: Math.round(16 + Math.random() * 14), // 16-30°C
-    light: Math.round(500 + Math.random() * 15000) // 500-15500 lux
+    moisture: Math.round(45 + Math.random() * 20), // 45-65% (more centered)
+    humidity: Math.round(55 + Math.random() * 15), // 55-70% (more centered)
+    temperature: Math.round(20 + Math.random() * 6), // 20-26°C (more centered)
+    light: Math.round(3000 + Math.random() * 6000) // 3000-9000 lux (more centered)
   }
 }
 
