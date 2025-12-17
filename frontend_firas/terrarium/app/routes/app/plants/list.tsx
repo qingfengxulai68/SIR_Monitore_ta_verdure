@@ -46,6 +46,7 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyCont
 import { toast } from "sonner"
 import { mockGetPlants, mockDeletePlant, mockGetCurrentSensorData, type Plant, type SensorData } from "~/lib/mocks"
 import { useHeader } from "~/hooks/use-header"
+import { CreatePlantDialog } from "./add-plant-dialog"
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "All Plants - Terrarium" }, { name: "description", content: "List of all registered plants." }]
@@ -59,6 +60,7 @@ export default function PlantsList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [sensorData, setSensorData] = useState<Record<string, SensorData>>({})
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
   const navigate = useNavigate()
   const { setHeaderContent } = useHeader()
@@ -69,7 +71,7 @@ export default function PlantsList() {
     setHeaderContent({
       breadcrumbs: [{ label: "Plants" }],
       actions: (
-        <Button onClick={() => alert("In dev")} variant="outline" size="icon">
+        <Button onClick={() => setCreateDialogOpen(true)} variant="outline" size="icon">
           <Plus className="h-4 w-4" />
         </Button>
       )
@@ -541,6 +543,8 @@ export default function PlantsList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreatePlantDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} onCreated={loadPlants} />
     </div>
   )
 }
