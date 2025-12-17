@@ -77,6 +77,15 @@ let plants: Plant[] = [
 
 let nextPlantId = 4
 
+// User DB
+const mockUser = {
+  id: "1",
+  name: "Admin User",
+  username: "admin",
+  password: "demo123",
+  email: "admin@terrarium.com"
+}
+
 // Simulate async delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -102,15 +111,31 @@ export async function mockLogin(username: string, password: string): Promise<Log
       success: true,
       token: "mock-jwt-token-" + Date.now(),
       user: {
-        id: "1",
-        username: "admin",
-        email: "admin@terrarium.com",
-        name: "Admin User"
+        id: mockUser.id,
+        name: mockUser.name,
+        username: mockUser.username,
+        email: mockUser.email
       }
     }
   }
 
   return { success: false, error: "Invalid credentials" }
+}
+
+export async function mockChangePassword(
+  oldPassword: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  await delay(800)
+
+  // Verify old password
+  if (oldPassword !== mockUser.password) {
+    return { success: false, error: "Current password is incorrect" }
+  }
+
+  // Update password
+  mockUser.password = newPassword
+  return { success: true }
 }
 
 export async function mockGetModules(onlyAvailable: boolean = false): Promise<Module[]> {
