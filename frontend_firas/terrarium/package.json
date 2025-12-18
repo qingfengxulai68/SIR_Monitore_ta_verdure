@@ -5,7 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
+    "start": "npx vite preview --outDir build/client",
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
