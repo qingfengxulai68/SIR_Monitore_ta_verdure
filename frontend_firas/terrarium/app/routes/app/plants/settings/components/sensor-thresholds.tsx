@@ -114,7 +114,7 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Droplets className="h-4 w-4 text-moisture" />
-              <h4 className="font-medium">Moisture (%)</h4>
+              <h4 className="text-sm font-medium">Moisture (%)</h4>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Controller
@@ -122,7 +122,9 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
                 control={moistureForm.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="moisture-min">Min</FieldLabel>
+                    <FieldLabel htmlFor="moisture-min" className="text-xs">
+                      Min
+                    </FieldLabel>
                     <Input
                       {...field}
                       id="moisture-min"
@@ -139,7 +141,9 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
                 control={moistureForm.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="moisture-max">Max</FieldLabel>
+                    <FieldLabel htmlFor="moisture-max" className="text-xs">
+                      Max
+                    </FieldLabel>
                     <Input
                       {...field}
                       id="moisture-max"
@@ -158,7 +162,7 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Cloud className="h-4 w-4 text-humidity" />
-              <h4 className="font-medium">Humidity (%)</h4>
+              <h4 className="text-sm font-medium">Humidity (%)</h4>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Controller
@@ -166,7 +170,9 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
                 control={humidityForm.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="humidity-min">Min</FieldLabel>
+                    <FieldLabel htmlFor="humidity-min" className="text-xs">
+                      Min
+                    </FieldLabel>
                     <Input
                       {...field}
                       id="humidity-min"
@@ -183,7 +189,9 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
                 control={humidityForm.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="humidity-max">Max</FieldLabel>
+                    <FieldLabel htmlFor="humidity-max" className="text-xs">
+                      Max
+                    </FieldLabel>
                     <Input
                       {...field}
                       id="humidity-max"
@@ -202,7 +210,7 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Thermometer className="h-4 w-4 text-temperature" />
-              <h4 className="font-medium">Temperature (°C)</h4>
+              <h4 className="text-sm font-medium">Temperature (°C)</h4>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Controller
@@ -210,7 +218,9 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
                 control={temperatureForm.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="temperature-min">Min</FieldLabel>
+                    <FieldLabel htmlFor="temperature-min" className="text-xs">
+                      Min
+                    </FieldLabel>
                     <Input
                       {...field}
                       id="temperature-min"
@@ -227,7 +237,9 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
                 control={temperatureForm.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="temperature-max">Max</FieldLabel>
+                    <FieldLabel htmlFor="temperature-max" className="text-xs">
+                      Max
+                    </FieldLabel>
                     <Input
                       {...field}
                       id="temperature-max"
@@ -246,7 +258,7 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Sun className="h-4 w-4 text-light" />
-              <h4 className="font-medium">Light (lux)</h4>
+              <h4 className="text-sm font-medium">Light (lux)</h4>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Controller
@@ -254,7 +266,9 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
                 control={lightForm.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="light-min">Min</FieldLabel>
+                    <FieldLabel htmlFor="light-min" className="text-xs">
+                      Min
+                    </FieldLabel>
                     <Input
                       {...field}
                       id="light-min"
@@ -271,7 +285,9 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
                 control={lightForm.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="light-max">Max</FieldLabel>
+                    <FieldLabel htmlFor="light-max" className="text-xs">
+                      Max
+                    </FieldLabel>
                     <Input
                       {...field}
                       id="light-max"

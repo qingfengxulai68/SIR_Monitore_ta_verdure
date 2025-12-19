@@ -31,8 +31,9 @@ export default function PlantsListPage() {
     setHeaderContent({
       breadcrumbs: [{ label: "Plants" }],
       actions: (
-        <Button onClick={() => setCreateDialogOpen(true)} variant="outline" size="icon">
+        <Button onClick={() => setCreateDialogOpen(true)} size="sm">
           <Plus className="h-4 w-4" />
+          Add
         </Button>
       )
     })
@@ -82,10 +83,10 @@ export default function PlantsListPage() {
             </div>
           </div>
         ) : plants.length === 0 ? (
-          <Empty>
+          <Empty className="border">
             <EmptyHeader>
-              <EmptyMedia variant="icon" className="bg-primary/10 text-primary">
-                <Flower2 className="size-6" />
+              <EmptyMedia variant="icon">
+                <Flower2 />
               </EmptyMedia>
               <EmptyTitle>No plants yet</EmptyTitle>
               <EmptyDescription>
@@ -93,7 +94,7 @@ export default function PlantsListPage() {
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
-              <Button onClick={() => alert("In dev")} size="sm" className="gap-2">
+              <Button onClick={() => setCreateDialogOpen(true)} size="sm" variant={"outline"}>
                 Add Plant
               </Button>
             </EmptyContent>

@@ -83,22 +83,28 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
 
   if (plants.length === 0) {
     return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon" className="bg-primary/10 text-primary">
-            <Flower2 className="size-6" />
-          </EmptyMedia>
-          <EmptyTitle>No plants yet</EmptyTitle>
-          <EmptyDescription>
-            Get started by adding your first plant to monitor its environment and health.
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button onClick={() => navigate("/app/plants")} size="sm" className="gap-2">
-            Add Plant
-          </Button>
-        </EmptyContent>
-      </Empty>
+      <>
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Your Plants</h2>
+          <p className="text-sm text-muted-foreground">No plants added yet. Start monitoring your plant collection.</p>
+        </div>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Flower2 />
+            </EmptyMedia>
+            <EmptyTitle>No plants yet</EmptyTitle>
+            <EmptyDescription>
+              Get started by adding your first plant to monitor its environment and health.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={() => navigate("/app/plants")} size="sm" variant={"outline"}>
+              Add Plant
+            </Button>
+          </EmptyContent>
+        </Empty>
+      </>
     )
   }
 
@@ -106,7 +112,7 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
     return (
       <>
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Plants Requiring Attention</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Your Plants</h2>
           <p className="text-sm text-muted-foreground">
             {plantsWithAlerts.length} {plantsWithAlerts.length === 1 ? "plant needs" : "plants need"} immediate action
           </p>
@@ -137,10 +143,7 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
                           <Activity className="h-4 w-4" />
                           Monitoring
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => navigate(`/app/plants/${plant.id}/settings`)}
-                          className="gap-2"
-                        >
+                        <DropdownMenuItem onClick={() => navigate(`/app/plants/${plant.id}`)} className="gap-2">
                           <Settings className="h-4 w-4" />
                           Settings
                         </DropdownMenuItem>
@@ -264,19 +267,17 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
         <h2 className="text-lg font-semibold tracking-tight">Your Plants</h2>
         <p className="text-sm text-muted-foreground">Real-time monitoring of your plant collection</p>
       </div>
-      <Card className="border-muted">
-        <CardContent className="flex items-center gap-3 py-8">
-          <div className="rounded-lg bg-green-500/10 p-3">
-            <CheckCircle2 className="h-6 w-6 text-green-600" />
-          </div>
-          <div>
-            <p className="text-base font-semibold">All Plants Healthy</p>
-            <p className="text-sm text-muted-foreground">
-              All {plants.length} {plants.length === 1 ? "plant is" : "plants are"} operating within normal parameters
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <Empty className="border">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CheckCircle2 />
+          </EmptyMedia>
+          <EmptyTitle>All Plants Healthy</EmptyTitle>
+          <EmptyDescription>
+            All {plants.length} {plants.length === 1 ? "plant is" : "plants are"} operating within normal parameters.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     </>
   )
 }
