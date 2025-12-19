@@ -104,7 +104,11 @@ export default function SignInPage() {
                       <Field data-invalid={fieldState.invalid}>
                         <div className="flex items-center">
                           <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                          <a href="#" className="ml-auto text-sm underline-offset-4 hover:underline text-foreground">
+                          <a
+                            href="#"
+                            className="ml-auto text-sm underline-offset-4 hover:underline text-foreground"
+                            tabIndex={-1}
+                          >
                             Forgot your password?
                           </a>
                         </div>
