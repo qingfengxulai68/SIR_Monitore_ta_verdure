@@ -12,6 +12,7 @@ import {
 import { useHeader } from "~/hooks/use-header"
 import { SystemOverview } from "./components/system-overview"
 import { PlantsStatus } from "./components/plants-status"
+import { ScrollArea } from "~/components/ui/scroll-area"
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -68,22 +69,24 @@ export default function DashboardPage() {
   }, [])
 
   return (
-    <div className="space-y-6">
-      {isLoading ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24" />
-            ))}
+    <ScrollArea className="h-[calc(100vh-4rem)] p-6">
+      <main className="space-y-6">
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-24" />
+              ))}
+            </div>
+            <Skeleton className="h-48" />
           </div>
-          <Skeleton className="h-48" />
-        </div>
-      ) : (
-        <>
-          <SystemOverview plants={plants} modules={modules} sensorData={sensorData} />
-          <PlantsStatus plants={plants} sensorData={sensorData} onDataChange={loadData} />
-        </>
-      )}
-    </div>
+        ) : (
+          <>
+            <SystemOverview plants={plants} modules={modules} sensorData={sensorData} />
+            <PlantsStatus plants={plants} sensorData={sensorData} onDataChange={loadData} />
+          </>
+        )}
+      </main>
+    </ScrollArea>
   )
 }

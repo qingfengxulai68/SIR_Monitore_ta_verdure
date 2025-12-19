@@ -9,6 +9,7 @@ import { useHeader } from "~/hooks/use-header"
 import { CreatePlantDialog } from "./components/add-plant-dialog"
 import { PlantsHeader } from "./components/plants-header"
 import { PlantsList } from "./components/plants-list"
+import { ScrollArea } from "~/components/ui/scroll-area"
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "All Plants - Terrarium" }, { name: "description", content: "List of all registered plants." }]
@@ -69,47 +70,49 @@ export default function PlantsListPage() {
   }, [])
 
   return (
-    <div className="space-y-6">
-      {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-80" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-64 w-full" />
-            ))}
+    <ScrollArea className="h-[calc(100vh-4rem)] p-6">
+      <main className="space-y-6">
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-80" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-64 w-full" />
+              ))}
+            </div>
           </div>
-        </div>
-      ) : plants.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon" className="bg-primary/10 text-primary">
-              <Flower2 className="size-6" />
-            </EmptyMedia>
-            <EmptyTitle>No plants yet</EmptyTitle>
-            <EmptyDescription>
-              Get started by adding your first plant to monitor its environment and health.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button onClick={() => alert("In dev")} size="sm" className="gap-2">
-              Add Plant
-            </Button>
-          </EmptyContent>
-        </Empty>
-      ) : (
-        <>
-          <PlantsHeader
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            filteredCount={filteredPlants.length}
-          />
-          <PlantsList plants={filteredPlants} sensorData={sensorData} viewMode={viewMode} onDataChange={loadPlants} />
-        </>
-      )}
+        ) : plants.length === 0 ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon" className="bg-primary/10 text-primary">
+                <Flower2 className="size-6" />
+              </EmptyMedia>
+              <EmptyTitle>No plants yet</EmptyTitle>
+              <EmptyDescription>
+                Get started by adding your first plant to monitor its environment and health.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button onClick={() => alert("In dev")} size="sm" className="gap-2">
+                Add Plant
+              </Button>
+            </EmptyContent>
+          </Empty>
+        ) : (
+          <>
+            <PlantsHeader
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              filteredCount={filteredPlants.length}
+            />
+            <PlantsList plants={filteredPlants} sensorData={sensorData} viewMode={viewMode} onDataChange={loadPlants} />
+          </>
+        )}
 
-      <CreatePlantDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} onCreated={loadPlants} />
-    </div>
+        <CreatePlantDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} onCreated={loadPlants} />
+      </main>
+    </ScrollArea>
   )
 }

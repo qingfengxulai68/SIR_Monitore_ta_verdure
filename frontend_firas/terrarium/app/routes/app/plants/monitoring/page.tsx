@@ -12,6 +12,7 @@ import { MoistureChart } from "./components/moisture-chart"
 import { HumidityChart } from "./components/humidity-chart"
 import { TemperatureChart } from "./components/temperature-chart"
 import { LightChart } from "./components/light-chart"
+import { ScrollArea } from "~/components/ui/scroll-area"
 
 const MAX_DATA_POINTS = 20
 
@@ -116,15 +117,16 @@ export default function PlantMonitoring() {
   }
 
   return (
-    <div className="space-y-6">
-      <CurrentValues plant={plant} currentData={currentData} />
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <MoistureChart data={chartData} />
-        <HumidityChart data={chartData} />
-        <TemperatureChart data={chartData} />
-        <LightChart data={chartData} />
-      </div>
-    </div>
+    <ScrollArea className="h-[calc(100vh-4rem)] p-6">
+      <main className="space-y-6">
+        <CurrentValues plant={plant} currentData={currentData} />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <MoistureChart data={chartData} />
+          <HumidityChart data={chartData} />
+          <TemperatureChart data={chartData} />
+          <LightChart data={chartData} />
+        </div>
+      </main>
+    </ScrollArea>
   )
 }

@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router"
 
 import { Card, CardContent, CardHeader } from "~/components/ui/card"
 import { Skeleton } from "~/components/ui/skeleton"
+import { ScrollArea } from "~/components/ui/scroll-area"
 import { toast } from "sonner"
 import { mockGetPlant, type Plant } from "~/lib/mocks"
 import { useHeader } from "~/hooks/use-header"
@@ -55,7 +56,7 @@ export default function PlantSettings() {
 
   if (isLoading) {
     return (
-      <div className="container max-w-5xl mx-auto py-6 space-y-6">
+      <div className="container max-w-4xl mx-auto p-6 space-y-6">
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -73,13 +74,15 @@ export default function PlantSettings() {
   }
 
   return (
-    <div className="container max-w-5xl mx-auto py-6 space-y-6">
-      {plant && (
-        <>
-          <GeneralInformation plant={plant} onPlantUpdate={handlePlantUpdate} />
-          <SensorThresholds plant={plant} onPlantUpdate={handlePlantUpdate} />
-        </>
-      )}
-    </div>
+    <ScrollArea className="h-[calc(100vh-4rem)] p-6">
+      <main className="max-w-4xl mx-auto space-y-6">
+        {plant && (
+          <>
+            <GeneralInformation plant={plant} onPlantUpdate={handlePlantUpdate} />
+            <SensorThresholds plant={plant} onPlantUpdate={handlePlantUpdate} />
+          </>
+        )}
+      </main>
+    </ScrollArea>
   )
 }
