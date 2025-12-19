@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
-import { Field, FieldError } from "~/components/ui/field"
+import { Field, FieldError, FieldGroup } from "~/components/ui/field"
 import {
   Dialog,
   DialogContent,
@@ -56,41 +56,43 @@ export function WebhookDialog({ open, onOpenChange, currentWebhook, onSave, mode
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-106.25 gap-7">
         <DialogHeader>
           <DialogTitle>{mode === "add" ? "Add Discord Webhook" : "Update Discord Webhook"}</DialogTitle>
           <DialogDescription>Enter your Discord webhook URL to receive alerts.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <Controller
-            control={form.control}
-            name="discordWebhook"
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <Input
-                  {...field}
-                  placeholder="https://discord.com/api/webhooks/..."
-                  aria-invalid={fieldState.invalid}
-                  disabled={form.formState.isSubmitting}
-                />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={form.formState.isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? <Spinner /> : "Save"}
-            </Button>
-          </DialogFooter>
+        <form id="webhook-form" onSubmit={form.handleSubmit(onSubmit)}>
+          <FieldGroup>
+            <Controller
+              control={form.control}
+              name="discordWebhook"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <Input
+                    {...field}
+                    placeholder="https://discord.com/api/webhooks/..."
+                    aria-invalid={fieldState.invalid}
+                    disabled={form.formState.isSubmitting}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          </FieldGroup>
         </form>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={form.formState.isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form="webhook-form" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? <Spinner /> : "Save"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

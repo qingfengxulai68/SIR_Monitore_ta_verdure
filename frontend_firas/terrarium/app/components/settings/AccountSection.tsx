@@ -16,7 +16,7 @@ export function AccountSection() {
             <label className="text-sm">Username</label>
             <p className="text-xs text-muted-foreground">Your account username</p>
           </div>
-          <Input value={user?.username || ""} disabled className="w-30" />
+          <Input value={user?.username || ""} disabled className="w-17" />
         </div>
 
         <div className="flex items-center justify-between space-x-2">

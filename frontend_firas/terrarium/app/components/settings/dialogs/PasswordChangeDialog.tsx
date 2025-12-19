@@ -62,13 +62,13 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-106.25 gap-7">
         <DialogHeader>
           <DialogTitle>Change password</DialogTitle>
           <DialogDescription>Enter your current password and choose a new one.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup className="py-4">
+        <form id="password-change-form" onSubmit={form.handleSubmit(onSubmit)}>
+          <FieldGroup>
             <Controller
               name="oldPassword"
               control={form.control}
@@ -121,20 +121,20 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
               )}
             />
           </FieldGroup>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleDialogChange(false)}
-              disabled={form.formState.isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? <Spinner /> : "Update"}
-            </Button>
-          </DialogFooter>
         </form>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleDialogChange(false)}
+            disabled={form.formState.isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form="password-change-form" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? <Spinner /> : "Update"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
