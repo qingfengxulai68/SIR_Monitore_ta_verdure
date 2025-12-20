@@ -36,7 +36,7 @@ export function SystemOverview({ plants, modules, sensorData }: SystemOverviewPr
         <p className="text-sm text-muted-foreground">Real-time status of your IoT monitoring system</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="gap-0">
           <CardHeader>
             <div className="flex items-center gap-2">

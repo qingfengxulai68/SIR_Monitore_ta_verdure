@@ -1,39 +1,8 @@
-import { useEffect, useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
+import { useTheme } from "~/components/theme-provider"
 
 export function AppearanceSection() {
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system")
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | "system" | null
-    if (savedTheme) {
-      setTheme(savedTheme)
-      applyTheme(savedTheme)
-    } else {
-      applyTheme("system")
-    }
-  }, [])
-
-  const applyTheme = (newTheme: "light" | "dark" | "system") => {
-    if (newTheme === "system") {
-      const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      if (systemPrefersDark) {
-        document.documentElement.classList.add("dark")
-      } else {
-        document.documentElement.classList.remove("dark")
-      }
-    } else if (newTheme === "dark") {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }
-
-  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
-    setTheme(newTheme)
-    localStorage.setItem("theme", newTheme)
-    applyTheme(newTheme)
-  }
+  const { theme, setTheme } = useTheme()
 
   return (
     <div className="space-y-6 max-w-112.5">
@@ -43,7 +12,7 @@ export function AppearanceSection() {
             <label className="text-sm">Theme</label>
             <p className="text-xs text-muted-foreground">Select your preferred theme</p>
           </div>
-          <Select value={theme} onValueChange={handleThemeChange}>
+          <Select value={theme} onValueChange={(value) => setTheme(value as "light" | "dark" | "system")}>
             <SelectTrigger className="w-22.5">
               <SelectValue placeholder="Select theme" />
             </SelectTrigger>

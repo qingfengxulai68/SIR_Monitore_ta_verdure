@@ -30,7 +30,6 @@ export function meta({}: Route.MetaArgs) {
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-  const login = useAuthStore((state) => state.login)
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -47,7 +46,7 @@ export default function SignInPage() {
       const result = await mockLogin(data.username, data.password)
 
       if (result.success && result.token && result.user) {
-        login(result.user, result.token)
+        useAuthStore.getState().login(result.user, result.token)
         toast.success("Welcome back!")
         navigate("/app/")
       } else {

@@ -87,6 +87,12 @@ const mockUser = {
   email: "admin@terrarium.com"
 }
 
+// Alerts settings
+let alertsSettings = {
+  alertsEnabled: false,
+  discordWebhook: ""
+}
+
 // Simulate async delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -228,4 +234,19 @@ export function mockGetCurrentSensorData(moduleId: string): SensorData {
     temperature: Math.round(18 + Math.random() * 10), // 18-28°C
     light: Math.round(500 + Math.random() * 14500) // 500-15000 lux
   }
+}
+
+// Alerts settings API
+export async function mockGetAlertsSettings(): Promise<{ alertsEnabled: boolean; discordWebhook: string }> {
+  await delay(200)
+  return { ...alertsSettings }
+}
+
+export async function mockUpdateAlertsSettings(settings: {
+  alertsEnabled?: boolean
+  discordWebhook?: string
+}): Promise<{ alertsEnabled: boolean; discordWebhook: string }> {
+  await delay(300)
+  alertsSettings = { ...alertsSettings, ...settings }
+  return { ...alertsSettings }
 }

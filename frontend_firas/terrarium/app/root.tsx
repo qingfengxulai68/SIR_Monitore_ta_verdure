@@ -1,5 +1,6 @@
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router"
 import { Toaster } from "~/components/ui/sonner"
+import { ThemeProvider } from "~/components/theme-provider"
 import type { Route } from "./+types/root"
 import "./app.css"
 
@@ -40,10 +41,10 @@ export function HydrateFallback() {
 
 export default function App() {
   return (
-    <>
+    <ThemeProvider>
       <Toaster />
       <Outlet />
-    </>
+    </ThemeProvider>
   )
 }
 

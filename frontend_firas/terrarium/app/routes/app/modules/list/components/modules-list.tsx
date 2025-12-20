@@ -37,13 +37,9 @@ export function ModulesList({ modules, viewMode }: ModulesListProps) {
             <CardContent>
               <div className="flex items-center gap-2">
                 {module.coupled ? (
-                  <Badge variant="secondary" className="bg-yellow-400">
-                    Assigned
-                  </Badge>
+                  <Badge className="bg-yellow-500">Assigned</Badge>
                 ) : (
-                  <Badge variant="default" className="bg-green-600 text-xs">
-                    Available
-                  </Badge>
+                  <Badge className="bg-green-600 text-xs">Available</Badge>
                 )}
                 {module.plantName && module.plantId && (
                   <Link to={`/app/plants/${module.plantId}`}>
@@ -76,13 +72,9 @@ export function ModulesList({ modules, viewMode }: ModulesListProps) {
               <TableCell className="font-mono text-sm font-medium pl-4">{module.id}</TableCell>
               <TableCell>
                 {module.coupled ? (
-                  <Badge variant="secondary" className="bg-yellow-400">
-                    Assigned
-                  </Badge>
+                  <Badge className="bg-yellow-500">Assigned</Badge>
                 ) : (
-                  <Badge variant="default" className="bg-green-600">
-                    Available
-                  </Badge>
+                  <Badge className="bg-green-600">Available</Badge>
                 )}
               </TableCell>
               <TableCell className="text-sm">
