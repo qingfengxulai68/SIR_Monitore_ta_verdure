@@ -56,31 +56,13 @@ This repository includes a multi-stage `Dockerfile` that builds the app and serv
 - Build the image:
 
 ```bash
-docker build -t terrarium:latest .
+docker build -t terrarium-front .
 ```
 
-- Run the container (serve on port 80):
+- Run the container (serve on port 5000):
 
 ```bash
-docker run --rm -p 80:80 terrarium:latest
-```
-
-- Example `docker-compose.yml`:
-
-```yaml
-version: '3.8'
-services:
-	terrarium:
-		build: .
-		ports:
-			- '80:80'
-		restart: unless-stopped
-```
-
-Start with:
-
-```bash
-docker compose up --build -d
+docker run -p 5000:80 terrarium-front
 ```
 
 Notes:

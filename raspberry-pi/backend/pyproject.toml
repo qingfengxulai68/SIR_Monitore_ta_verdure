@@ -1,0 +1,9 @@
+[project]
+name = "terrarium-api"
+version = "0.1.0"
+description = "FastAPI Backend : Système IoT de Monitoring de Plantes"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]>=0.126.0",
+]
