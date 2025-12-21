@@ -1,87 +1,89 @@
-# Welcome to React Router!
+# Terrarium — Frontend
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Lightweight Vite + React frontend for the SIR “Monitore ta verdure” terrarium monitoring UI.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Quick Start
 
-## Features
-
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
+- Prerequisites: Node.js 18+ and npm (or pnpm/yarn)
+- Install dependencies:
 
 ```bash
 npm install
 ```
 
-### Development
-
-Start the development server with HMR:
+- Start development server:
 
 ```bash
 npm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
-
-## Building for Production
-
-Create a production build:
+- Build for production:
 
 ```bash
 npm run build
 ```
 
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
+- Preview production build:
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+npm run start
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+- Type check:
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+```bash
+npm run typecheck
 ```
 
-## Styling
+## Structure (important paths)
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+- `app/` — source routes, components and UI primitives
+- `build/` — generated output after build
+- `public/` — static assets
+- `package.json` — scripts and deps
 
----
+## Notes
 
-Built with ❤️ using React Router.
+- Uses `react-router` tooling and Vite for dev/preview. Keep Node and deps up to date.
+- For CI: run `npm ci`, `npm run typecheck`, then `npm run build`.
+
+If you want, I can add usage examples, screenshots, or CI config next.
+
+## Docker deployment
+
+This repository includes a multi-stage `Dockerfile` that builds the app and serves the static assets with Nginx.
+
+- Build the image:
+
+```bash
+docker build -t terrarium:latest .
+```
+
+- Run the container (serve on port 80):
+
+```bash
+docker run --rm -p 80:80 terrarium:latest
+```
+
+- Example `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+services:
+	terrarium:
+		build: .
+		ports:
+			- '80:80'
+		restart: unless-stopped
+```
+
+Start with:
+
+```bash
+docker compose up --build -d
+```
+
+Notes:
+- The image is multi-stage: the first stage runs `npm run build` and the second stage serves `build/client` with Nginx.
+- Adjust `nginx.conf` or ports as needed for your environment or reverse-proxy setup.
+
