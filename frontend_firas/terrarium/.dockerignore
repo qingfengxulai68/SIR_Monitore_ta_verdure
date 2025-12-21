@@ -1,0 +1,21 @@
+# --- Dependencies & Cache ---
+node_modules
+.react-router
+
+# --- Local Build ---
+build
+dist
+
+# --- Development & Formatting Configs ---
+.prettierrc
+.prettierignore
+.gitignore
+
+# --- Docker & Documentation ---
+Dockerfile
+.dockerignore
+README.md
+
+# --- IDE Settings ---
+.vscode
+.idea

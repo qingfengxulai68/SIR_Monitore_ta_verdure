@@ -1,0 +1,10 @@
+# 1. Ignore everything by default (files and folders)
+**/*
+
+# 2. Whitelist the "app" folder and its contents
+!app/
+!app/**/*
+
+# 3. Whitelist .js and .ts configuration files at the root
+!*.js
+!*.ts
