@@ -16,9 +16,9 @@ const int PERIOD = 500; // in miliseconds
 const int THRESHOLD = 2167;
 //const int DRY_Value=3265;//humitity minimum:0%
 //const int WET_Value=1070;//humitity maximum:100%
-////Air temperature
+// Air temperature
 #define LMT87_PIN 6
-////Air temperature + humidity
+// Air temperature + humidity
 #define DHT_PIN 15
 #define DHTTYPE DHT11 
 
@@ -43,12 +43,12 @@ void setup() {
 
   
 
-  ////Soil moisture sensor
+  // Soil moisture sensor
   if (soilMoistureIsActivated) {
     pinMode(SOIL_MOISTURE_PIN, INPUT);
   }
 
-  ////Luminosity
+  // Luminosity
   if (lightMeterIsActivated) {
     Wire.begin(21, 22);   // SDA=21, SCL=22
 
@@ -60,7 +60,7 @@ void setup() {
     }
   }
 
-  ////Temperature + Humidity
+  // Temperature + Humidity
   if (dhtIsActivated) {
     dht.begin();
   }
@@ -105,8 +105,4 @@ void loop() {
     }
     Serial.println("###########################################################################");
   }
-
-  // Code bellow is executed every time the arduino loops
-
-
 }
