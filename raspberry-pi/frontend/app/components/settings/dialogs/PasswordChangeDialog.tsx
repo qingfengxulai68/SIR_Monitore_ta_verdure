@@ -12,8 +12,11 @@ import {
   DialogHeader,
   DialogTitle
 } from "~/components/ui/dialog"
-import { passwordChangeSchema, type PasswordChangeFormData } from "~/lib/validation"
-import { mockChangePassword } from "~/lib/mocks"
+import {
+  changePasswordRequestSchema as passwordChangeSchema,
+  type changePasswordRequest as PasswordChangeFormData
+} from "~/lib/auth"
+import { changePassword } from "~/lib/auth"
 import { Spinner } from "~/components/ui/spinner"
 
 interface PasswordChangeDialogProps {
@@ -25,7 +28,7 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
   const form = useForm<PasswordChangeFormData>({
     resolver: zodResolver(passwordChangeSchema),
     defaultValues: {
-      oldPassword: "",
+      currentPassword: "",
       newPassword: "",
       confirmPassword: ""
     }
@@ -33,23 +36,23 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
 
   const onSubmit = async (data: PasswordChangeFormData) => {
     try {
-      const result = await mockChangePassword(data.oldPassword, data.newPassword)
+      await changePassword(data.currentPassword, data.newPassword)
 
-      if (result.success) {
-        toast.success("Your password has been updated successfully.")
-        form.reset()
-        onOpenChange(false)
-      } else {
-        // Set error on the oldPassword field
-        form.setError("oldPassword", {
-          type: "manual",
-          message: result.error || "Incorrect password"
-        })
-      }
-    } catch (error) {
-      toast.error("An error occurred. Please try again.")
-      form.reset()
+      toast.success("Your password has been updated successfully.")
       onOpenChange(false)
+    } catch (error) {
+      const errorMessage = (error as Error).message
+
+      // If it's a current password error, set it on the field
+      if (errorMessage.toLowerCase().includes("current password")) {
+        form.setError("currentPassword", {
+          type: "manual",
+          message: errorMessage
+        })
+      } else {
+        alert(errorMessage)
+        form.reset()
+      }
     }
   }
 
@@ -70,7 +73,7 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
         <form id="password-change-form" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
             <Controller
-              name="oldPassword"
+              name="currentPassword"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>

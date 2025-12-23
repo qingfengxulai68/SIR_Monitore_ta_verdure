@@ -7,14 +7,14 @@ from pydantic import BaseModel, Field
 class LoginRequest(BaseModel):
     """Login request schema."""
 
-    username: str = Field(..., min_length=1, max_length=50)
-    password: str = Field(..., min_length=8)
+    username: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=1)
 
 
 class ChangePasswordRequest(BaseModel):
     """Change password request schema."""
 
-    currentPassword: str = Field(..., min_length=8)
+    currentPassword: str
     newPassword: str = Field(..., min_length=8)
 
 

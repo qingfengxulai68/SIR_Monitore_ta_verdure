@@ -1,11 +1,11 @@
 import { useState } from "react"
 import { Input } from "~/components/ui/input"
 import { Button } from "~/components/ui/button"
-import { useAuthStore } from "~/store/auth"
+import { getUser } from "~/lib/auth"
 import { PasswordChangeDialog } from "./dialogs/PasswordChangeDialog"
 
 export function AccountSection() {
-  const user = useAuthStore((state) => state.user)
+  const user = getUser()
   const [dialogOpen, setDialogOpen] = useState(false)
 
   return (

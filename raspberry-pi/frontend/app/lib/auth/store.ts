@@ -1,29 +1,22 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import type { User } from "./types"
 
-export interface User {
-  id: string
-  username: string
-  email: string
-  name: string
-}
-
-interface AuthState {
+type AuthState = {
+  isAuthenticated: boolean
   token: string | null
   user: User | null
-  isAuthenticated: boolean
   login: (userData: User, token: string) => void
   logout: () => void
-}
+} & ({ isAuthenticated: false; token: null; user: null } | { isAuthenticated: true; token: string; user: User })
 
-export const useAuthStore = create<AuthState>()(
+const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       token: null,
       user: null,
       isAuthenticated: false,
 
-      // Login action
       login: (userData: User, token: string) =>
         set({
           user: userData,
@@ -31,7 +24,6 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true
         }),
 
-      // Logout action
       logout: () =>
         set({
           user: null,
@@ -40,7 +32,9 @@ export const useAuthStore = create<AuthState>()(
         })
     }),
     {
-      name: "auth-storage" // localStorage key name
+      name: "auth-storage"
     }
   )
 )
+
+export { useAuthStore }

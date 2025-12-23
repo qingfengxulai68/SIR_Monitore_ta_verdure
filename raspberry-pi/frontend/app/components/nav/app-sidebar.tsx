@@ -7,7 +7,7 @@ import { NavMain } from "~/components/nav/nav-main"
 import { NavUser } from "~/components/nav/nav-user"
 import { TeamSwitcher } from "~/components/nav/team-switcher"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "~/components/ui/sidebar"
-import { useAuthStore } from "~/store/auth"
+import { getUser } from "~/lib/auth"
 
 // Application data
 const appData = {
@@ -35,7 +35,7 @@ const appData = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const user = useAuthStore((state) => state.user)
+  const user = getUser()
 
   return (
     <Sidebar collapsible="icon" {...props}>

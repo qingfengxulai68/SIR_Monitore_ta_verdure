@@ -12,12 +12,11 @@ import {
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "~/components/ui/sidebar"
-import { useAuthStore, type User } from "~/store/auth"
+import { logout, type User } from "~/lib/auth"
 import { AppSettings } from "~/components/settings/AppSettings"
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar()
-  const logout = useAuthStore((state) => state.logout)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const handleLogout = () => {
@@ -26,12 +25,7 @@ export function NavUser({ user }: { user: User }) {
   }
 
   // Get initials for avatar fallback
-  const initials = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
+  const initials = user.username.slice(0, 2).toUpperCase()
 
   return (
     <>
@@ -47,8 +41,7 @@ export function NavUser({ user }: { user: User }) {
                   <AvatarFallback className="rounded-lg bg-primary/10 text-primary">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">{user.username}</span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
               </SidebarMenuButton>
@@ -65,8 +58,7 @@ export function NavUser({ user }: { user: User }) {
                     <AvatarFallback className="rounded-lg bg-primary/10 text-primary">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-xs">{user.email}</span>
+                    <span className="truncate font-medium">{user.username}</span>
                   </div>
                 </div>
               </DropdownMenuLabel>

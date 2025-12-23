@@ -78,15 +78,6 @@ let plants: Plant[] = [
 
 let nextPlantId = 4
 
-// User DB
-const mockUser = {
-  id: "1",
-  name: "Admin User",
-  username: "admin",
-  password: "demo123",
-  email: "admin@terrarium.com"
-}
-
 // Alerts settings
 let alertsSettings = {
   alertsEnabled: false,
@@ -97,54 +88,6 @@ let alertsSettings = {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Mock API functions
-export interface LoginResponse {
-  success: boolean
-  error?: string
-  token?: string
-  user?: {
-    id: string
-    username: string
-    email: string
-    name: string
-  }
-}
-
-export async function mockLogin(username: string, password: string): Promise<LoginResponse> {
-  await delay(800)
-
-  // Only accept the correct admin credentials
-  if (username === "admin" && password === "demo123") {
-    return {
-      success: true,
-      token: "mock-jwt-token-" + Date.now(),
-      user: {
-        id: mockUser.id,
-        name: mockUser.name,
-        username: mockUser.username,
-        email: mockUser.email
-      }
-    }
-  }
-
-  return { success: false, error: "Invalid credentials" }
-}
-
-export async function mockChangePassword(
-  oldPassword: string,
-  newPassword: string
-): Promise<{ success: boolean; error?: string }> {
-  await delay(800)
-
-  // Verify old password
-  if (oldPassword !== mockUser.password) {
-    return { success: false, error: "Current password is incorrect" }
-  }
-
-  // Update password
-  mockUser.password = newPassword
-  return { success: true }
-}
-
 export async function mockGetModules(onlyAvailable: boolean = false): Promise<Module[]> {
   await delay(300)
 

@@ -9,14 +9,12 @@ import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
 import { Field, FieldGroup, FieldLabel, FieldError } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
-import { mockLogin } from "~/lib/mocks"
-import { loginSchema, type LoginFormData } from "~/lib/validation"
-import { useAuthStore } from "~/store/auth"
+import { login, isAuthenticated } from "~/lib/auth"
+import { loginRequestSchema, type loginRequest } from "~/lib/auth"
 import { Spinner } from "~/components/ui/spinner"
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  const isLoggedIn = useAuthStore.getState().isAuthenticated
-  if (isLoggedIn) {
+  if (isAuthenticated()) {
     return redirect("/app/")
   }
 
@@ -31,30 +29,23 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<loginRequest>({
+    resolver: zodResolver(loginRequestSchema),
     defaultValues: {
       username: "",
       password: ""
     }
   })
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: loginRequest) => {
     setIsLoading(true)
 
     try {
-      const result = await mockLogin(data.username, data.password)
-
-      if (result.success && result.token && result.user) {
-        useAuthStore.getState().login(result.user, result.token)
-        toast.success("Welcome back!")
-        navigate("/app/")
-      } else {
-        toast.error(result.error || "Invalid credentials")
-        form.reset()
-      }
-    } catch {
-      toast.error("Something went wrong. Please try again.")
+      await login(data.username, data.password)
+      toast.success("Welcome back!")
+      navigate("/app/")
+    } catch (error) {
+      toast.error((error as Error).message)
       form.reset()
     } finally {
       setIsLoading(false)

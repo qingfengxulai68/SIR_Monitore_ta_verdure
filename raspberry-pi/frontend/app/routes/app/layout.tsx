@@ -1,7 +1,7 @@
 import { Outlet, redirect } from "react-router"
 import React, { useState, type ReactNode } from "react"
 import type { Route } from "./+types/layout"
-import { useAuthStore } from "~/store/auth"
+import { isAuthenticated } from "~/lib/auth"
 import { AppSidebar } from "~/components/nav/app-sidebar"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "~/components/ui/sidebar"
 import {
@@ -16,9 +16,7 @@ import { Separator } from "~/components/ui/separator"
 import { HeaderContext } from "~/hooks/use-header"
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  const isLoggedIn = useAuthStore.getState().isAuthenticated
-
-  if (!isLoggedIn) {
+  if (!isAuthenticated()) {
     throw redirect("/")
   }
 
