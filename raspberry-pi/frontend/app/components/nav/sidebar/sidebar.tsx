@@ -3,9 +3,9 @@
 import * as React from "react"
 import { LayoutDashboard, Flower2, Cpu, Sprout } from "lucide-react"
 
-import { NavMain } from "~/components/nav/nav-main"
-import { NavUser } from "~/components/nav/nav-user"
-import { TeamSwitcher } from "~/components/nav/team-switcher"
+import { SidebarMain } from "~/components/nav/sidebar/sidebar-main"
+import { SidebarUser } from "~/components/nav/sidebar/sidebar-user"
+import { SidebarTitle } from "~/components/nav/sidebar/sidebar-title"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "~/components/ui/sidebar"
 import { getUser } from "~/lib/auth"
 
@@ -40,12 +40,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher app={appData.app} />
+        <SidebarTitle app={appData.app} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={appData.navMain} />
+        <SidebarMain items={appData.navMain} />
       </SidebarContent>
-      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
+      <SidebarFooter>
+        <SidebarUser user={user} />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

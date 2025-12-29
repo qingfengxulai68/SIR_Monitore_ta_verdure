@@ -13,11 +13,11 @@ import { login, isAuthenticated } from "~/lib/auth"
 import { loginRequestSchema, type loginRequest } from "~/lib/auth"
 import { Spinner } from "~/components/ui/spinner"
 
+// Client-side loader to redirect authenticated users
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   if (isAuthenticated()) {
     return redirect("/app/")
   }
-
   return null
 }
 

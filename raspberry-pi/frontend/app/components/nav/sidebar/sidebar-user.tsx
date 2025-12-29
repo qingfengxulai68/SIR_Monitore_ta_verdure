@@ -1,11 +1,10 @@
 import { useState } from "react"
 import { ChevronsUpDown, LogOut, Settings } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
+import { Avatar, AvatarFallback } from "~/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -13,9 +12,9 @@ import {
 } from "~/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "~/components/ui/sidebar"
 import { logout, type User } from "~/lib/auth"
-import { AppSettings } from "~/components/settings/AppSettings"
+import { AppSettings } from "~/components/nav/settings/settings"
 
-export function NavUser({ user }: { user: User }) {
+export function SidebarUser({ user }: { user: User }) {
   const { isMobile } = useSidebar()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
@@ -79,7 +78,7 @@ export function NavUser({ user }: { user: User }) {
           </DropdownMenu>
         </SidebarMenuItem>
       </SidebarMenu>
-      <AppSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
+      {settingsOpen && <AppSettings open={settingsOpen} onOpenChange={setSettingsOpen} />}
     </>
   )
 }

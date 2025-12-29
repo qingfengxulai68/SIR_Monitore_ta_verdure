@@ -1,6 +1,6 @@
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router"
 import { Toaster } from "~/components/ui/sonner"
-import { ThemeProvider } from "~/components/theme-provider"
+import { ThemeProvider } from "~/components/other/theme-provider"
 import type { Route } from "./+types/root"
 import "./app.css"
 

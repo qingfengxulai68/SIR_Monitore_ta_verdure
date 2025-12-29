@@ -1,5 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
-import { useTheme } from "~/components/theme-provider"
+import { useTheme } from "~/components/other/theme-provider"
 
 export function AppearanceSection() {
   const { theme, setTheme } = useTheme()

@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Input } from "~/components/ui/input"
 import { Button } from "~/components/ui/button"
 import { getUser } from "~/lib/auth"
-import { PasswordChangeDialog } from "./dialogs/PasswordChangeDialog"
+import { PasswordChangeDialog } from "../dialogs/password-change-dialog"
 
 export function AccountSection() {
   const user = getUser()

@@ -4,7 +4,7 @@ import * as React from "react"
 
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "~/components/ui/sidebar"
 
-export function TeamSwitcher({
+export function SidebarTitle({
   app
 }: {
   app: {

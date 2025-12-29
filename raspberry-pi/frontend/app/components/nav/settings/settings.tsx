@@ -19,9 +19,9 @@ import {
   SidebarMenuItem,
   SidebarProvider
 } from "~/components/ui/sidebar"
-import { AccountSection } from "./AccountSection"
-import { AlertsSection } from "./AlertsSection"
-import { AppearanceSection } from "./AppearanceSection"
+import { AccountSection } from "./sections/settings-account"
+import { AlertsSection } from "./sections/settings-alerts"
+import { AppearanceSection } from "./sections/settings-appearance"
 
 interface AppSettingsProps {
   open: boolean

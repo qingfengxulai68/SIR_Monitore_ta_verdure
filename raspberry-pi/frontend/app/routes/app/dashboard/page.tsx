@@ -9,7 +9,7 @@ import {
   type Module,
   type SensorData
 } from "~/lib/mocks"
-import { useHeader } from "~/hooks/use-header"
+import { useHeader } from "~/components/nav/header/header-provider"
 import { SystemOverview } from "./components/system-overview"
 import { PlantsStatus } from "./components/plants-status"
 import { ScrollArea } from "~/components/ui/scroll-area"

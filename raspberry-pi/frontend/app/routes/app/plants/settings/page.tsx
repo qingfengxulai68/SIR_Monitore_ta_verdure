@@ -7,7 +7,7 @@ import { Skeleton } from "~/components/ui/skeleton"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import { toast } from "sonner"
 import { mockGetPlant, type Plant } from "~/lib/mocks"
-import { useHeader } from "~/hooks/use-header"
+import { useHeader } from "~/components/nav/header/header-provider"
 import { GeneralInformation } from "~/routes/app/plants/settings/components/general-info"
 import { SensorThresholds } from "~/routes/app/plants/settings/components/sensor-thresholds"
 

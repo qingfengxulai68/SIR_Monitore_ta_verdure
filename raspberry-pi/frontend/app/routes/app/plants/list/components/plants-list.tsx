@@ -226,12 +226,12 @@ export function PlantsList({ plants, sensorData, viewMode, onDataChange }: Plant
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="font-semibold pl-4">Name</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="font-semibold">Moisture</TableHead>
-                <TableHead className="font-semibold">Temperature</TableHead>
-                <TableHead className="font-semibold">Humidity</TableHead>
-                <TableHead className="font-semibold">Light</TableHead>
+                <TableHead className="pl-4">Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Moisture</TableHead>
+                <TableHead>Temperature</TableHead>
+                <TableHead>Humidity</TableHead>
+                <TableHead>Light</TableHead>
                 <TableHead className="w-12 pr-4"></TableHead>
               </TableRow>
             </TableHeader>
