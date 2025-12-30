@@ -1,7 +1,7 @@
 import type { User } from "./types"
 import { useAuthStore } from "./store"
 
-const API_BASE_URL = "http://localhost:8000"
+const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL as string
 
 // Re-export types
 export * from "./types"
@@ -38,12 +38,10 @@ export async function login(username: string, password: string): Promise<void> {
   if (response.status === 200) {
     const data: { token: string; user: User } = await response.json()
     useAuthStore.getState().login(data.user, data.token)
+  } else if (response.status === 401) {
+    throw new Error((await response.json()).detail)
   } else {
-    if (response.status === 401) {
-      throw new Error((await response.json()).detail)
-    } else {
-      throw new Error("Failed to login")
-    }
+    throw new Error("Failed to login")
   }
 }
 
@@ -60,12 +58,10 @@ export async function changePassword(currentPassword: string, newPassword: strin
     body: JSON.stringify({ currentPassword, newPassword })
   })
 
-  if (response.status !== 204) {
-    if (response.status === 403) {
-      throw new Error((await response.json()).detail)
-    } else {
-      throw new Error("Failed to change password")
-    }
+  if (response.status !== 204 && response.status === 403) {
+    throw new Error((await response.json()).detail)
+  } else {
+    throw new Error("Failed to change password")
   }
 }
 

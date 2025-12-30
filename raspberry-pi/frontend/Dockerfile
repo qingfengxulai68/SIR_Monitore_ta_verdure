@@ -6,6 +6,10 @@ FROM node:24-alpine AS builder
 # Set the working directory inside the container
 WORKDIR /app
 
+# Build-time env for API base URL (Vite needs VITE_ prefix to embed at build time)
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
 # 1. Copy package definitions first
 # This allows Docker to cache dependencies if package.json hasn't changed
 COPY package.json package-lock.json ./
