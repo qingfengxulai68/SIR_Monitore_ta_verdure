@@ -1,32 +1,16 @@
 import { Flower2, Cpu, AlertCircle, Activity } from "lucide-react"
 import { Card, CardHeader, CardTitle } from "~/components/ui/card"
-import type { Plant, Module, SensorData } from "~/lib/mocks"
+import type { Plant } from "~/lib/api/plants"
+import type { Module } from "~/lib/api/modules"
 
 interface SystemOverviewProps {
   plants: Plant[]
   modules: Module[]
-  sensorData: Record<string, SensorData>
-}
-
-const checkPlantStatus = (plant: Plant, data: SensorData | undefined) => {
-  if (!data) return "unknown"
-
-  const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
-
-  if (
-    isOutOfRange(data.moisture, plant.thresholds.moisture.min, plant.thresholds.moisture.max) ||
-    isOutOfRange(data.humidity, plant.thresholds.humidity.min, plant.thresholds.humidity.max) ||
-    isOutOfRange(data.temperature, plant.thresholds.temperature.min, plant.thresholds.temperature.max) ||
-    isOutOfRange(data.light, plant.thresholds.light.min, plant.thresholds.light.max)
-  ) {
-    return "alert"
-  }
-
-  return "ok"
+  sensorData: Record<string, any>
 }
 
 export function SystemOverview({ plants, modules, sensorData }: SystemOverviewProps) {
-  const plantsWithAlerts = plants.filter((plant) => checkPlantStatus(plant, sensorData[plant.moduleId]) === "alert")
+  const plantsWithAlerts = plants.filter((plant) => plant.status === "alert")
   const systemHealth =
     plants.length > 0 ? Math.round(((plants.length - plantsWithAlerts.length) / plants.length) * 100) : 100
   return (

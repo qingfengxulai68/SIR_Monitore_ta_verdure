@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "~/components/ui/dialog"
-import { settingsSchema, type SettingsFormData } from "~/lib/validation"
+import { enableAlerts, type AlertsEnableRequest, alertsEnableRequestSchema } from "~/lib/api/settings"
 import { Spinner } from "~/components/ui/spinner"
 
 interface WebhookDialogProps {
@@ -25,37 +25,26 @@ interface WebhookDialogProps {
 }
 
 export function WebhookDialog({ open, onOpenChange, currentWebhook, onSave, mode = "add" }: WebhookDialogProps) {
-  const form = useForm<SettingsFormData>({
-    resolver: zodResolver(settingsSchema),
+  const form = useForm<AlertsEnableRequest>({
+    resolver: zodResolver(alertsEnableRequestSchema),
     defaultValues: {
-      discordWebhook: currentWebhook
+      discordWebhookUrl: currentWebhook
     }
   })
 
-  // Reset form when dialog opens or currentWebhook changes
-  useEffect(() => {
-    if (open) {
-      form.reset({ discordWebhook: currentWebhook })
-    }
-  }, [open, currentWebhook, form])
-
-  const onSubmit = async (data: SettingsFormData) => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    onSave(data.discordWebhook)
-    toast.success(mode === "add" ? "Webhook added successfully." : "Webhook updated successfully.")
-    onOpenChange(false)
-  }
-
-  const handleDialogChange = (isOpen: boolean) => {
-    onOpenChange(isOpen)
-    if (!isOpen) {
-      form.reset({ discordWebhook: currentWebhook })
+  const onSubmit = async (data: AlertsEnableRequest) => {
+    try {
+      await enableAlerts(data)
+      onSave(data.discordWebhookUrl)
+      toast.success(mode === "add" ? "Webhook added successfully." : "Webhook updated successfully.")
+      onOpenChange(false)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save webhook.")
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-106.25 gap-7">
         <DialogHeader>
           <DialogTitle>{mode === "add" ? "Add Discord Webhook" : "Update Discord Webhook"}</DialogTitle>
@@ -65,7 +54,7 @@ export function WebhookDialog({ open, onOpenChange, currentWebhook, onSave, mode
           <FieldGroup>
             <Controller
               control={form.control}
-              name="discordWebhook"
+              name="discordWebhookUrl"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <Input

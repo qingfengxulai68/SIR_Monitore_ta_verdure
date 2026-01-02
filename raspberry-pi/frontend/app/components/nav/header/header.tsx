@@ -11,7 +11,7 @@ import {
 } from "~/components/ui/breadcrumb"
 import { useHeader } from "~/components/nav/header/header-provider"
 
-export default function Header() {
+export default function AppHeader() {
   const { headerContent } = useHeader()
 
   return (

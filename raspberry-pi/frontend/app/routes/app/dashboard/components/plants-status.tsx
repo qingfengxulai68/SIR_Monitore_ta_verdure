@@ -33,11 +33,11 @@ import {
   AlertDialogTitle
 } from "~/components/ui/alert-dialog"
 import { toast } from "sonner"
-import { mockDeletePlant, type Plant, type SensorData } from "~/lib/mocks"
+import { deletePlant, type Plant, type LatestValues } from "~/lib/api/plants"
 
 interface PlantsStatusProps {
   plants: Plant[]
-  sensorData: Record<string, SensorData>
+  sensorData: Record<string, LatestValues>
   onDataChange: () => void
 }
 
@@ -46,35 +46,17 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null)
 
-  const checkPlantStatus = (plant: Plant, data: SensorData | undefined) => {
-    if (!data) return "unknown"
-
-    const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
-
-    if (
-      isOutOfRange(data.moisture, plant.thresholds.moisture.min, plant.thresholds.moisture.max) ||
-      isOutOfRange(data.humidity, plant.thresholds.humidity.min, plant.thresholds.humidity.max) ||
-      isOutOfRange(data.temperature, plant.thresholds.temperature.min, plant.thresholds.temperature.max) ||
-      isOutOfRange(data.light, plant.thresholds.light.min, plant.thresholds.light.max)
-    ) {
-      return "alert"
-    }
-
-    return "ok"
-  }
-
-  const plantsWithAlerts = plants.filter((plant) => checkPlantStatus(plant, sensorData[plant.moduleId]) === "alert")
+  const plantsWithAlerts = plants.filter((plant) => plant.status === "alert")
 
   const handleDelete = async () => {
     if (!plantToDelete) return
 
-    const success = await mockDeletePlant(plantToDelete.id)
-
-    if (success) {
+    try {
+      await deletePlant(plantToDelete.id)
       toast.success(`${plantToDelete.name} has been removed.`)
       onDataChange()
-    } else {
-      toast.error("Failed to delete plant.")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete plant.")
     }
 
     setDeleteDialogOpen(false)
@@ -168,16 +150,16 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-1.5 text-muted-foreground">
                           <Droplets className="h-3.5 w-3.5" />
-                          <span className="text-xs font-medium">Moisture</span>
+                          <span className="text-xs font-medium">Soil Moisture</span>
                         </div>
                         <p
                           className={`text-lg tabular-nums ${
-                            isOutOfRange(data.moisture, plant.thresholds.moisture.min, plant.thresholds.moisture.max)
+                            isOutOfRange(data.soilMoist, plant.thresholds.soilMoist.min, plant.thresholds.soilMoist.max)
                               ? "text-destructive"
                               : "text-foreground"
                           }`}
                         >
-                          {data.moisture}%
+                          {data.soilMoist}%
                         </p>
                       </div>
 
@@ -188,16 +170,12 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
                         </div>
                         <p
                           className={`text-lg tabular-nums ${
-                            isOutOfRange(
-                              data.temperature,
-                              plant.thresholds.temperature.min,
-                              plant.thresholds.temperature.max
-                            )
+                            isOutOfRange(data.temp, plant.thresholds.temp.min, plant.thresholds.temp.max)
                               ? "text-destructive"
                               : "text-foreground"
                           }`}
                         >
-                          {data.temperature}°C
+                          {data.temp}°C
                         </p>
                       </div>
 

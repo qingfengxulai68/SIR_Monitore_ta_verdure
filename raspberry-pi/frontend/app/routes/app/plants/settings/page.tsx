@@ -1,33 +1,47 @@
-import { useEffect, useState } from "react"
-import type { Route } from "../+types/page"
-import { useParams, useNavigate } from "react-router"
-
-import { Card, CardContent, CardHeader } from "~/components/ui/card"
-import { Skeleton } from "~/components/ui/skeleton"
+import { useEffect, useState, useCallback } from "react"
+import type { Route } from "./+types/page"
+import { useNavigate, redirect } from "react-router"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import { toast } from "sonner"
-import { mockGetPlant, type Plant } from "~/lib/mocks"
+import { getPlant, type Plant } from "~/lib/api/plants"
+import { getAllModules, type Module } from "~/lib/api/modules"
 import { useHeader } from "~/components/nav/header/header-provider"
 import { GeneralInformation } from "~/routes/app/plants/settings/components/general-info"
 import { SensorThresholds } from "~/routes/app/plants/settings/components/sensor-thresholds"
+import { Spinner } from "~/components/ui/spinner"
+import { ErrorWithRetry } from "~/components/other/error-with-retry"
 
 export function meta({ params }: Route.MetaArgs) {
   return [{ title: `Plant: ${params.id} - Terrarium` }, { name: "description", content: "Edit plant configuration." }]
 }
 
-export default function PlantSettings() {
-  const { id } = useParams()
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
+  const id = params.id
+
+  // Validate that id is a valid integer
+  if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id)) || Number(id) <= 0) {
+    throw redirect("/app/plants")
+  }
+
+  return null
+}
+
+export default function PlantSettings({ params }: Route.ComponentProps) {
+  const { id } = params
   const navigate = useNavigate()
   const { setHeaderContent } = useHeader()
 
   const [plant, setPlant] = useState<Plant | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [modules, setModules] = useState<Module[]>([])
 
-  useEffect(() => {
-    const loadData = async () => {
-      if (!id) return
+  const loadData = async () => {
+    setIsLoading(true)
+    setError(null)
 
-      const plantData = await mockGetPlant(parseInt(id))
+    try {
+      const [plantData, modules] = await Promise.all([getPlant(parseInt(id)), getAllModules()])
 
       if (!plantData) {
         toast.error("Plant not found")
@@ -36,16 +50,23 @@ export default function PlantSettings() {
       }
 
       setPlant(plantData)
-
+      setModules(modules)
       setHeaderContent({
         breadcrumbs: [{ label: "Plants", href: "/app/plants" }, { label: plantData.name }]
       })
-
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
       setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
+    setHeaderContent({
+      breadcrumbs: [{ label: "Plants", href: "/app/plants" }, { label: "..." }]
+    })
     loadData()
-  }, [id, navigate, setHeaderContent])
+  }, [])
 
   const handlePlantUpdate = (updatedPlant: Plant) => {
     setPlant(updatedPlant)
@@ -54,33 +75,22 @@ export default function PlantSettings() {
     })
   }
 
-  if (isLoading) {
-    return (
-      <div className="container max-w-4xl mx-auto p-6 space-y-6">
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-40" />
-              <Skeleton className="h-4 w-60" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] p-6">
       <main className="max-w-4xl mx-auto space-y-6">
-        {plant && (
-          <>
-            <GeneralInformation plant={plant} onPlantUpdate={handlePlantUpdate} />
-            <SensorThresholds plant={plant} onPlantUpdate={handlePlantUpdate} />
-          </>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Spinner />
+          </div>
+        ) : error ? (
+          <ErrorWithRetry error={error} onRetry={loadData} />
+        ) : (
+          plant && (
+            <>
+              <GeneralInformation plant={plant} onPlantUpdate={handlePlantUpdate} modules={modules} />
+              <SensorThresholds plant={plant} onPlantUpdate={handlePlantUpdate} />
+            </>
+          )
         )}
       </main>
     </ScrollArea>

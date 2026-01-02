@@ -4,7 +4,7 @@ import os
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
@@ -22,6 +22,7 @@ router = APIRouter(prefix="/modules", tags=["Modules"])
 async def get_modules(
     session: Annotated[Session, Depends(get_session)],
     _current_user: Annotated[User, Depends(verify_jwt_user)],
+    coupled: Annotated[bool | None, Query()] = None,
 ) -> list[ModuleResponse]:
     """Get all modules with their connectivity status."""
     # Calculate isOnline in SQL using CASE and datetime functions
@@ -37,6 +38,8 @@ async def get_modules(
         select(Module, Plant, is_online)
         .outerjoin(Plant, Module.id == Plant.module_id)
     )
+    if coupled is not None:
+        query = query.where(Module.coupled == coupled)
     results = session.execute(query).all()
 
     # Build response from joined results
@@ -49,3 +52,5 @@ async def get_modules(
         )
         for module, plant, is_online_value in results
     ]
+
+

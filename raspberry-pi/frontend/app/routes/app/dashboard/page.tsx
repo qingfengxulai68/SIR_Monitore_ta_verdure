@@ -1,18 +1,13 @@
 import { useEffect, useState } from "react"
 import type { Route } from "./+types/page"
-import { Skeleton } from "~/components/ui/skeleton"
-import {
-  mockGetPlants,
-  mockGetModules,
-  mockGetCurrentSensorData,
-  type Plant,
-  type Module,
-  type SensorData
-} from "~/lib/mocks"
+import { getAllPlants, type Plant } from "~/lib/api/plants"
+import { getAllModules, type Module } from "~/lib/api/modules"
 import { useHeader } from "~/components/nav/header/header-provider"
 import { SystemOverview } from "./components/system-overview"
 import { PlantsStatus } from "./components/plants-status"
 import { ScrollArea } from "~/components/ui/scroll-area"
+import { Spinner } from "~/components/ui/spinner"
+import { ErrorWithRetry } from "~/components/other/error-with-retry"
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -25,7 +20,9 @@ export default function DashboardPage() {
   const [plants, setPlants] = useState<Plant[]>([])
   const [modules, setModules] = useState<Module[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [sensorData, setSensorData] = useState<Record<string, SensorData>>({})
+  const [error, setError] = useState<string | null>(null)
+  // TODO: Define proper SensorData type when WebSocket is implemented
+  const [sensorData, setSensorData] = useState<Record<string, any>>({})
 
   const { setHeaderContent } = useHeader()
 
@@ -33,53 +30,40 @@ export default function DashboardPage() {
     setHeaderContent({
       breadcrumbs: [{ label: "Dashboard" }]
     })
-  }, [setHeaderContent])
+  }, [])
 
   const loadData = async () => {
-    const [plantsData, modulesData] = await Promise.all([mockGetPlants(), mockGetModules()])
+    setIsLoading(true)
+    setError(null)
+    try {
+      const [plantsData, modulesData] = await Promise.all([getAllPlants(), getAllModules()])
 
-    setPlants(plantsData)
-    setModules(modulesData)
-    setIsLoading(false)
+      setPlants(plantsData)
+      setModules(modulesData)
 
-    // Load initial sensor data
-    const initialSensorData: Record<string, SensorData> = {}
-    plantsData.forEach((plant) => {
-      initialSensorData[plant.moduleId] = mockGetCurrentSensorData(plant.moduleId)
-    })
-    setSensorData(initialSensorData)
+      // TODO: Load initial sensor data via WebSocket/API
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   useEffect(() => {
     loadData()
-
-    // Update sensor data every 5 seconds
-    const interval = setInterval(() => {
-      setPlants((currentPlants) => {
-        const updatedSensorData: Record<string, SensorData> = {}
-        currentPlants.forEach((plant) => {
-          updatedSensorData[plant.moduleId] = mockGetCurrentSensorData(plant.moduleId)
-        })
-        setSensorData(updatedSensorData)
-        return currentPlants
-      })
-    }, 5000)
-
-    return () => clearInterval(interval)
+    // TODO: Implement WebSocket connection for real-time sensor updates
+    // TODO: Remove when WebSocket is implemented
   }, [])
 
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] p-6">
       <main className="space-y-6">
         {isLoading ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-24" />
-              ))}
-            </div>
-            <Skeleton className="h-48" />
+          <div className="flex items-center justify-center h-64">
+            <Spinner />
           </div>
+        ) : error ? (
+          <ErrorWithRetry error={error} onRetry={loadData} />
         ) : (
           <>
             <SystemOverview plants={plants} modules={modules} sensorData={sensorData} />

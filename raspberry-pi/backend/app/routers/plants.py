@@ -97,7 +97,7 @@ async def get_plant(
 ) -> PlantResponse:
     """Get a specific plant by ID."""
     # Get plant
-    plant = session.exec(select(Plant).where(Plant.id == plant_id)).first()
+    plant = session.execute(select(Plant).where(Plant.id == plant_id)).scalars().first()
     if not plant:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plant not found")
 

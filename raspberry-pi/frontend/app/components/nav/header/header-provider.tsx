@@ -10,7 +10,7 @@ interface HeaderContextType {
 const HeaderContext = createContext<HeaderContextType | undefined>(undefined)
 
 // Provider Component
-export function HeaderProvider({ children }: { children: ReactNode }) {
+export function AppHeaderProvider({ children }: { children: ReactNode }) {
   const [headerContent, setHeaderContent] = useState<HeaderContent>({ breadcrumbs: [] })
 
   return <HeaderContext.Provider value={{ headerContent, setHeaderContent }}>{children}</HeaderContext.Provider>

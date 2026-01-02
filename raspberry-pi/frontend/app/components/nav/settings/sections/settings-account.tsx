@@ -34,7 +34,7 @@ export function AccountSection() {
           </Button>
         </div>
       </div>
-      <PasswordChangeDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      {dialogOpen && <PasswordChangeDialog open={dialogOpen} onOpenChange={setDialogOpen} />}
     </div>
   )
 }

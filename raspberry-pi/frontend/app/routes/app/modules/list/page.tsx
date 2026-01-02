@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react"
-import type { Route } from "../+types/page"
-import { Cpu } from "lucide-react"
-import { Skeleton } from "~/components/ui/skeleton"
-import { Card } from "~/components/ui/card"
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "~/components/ui/empty"
-import { mockGetModules, type Module } from "~/lib/mocks"
+import type { Route } from "./+types/page"
+import { Spinner } from "~/components/ui/spinner"
+import { getAllModules, type Module } from "~/lib/api/modules"
 import { useHeader } from "~/components/nav/header/header-provider"
-import { ModulesHeader } from "./components/modules-header"
+import ModulesEmpty from "./components/modules-empty"
 import { ModulesList } from "./components/modules-list"
 import { ScrollArea } from "~/components/ui/scroll-area"
+import { ErrorWithRetry } from "~/components/other/error-with-retry"
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Modules - Terrarium" }, { name: "description", content: "Manage system modules." }]
@@ -17,25 +15,29 @@ export function meta({}: Route.MetaArgs) {
 export default function ModulesListPage() {
   const [modules, setModules] = useState<Module[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
+  const [error, setError] = useState<string | null>(null)
   const { setHeaderContent } = useHeader()
-
-  const filteredModules = modules.filter((module) => module.id.toLowerCase().includes(searchQuery.toLowerCase()))
 
   useEffect(() => {
     setHeaderContent({
       breadcrumbs: [{ label: "Modules" }]
     })
-  }, [setHeaderContent])
+  }, [])
 
-  useEffect(() => {
-    const loadModules = async () => {
-      const data = await mockGetModules()
+  const loadModules = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await getAllModules()
       setModules(data)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
       setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
     loadModules()
   }, [])
 
@@ -43,37 +45,15 @@ export default function ModulesListPage() {
     <ScrollArea className="h-[calc(100vh-4rem)] p-6">
       <main className="space-y-6">
         {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-10 w-80" />
-            <Card>
-              <div className="p-4 space-y-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            </Card>
+          <div className="flex items-center justify-center h-64">
+            <Spinner />
           </div>
+        ) : error ? (
+          <ErrorWithRetry error={error} onRetry={loadModules} />
         ) : modules.length === 0 ? (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon" className="bg-primary/10 text-primary">
-                <Cpu className="size-6" />
-              </EmptyMedia>
-              <EmptyTitle>No modules yet</EmptyTitle>
-              <EmptyDescription>No sensor modules have been registered in the system.</EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          <ModulesEmpty />
         ) : (
-          <>
-            <ModulesHeader
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              filteredCount={filteredModules.length}
-            />
-            <ModulesList modules={filteredModules} viewMode={viewMode} />
-          </>
+          <ModulesList modules={modules} />
         )}
       </main>
     </ScrollArea>

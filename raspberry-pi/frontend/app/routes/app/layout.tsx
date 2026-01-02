@@ -3,8 +3,8 @@ import type { Route } from "./+types/layout"
 import { isAuthenticated } from "~/lib/auth"
 import { AppSidebar } from "~/components/nav/sidebar/sidebar"
 import { SidebarProvider, SidebarInset } from "~/components/ui/sidebar"
-import Header from "~/components/nav/header/header"
-import { HeaderProvider } from "~/components/nav/header/header-provider"
+import { AppHeaderProvider } from "~/components/nav/header/header-provider"
+import AppHeader from "~/components/nav/header/header"
 
 // Client-side loader to enforce authentication
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
@@ -19,10 +19,10 @@ export default function AppLayout() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <HeaderProvider>
-          <Header />
+        <AppHeaderProvider>
+          <AppHeader />
           <Outlet />
-        </HeaderProvider>
+        </AppHeaderProvider>
       </SidebarInset>
     </SidebarProvider>
   )

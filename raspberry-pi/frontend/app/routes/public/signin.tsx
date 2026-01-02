@@ -42,7 +42,6 @@ export default function SignInPage() {
 
     try {
       await login(data.username, data.password)
-      toast.success("Welcome back!")
       navigate("/app/")
     } catch (error) {
       toast.error((error as Error).message)

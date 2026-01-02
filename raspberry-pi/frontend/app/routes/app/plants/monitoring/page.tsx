@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react"
-import type { Route } from "../+types/page"
+import type { Route } from "./+types/page"
 import { useParams, useNavigate } from "react-router"
 import { Badge } from "~/components/ui/badge"
-import { Skeleton } from "~/components/ui/skeleton"
+import { Spinner } from "~/components/ui/spinner"
 import { toast } from "sonner"
 import { mockGetPlant, type Plant, type SensorData } from "~/lib/mocks"
 import { mockSubscribeToPlant, mockUnsubscribe } from "~/lib/ws"
@@ -101,16 +101,10 @@ export default function PlantMonitoring() {
 
   if (isLoading || !plant) {
     return (
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-        <div className="grid gap-6 lg:grid-cols-2">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-80" />
-          ))}
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="flex flex-col items-center gap-4">
+          <Spinner size="lg" />
+          <p className="text-muted-foreground">Loading plant monitoring...</p>
         </div>
       </div>
     )

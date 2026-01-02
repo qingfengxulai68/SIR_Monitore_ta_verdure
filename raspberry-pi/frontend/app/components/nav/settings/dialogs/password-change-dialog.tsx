@@ -37,7 +37,6 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
   const onSubmit = async (data: PasswordChangeFormData) => {
     try {
       await changePassword(data.currentPassword, data.newPassword)
-
       toast.success("Your password has been updated successfully.")
       onOpenChange(false)
     } catch (error) {
@@ -51,20 +50,12 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
         })
       } else {
         alert(errorMessage)
-        form.reset()
       }
     }
   }
 
-  const handleDialogChange = (isOpen: boolean) => {
-    onOpenChange(isOpen)
-    if (!isOpen) {
-      form.reset()
-    }
-  }
-
   return (
-    <Dialog open={open} onOpenChange={handleDialogChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-106.25 gap-7">
         <DialogHeader>
           <DialogTitle>Change password</DialogTitle>
@@ -129,7 +120,7 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
           <Button
             type="button"
             variant="outline"
-            onClick={() => handleDialogChange(false)}
+            onClick={() => onOpenChange(false)}
             disabled={form.formState.isSubmitting}
           >
             Cancel

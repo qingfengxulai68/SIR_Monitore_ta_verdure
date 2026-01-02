@@ -3,7 +3,10 @@ import { Button } from "~/components/ui/button"
 import { Switch } from "~/components/ui/switch"
 import { Edit2 } from "lucide-react"
 import { WebhookDialog } from "../dialogs/webhook-dialog"
-import { mockGetAlertsSettings, mockUpdateAlertsSettings } from "~/lib/mocks"
+import { getAlerts, disableAlerts } from "~/lib/api/settings"
+import { toast } from "sonner"
+import { Spinner } from "~/components/ui/spinner"
+import { ErrorWithRetry } from "~/components/other/error-with-retry"
 
 export function AlertsSection() {
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -11,6 +14,7 @@ export function AlertsSection() {
   const [discordWebhook, setDiscordWebhook] = useState("")
   const [alertsEnabled, setAlertsEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Load alerts settings on mount
   useEffect(() => {
@@ -18,10 +22,14 @@ export function AlertsSection() {
   }, [])
 
   const loadAlertsSettings = async () => {
+    setLoading(true)
+    setError(null)
     try {
-      const settings = await mockGetAlertsSettings()
-      setAlertsEnabled(settings.alertsEnabled)
-      setDiscordWebhook(settings.discordWebhook)
+      const settings = await getAlerts()
+      setAlertsEnabled(settings.enabled)
+      setDiscordWebhook(settings.discordWebhookUrl || "")
+    } catch (err) {
+      setError((err as Error).message)
     } finally {
       setLoading(false)
     }
@@ -34,9 +42,14 @@ export function AlertsSection() {
       setDialogOpen(true)
     } else {
       // Disable alerts and clear webhook
-      const settings = await mockUpdateAlertsSettings({ alertsEnabled: false, discordWebhook: "" })
-      setAlertsEnabled(settings.alertsEnabled)
-      setDiscordWebhook(settings.discordWebhook)
+      try {
+        await disableAlerts()
+        setAlertsEnabled(false)
+        setDiscordWebhook("")
+        toast.success("Alerts disabled")
+      } catch (err) {
+        toast.error("Failed to disable alerts")
+      }
     }
   }
 
@@ -45,9 +58,8 @@ export function AlertsSection() {
   }
 
   const handleSaveWebhook = async (webhook: string) => {
-    const settings = await mockUpdateAlertsSettings({ discordWebhook: webhook, alertsEnabled: true })
-    setDiscordWebhook(settings.discordWebhook)
-    setAlertsEnabled(settings.alertsEnabled)
+    setDiscordWebhook(webhook)
+    setAlertsEnabled(true)
   }
 
   const handleEditWebhook = () => {
@@ -56,7 +68,19 @@ export function AlertsSection() {
   }
 
   if (loading) {
-    return <div className="space-y-6 max-w-112.5">Loading...</div>
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Spinner />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 max-w-112.5">
+        <ErrorWithRetry error={error} onRetry={loadAlertsSettings} />
+      </div>
+    )
   }
 
   return (
@@ -81,13 +105,15 @@ export function AlertsSection() {
           </div>
         )}
       </div>
-      <WebhookDialog
-        open={dialogOpen}
-        onOpenChange={handleDialogClose}
-        currentWebhook={discordWebhook}
-        onSave={handleSaveWebhook}
-        mode={dialogMode}
-      />
+      {dialogOpen && (
+        <WebhookDialog
+          open={dialogOpen}
+          onOpenChange={handleDialogClose}
+          currentWebhook={discordWebhook}
+          onSave={handleSaveWebhook}
+          mode={dialogMode}
+        />
+      )}
     </div>
   )
 }
