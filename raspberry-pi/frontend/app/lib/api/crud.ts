@@ -1,6 +1,6 @@
 import { getToken, logout } from "~/lib/auth"
 
-const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL as string
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 
 // Generic request function
 async function request<T>(
