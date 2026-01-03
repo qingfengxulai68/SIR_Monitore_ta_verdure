@@ -24,6 +24,11 @@ from app.schemas.plant import (
 from app.schemas.values import (
     ValuesResponse,
 )
+from app.schemas.websocket import (
+    EntityChangeMessage,
+    EntityChangePayload,
+)
+from app.services.websocket_manager import ws_manager
 
 router = APIRouter(prefix="/plants", tags=["Plants"])
 
@@ -155,6 +160,28 @@ async def create_plant(
     # Get current values
     latest_values = _get_latest_values(session, plant.id)
 
+    # Broadcast ENTITY_CHANGE for plant creation
+    await ws_manager.emit_entity_change(
+        EntityChangeMessage(
+            payload=EntityChangePayload(
+                entity="plant",
+                action="create",
+                id=plant.id,
+            )
+        )
+    )
+
+    # Broadcast ENTITY_CHANGE for module update (marked as coupled)
+    await ws_manager.emit_entity_change(
+        EntityChangeMessage(
+            payload=EntityChangePayload(
+                entity="module",
+                action="update",
+                id=request.moduleId,
+            )
+        )
+    )
+
     return PlantResponse(
         id=plant.id,
         name=plant.name,
@@ -181,8 +208,11 @@ async def update_plant(
     if not plant:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plant not found")
 
-    # Handle module change
-    if request.moduleId and request.moduleId != plant.module_id:
+    # Track old module ID and handle module change
+    old_module_id = plant.module_id
+    module_changed = request.moduleId and request.moduleId != plant.module_id
+    
+    if module_changed:
         new_module = session.execute(select(Module).where(Module.id == request.moduleId)).scalars().first()
         if not new_module:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
@@ -216,6 +246,40 @@ async def update_plant(
     session.commit()
     session.refresh(plant)
 
+    # Broadcast ENTITY_CHANGE for plant update
+    await ws_manager.emit_entity_change(
+        EntityChangeMessage(
+            payload=EntityChangePayload(
+                entity="plant",
+                action="update",
+                id=plant.id,
+            )
+        )
+    )
+
+    # If module changed, broadcast ENTITY_CHANGE for both old and new modules
+    if module_changed:
+        # Old module (now available)
+        await ws_manager.emit_entity_change(
+            EntityChangeMessage(
+                payload=EntityChangePayload(
+                    entity="module",
+                    action="update",
+                    id=old_module_id,
+                )
+            )
+        )
+        # New module (now coupled)
+        await ws_manager.emit_entity_change(
+            EntityChangeMessage(
+                payload=EntityChangePayload(
+                    entity="module",
+                    action="update",
+                    id=request.moduleId,
+                )
+            )
+        )
+
     latest_values = _get_latest_values(session, plant.id)
     return PlantResponse(
         id=plant.id,
@@ -244,13 +308,39 @@ async def delete_plant(
     if not plant:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plant not found")
 
+    # Save module ID before deletion
+    coupled_module_id = plant.module_id
+
     # Delete sensor values
     session.execute(delete(Values).where(Values.plant_id == plant.id))
     session.delete(plant)
     session.commit()
 
     # Uncouple module
-    module = session.execute(select(Module).where(Module.id == plant.module_id)).scalars().first()
-    module.coupled = False
-    session.add(module)
-    session.commit()
+    module = session.execute(select(Module).where(Module.id == coupled_module_id)).scalars().first()
+    if module:
+        module.coupled = False
+        session.add(module)
+        session.commit()
+
+    # Broadcast ENTITY_CHANGE for plant deletion
+    await ws_manager.emit_entity_change(
+        EntityChangeMessage(
+            payload=EntityChangePayload(
+                entity="plant",
+                action="delete",
+                id=plant_id,
+            )
+        )
+    )
+
+    # Broadcast ENTITY_CHANGE for module update (now available)
+    await ws_manager.emit_entity_change(
+        EntityChangeMessage(
+            payload=EntityChangePayload(
+                entity="module",
+                action="update",
+                id=coupled_module_id,
+            )
+        )
+    )

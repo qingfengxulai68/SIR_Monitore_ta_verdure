@@ -26,9 +26,13 @@ from app.schemas.settings import (
     AlertsResponse,
 )
 from app.schemas.websocket import (
-    ModuleStatusEvent,
-    PlantOfflineEvent,
-    PlantUpdateEvent,
+    EntityChangeMessage,
+    EntityChangePayload,
+    ModuleConnectionMessage,
+    ModuleConnectionPayload,
+    PlantMetricsMessage,
+    PlantMetricsPayload,
+    PlantMetricsValues,
 )
 
 __all__ = [
@@ -56,7 +60,11 @@ __all__ = [
     "AlertsResponse",
     "AlertsEnableRequest",
     # WebSocket
-    "PlantUpdateEvent",
-    "PlantOfflineEvent",
-    "ModuleStatusEvent",
+    "PlantMetricsMessage",
+    "PlantMetricsPayload",
+    "PlantMetricsValues",
+    "ModuleConnectionMessage",
+    "ModuleConnectionPayload",
+    "EntityChangeMessage",
+    "EntityChangePayload",
 ]

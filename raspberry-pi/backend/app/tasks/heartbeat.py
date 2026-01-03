@@ -11,7 +11,13 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.database import engine
 from app.models.module import Module
 from app.models.plant import Plant
-from app.schemas.websocket import ModuleStatusEvent, PlantOfflineEvent
+from app.schemas.websocket import (
+    ModuleConnectionMessage,
+    ModuleConnectionPayload,
+    PlantMetricsMessage,
+    PlantMetricsPayload,
+    PlantMetricsValues,
+)
 from app.services.websocket_manager import ws_manager
 
 logger = logging.getLogger(__name__)
@@ -78,20 +84,14 @@ class HeartbeatChecker:
                     plant = session.execute(select(Plant).where(Plant.module_id == module.id)).scalars().first()
                     if plant:
                         logger.warning(f"Module {module.id} (Plant: {plant.name}) went offline")
-                        await ws_manager.emit_plant_offline(
-                            PlantOfflineEvent(
-                                plantId=plant.id,
-                                name=plant.name,
-                                moduleId=module.id,
-                                status="offline",
-                                timestamp=datetime.now(UTC),
-                            )
-                        )
-                        await ws_manager.emit_module_status(
-                            ModuleStatusEvent(
-                                moduleId=module.id,
-                                isOnline=False,
-                                lastSeen=module.last_seen or datetime.now(UTC),
+                        # Broadcast MODULE_CONNECTION when module goes offline
+                        await ws_manager.emit_module_connection(
+                            ModuleConnectionMessage(
+                                payload=ModuleConnectionPayload(
+                                    moduleId=module.id,
+                                    isOnline=False,
+                                    coupledPlantId=plant.id,
+                                )
                             )
                         )
 

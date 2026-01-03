@@ -22,14 +22,13 @@ async def websocket_endpoint(
 
     Connect with: ws://host/ws?token=<jwt_token>
 
-    Events from server:
-    - plant:update: Sent when sensor data is ingested
-    - plant:offline: Sent when a module times out
-    - module:status: Sent when module online status changes
+    Messages from server:
+    - PLANT_METRICS: Sensor data updates
+    - MODULE_CONNECTION: Module connectivity status
+    - ENTITY_CHANGE: Structural changes (CRUD operations)
 
-    Events from client:
-    - subscribe:plant: Subscribe to a specific plant's updates
-    - unsubscribe:plant: Unsubscribe from a plant's updates
+    Messages from client:
+    - PING: Keep-alive (server responds with PONG)
     """
     # Validate token
     if token is None:
@@ -54,33 +53,10 @@ async def websocket_endpoint(
 
             try:
                 message = json.loads(data)
-                event = message.get("event")
-                event_data = message.get("data")
+                message_type = message.get("type")
 
-                if event == "subscribe:plant" and isinstance(event_data, int):
-                    await ws_manager.subscribe_to_plant(connection_id, event_data)
-                    await websocket.send_text(
-                        json.dumps(
-                            {
-                                "event": "subscribed",
-                                "data": {"plantId": event_data},
-                            }
-                        )
-                    )
-
-                elif event == "unsubscribe:plant" and isinstance(event_data, int):
-                    await ws_manager.unsubscribe_from_plant(connection_id, event_data)
-                    await websocket.send_text(
-                        json.dumps(
-                            {
-                                "event": "unsubscribed",
-                                "data": {"plantId": event_data},
-                            }
-                        )
-                    )
-
-                elif event == "ping":
-                    await websocket.send_text(json.dumps({"event": "pong"}))
+                if message_type == "PING":
+                    await websocket.send_text(json.dumps({"type": "PONG"}))
 
             except json.JSONDecodeError:
                 logger.warning(f"Invalid JSON from connection {connection_id}")
