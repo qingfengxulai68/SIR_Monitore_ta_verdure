@@ -1,14 +1,15 @@
 import { z } from "zod"
 
-// Threshold ranges (hardcoded)
-export const SOIL_MOIST_MIN = 0
-export const SOIL_MOIST_MAX = 100
-export const HUMIDITY_MIN = 0
-export const HUMIDITY_MAX = 100
-export const LIGHT_MIN = 0
-export const LIGHT_MAX = 50000
-export const TEMP_MIN = 0
-export const TEMP_MAX = 50
+// Read threshold ranges from environment variables (Vite) with fallbacks
+const env = import.meta.env
+const SOIL_MOIST_MIN = parseFloat(env.VITE_SOIL_MOIST_MIN as string)
+const SOIL_MOIST_MAX = parseFloat(env.VITE_SOIL_MOIST_MAX as string)
+const HUMIDITY_MIN = parseFloat(env.VITE_HUMIDITY_MIN as string)
+const HUMIDITY_MAX = parseFloat(env.VITE_HUMIDITY_MAX as string)
+const LIGHT_MIN = parseFloat(env.VITE_LIGHT_MIN as string)
+const LIGHT_MAX = parseFloat(env.VITE_LIGHT_MAX as string)
+const TEMP_MIN = parseFloat(env.VITE_TEMP_MIN as string)
+const TEMP_MAX = parseFloat(env.VITE_TEMP_MAX as string)
 
 // Local threshold range
 export type ThresholdRange = {

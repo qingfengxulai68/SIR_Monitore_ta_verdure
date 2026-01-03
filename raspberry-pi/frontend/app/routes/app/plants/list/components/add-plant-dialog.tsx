@@ -18,21 +18,20 @@ import { Button } from "~/components/ui/button"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import { toast } from "sonner"
 import { getAllModules, type Module } from "~/lib/api/modules"
-import {
-  createPlant,
-  type PlantCreateRequest,
-  plantCreateRequestSchema,
-  SOIL_MOIST_MIN,
-  SOIL_MOIST_MAX,
-  HUMIDITY_MIN,
-  HUMIDITY_MAX,
-  LIGHT_MIN,
-  LIGHT_MAX,
-  TEMP_MIN,
-  TEMP_MAX
-} from "~/lib/api/plants"
+import { createPlant, type PlantCreateRequest, plantCreateRequestSchema } from "~/lib/api/plants"
 import { Spinner } from "~/components/ui/spinner"
 import { ErrorWithRetry } from "~/components/other/error-with-retry"
+
+// Read threshold ranges from environment variables (Vite) with fallbacks
+const env = import.meta.env
+const SOIL_MOIST_MIN = parseFloat(env.VITE_SOIL_MOIST_MIN as string)
+const SOIL_MOIST_MAX = parseFloat(env.VITE_SOIL_MOIST_MAX as string)
+const HUMIDITY_MIN = parseFloat(env.VITE_HUMIDITY_MIN as string)
+const HUMIDITY_MAX = parseFloat(env.VITE_HUMIDITY_MAX as string)
+const LIGHT_MIN = parseFloat(env.VITE_LIGHT_MIN as string)
+const LIGHT_MAX = parseFloat(env.VITE_LIGHT_MAX as string)
+const TEMP_MIN = parseFloat(env.VITE_TEMP_MIN as string)
+const TEMP_MAX = parseFloat(env.VITE_TEMP_MAX as string)
 
 interface CreatePlantDialogProps {
   open: boolean

@@ -63,6 +63,21 @@ During a production Docker build you can override the value using a build-arg. E
 docker build --build-arg VITE_API_BASE_URL="https://api.example.com" -t terrarium-front .
 ```
 
+### Threshold env vars (client-exposed)
+
+The frontend uses the following Vite env variables to set hard limits for sensor thresholds. These are embedded at build time like `VITE_API_BASE_URL`.
+
+| Variable | Description |
+|---|---|
+| `VITE_SOIL_MOIST_MIN` | Minimum allowed soil moisture (%) |
+| `VITE_SOIL_MOIST_MAX` | Maximum allowed soil moisture (%) |
+| `VITE_HUMIDITY_MIN` | Minimum allowed humidity (%) |
+| `VITE_HUMIDITY_MAX` | Maximum allowed humidity (%) |
+| `VITE_LIGHT_MIN` | Minimum allowed light (lux) |
+| `VITE_LIGHT_MAX` | Maximum allowed light (lux) |
+| `VITE_TEMP_MIN` | Minimum allowed temperature (°C) |
+| `VITE_TEMP_MAX` | Maximum allowed temperature (°C) |
+
 The Dockerfile sets the build ARG and `ENV` so Vite can embed the value at build time.
 
 ## Docker deployment
