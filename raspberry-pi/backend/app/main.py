@@ -50,7 +50,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title=os.environ.get('APP_NAME', 'Terrarium API'),
+    title='Terrarium API',
     description="IoT Plant Monitoring System Backend",
     version="0.1.0",
     lifespan=lifespan,
@@ -80,7 +80,7 @@ app.websocket("/ws")(websocket_endpoint)
 async def root() -> dict:
     """Root endpoint - API health check."""
     return {
-        "name": os.environ.get('APP_NAME', 'Terrarium API'),
+        "name": 'Terrarium API',
         "status": "healthy",
         "version": "0.1.0",
     }

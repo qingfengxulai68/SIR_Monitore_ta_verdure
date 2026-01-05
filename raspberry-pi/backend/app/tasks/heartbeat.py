@@ -25,7 +25,7 @@ def _is_module_online(module: Module) -> bool:
     if not module.last_seen:
         return False
     last_seen = module.last_seen.replace(tzinfo=UTC) if module.last_seen.tzinfo is None else module.last_seen
-    return (datetime.now(UTC) - last_seen).total_seconds() <= int(os.environ.get('HEARTBEAT_TIMEOUT_SECONDS', '120'))
+    return (datetime.now(UTC) - last_seen).total_seconds() <= int(os.environ.get('HEARTBEAT_TIMEOUT_SECONDS'))
 
 
 class HeartbeatChecker:
@@ -61,7 +61,7 @@ class HeartbeatChecker:
                 await self._check_heartbeats()
             except Exception as e:
                 pass
-            await asyncio.sleep(int(os.environ.get('HEARTBEAT_CHECK_INTERVAL_SECONDS', '60')))
+            await asyncio.sleep(int(os.environ.get('HEARTBEAT_CHECK_INTERVAL_SECONDS')))
 
     async def _check_heartbeats(self) -> None:
         """Check all modules for heartbeat timeout."""

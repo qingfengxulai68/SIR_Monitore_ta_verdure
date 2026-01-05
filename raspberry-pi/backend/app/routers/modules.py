@@ -32,7 +32,7 @@ async def get_modules(
     now = datetime.now(UTC)
     is_online = case(
         (Module.last_seen.is_(None), False),
-        (func.julianday(now) - func.julianday(Module.last_seen) <= int(os.environ.get('HEARTBEAT_TIMEOUT_SECONDS', '120')) / 86400.0, True),
+        (func.julianday(now) - func.julianday(Module.last_seen) <= int(os.environ.get('HEARTBEAT_TIMEOUT_SECONDS')) / 86400.0, True),
         else_=False
     ).label("is_online")
     

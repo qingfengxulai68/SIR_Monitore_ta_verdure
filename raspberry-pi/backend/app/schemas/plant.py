@@ -42,8 +42,8 @@ class ThresholdsRequest(BaseModel):
     @field_validator("soilMoist")
     @classmethod
     def validate_soil_moist(cls, v):
-        min_val = float(os.environ.get('SOIL_MOIST_MIN', '0'))
-        max_val = float(os.environ.get('SOIL_MOIST_MAX', '100'))
+        min_val = float(os.environ.get('SOIL_MOIST_MIN'))
+        max_val = float(os.environ.get('SOIL_MOIST_MAX'))
         if not (min_val <= v.min <= max_val and min_val <= v.max <= max_val):
             raise ValueError(f"Soil moisture thresholds must be between {min_val} and {max_val}")
         return v
@@ -51,8 +51,8 @@ class ThresholdsRequest(BaseModel):
     @field_validator("humidity")
     @classmethod
     def validate_humidity(cls, v):
-        min_val = float(os.environ.get('HUMIDITY_MIN', '0'))
-        max_val = float(os.environ.get('HUMIDITY_MAX', '100'))
+        min_val = float(os.environ.get('HUMIDITY_MIN'))
+        max_val = float(os.environ.get('HUMIDITY_MAX'))
         if not (min_val <= v.min <= max_val and min_val <= v.max <= max_val):
             raise ValueError(f"Humidity thresholds must be between {min_val} and {max_val}")
         return v
@@ -60,8 +60,8 @@ class ThresholdsRequest(BaseModel):
     @field_validator("light")
     @classmethod
     def validate_light(cls, v):
-        min_val = float(os.environ.get('LIGHT_MIN', '0'))
-        max_val = float(os.environ.get('LIGHT_MAX', '50000'))
+        min_val = float(os.environ.get('LIGHT_MIN'))
+        max_val = float(os.environ.get('LIGHT_MAX'))
         if not (min_val <= v.min <= max_val and min_val <= v.max <= max_val):
             raise ValueError(f"Light thresholds must be between {min_val} and {max_val}")
         return v
@@ -69,8 +69,8 @@ class ThresholdsRequest(BaseModel):
     @field_validator("temp")
     @classmethod
     def validate_temp(cls, v):
-        min_val = float(os.environ.get('TEMP_MIN', '0'))
-        max_val = float(os.environ.get('TEMP_MAX', '50'))
+        min_val = float(os.environ.get('TEMP_MIN'))
+        max_val = float(os.environ.get('TEMP_MAX'))
         if not (min_val <= v.min <= max_val and min_val <= v.max <= max_val):
             raise ValueError(f"Temperature thresholds must be between {min_val} and {max_val}")
         return v

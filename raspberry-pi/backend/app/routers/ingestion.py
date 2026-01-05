@@ -50,7 +50,7 @@ async def ingest_sensor_data(
     # Check if module was offline before (for MODULE_CONNECTION event)
     was_offline = not module.last_seen or (
         (datetime.now(UTC) - module.last_seen.replace(tzinfo=UTC)).total_seconds()
-        > int(os.environ.get("HEARTBEAT_TIMEOUT_SECONDS", "120"))
+        > int(os.environ.get("HEARTBEAT_TIMEOUT_SECONDS"))
     )
 
     # Update last_seen

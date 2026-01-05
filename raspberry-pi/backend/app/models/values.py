@@ -13,10 +13,10 @@ class Values(Base):
     __tablename__ = "values"
 
     __table_args__ = (
-        CheckConstraint(f'soil_moist >= {float(os.environ.get("SOIL_MOIST_MIN", "0"))} AND soil_moist <= {float(os.environ.get("SOIL_MOIST_MAX", "100"))}', name='check_soil_moist_bounds'),
-        CheckConstraint(f'humidity >= {float(os.environ.get("HUMIDITY_MIN", "0"))} AND humidity <= {float(os.environ.get("HUMIDITY_MAX", "100"))}', name='check_humidity_bounds'),
-        CheckConstraint(f'light >= {float(os.environ.get("LIGHT_MIN", "0"))} AND light <= {float(os.environ.get("LIGHT_MAX", "50000"))}', name='check_light_bounds'),
-        CheckConstraint(f'temp >= {float(os.environ.get("TEMP_MIN", "0"))} AND temp <= {float(os.environ.get("TEMP_MAX", "50"))}', name='check_temp_bounds'),
+        CheckConstraint(f'soil_moist >= {float(os.environ.get("SOIL_MOIST_MIN"))} AND soil_moist <= {float(os.environ.get("SOIL_MOIST_MAX"))}', name='check_soil_moist_bounds'),
+        CheckConstraint(f'humidity >= {float(os.environ.get("HUMIDITY_MIN"))} AND humidity <= {float(os.environ.get("HUMIDITY_MAX"))}', name='check_humidity_bounds'),
+        CheckConstraint(f'light >= {float(os.environ.get("LIGHT_MIN"))} AND light <= {float(os.environ.get("LIGHT_MAX"))}', name='check_light_bounds'),
+        CheckConstraint(f'temp >= {float(os.environ.get("TEMP_MIN"))} AND temp <= {float(os.environ.get("TEMP_MAX"))}', name='check_temp_bounds'),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)

@@ -29,20 +29,20 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(user_id: int, username: str) -> str:
     """Create a JWT access token."""
-    expire = datetime.now(UTC) + timedelta(hours=int(os.environ.get('JWT_EXPIRATION_HOURS', '24')))
+    expire = datetime.now(UTC) + timedelta(hours=1)
     payload = {
         "sub": str(user_id),
         "username": username,
         "exp": expire,
     }
-    return jwt.encode(payload, os.environ.get('JWT_SECRET_KEY', 'your-super-secret-key-change-in-production'), algorithm=os.environ.get('JWT_ALGORITHM', 'HS256'))
+    return jwt.encode(payload, os.environ.get('JWT_SECRET_KEY'), algorithm='HS256')
 
 
 def decode_token(token: str) -> dict | None:
     """Decode and validate a JWT token."""
     try:
         payload = jwt.decode(
-            token, os.environ.get('JWT_SECRET_KEY', 'your-super-secret-key-change-in-production'), algorithms=[os.environ.get('JWT_ALGORITHM', 'HS256')]
+            token, os.environ.get('JWT_SECRET_KEY'), algorithms=['HS256']
         )
         return payload
     except jwt.ExpiredSignatureError:

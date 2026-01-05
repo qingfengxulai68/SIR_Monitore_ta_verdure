@@ -38,7 +38,7 @@ def _is_module_online(module: Module | None) -> bool:
     if not module or not module.last_seen:
         return False
     last_seen = module.last_seen.replace(tzinfo=UTC) if module.last_seen.tzinfo is None else module.last_seen
-    return (datetime.now(UTC) - last_seen).total_seconds() <= int(os.environ.get('HEARTBEAT_TIMEOUT_SECONDS', '120'))
+    return (datetime.now(UTC) - last_seen).total_seconds() <= int(os.environ.get('HEARTBEAT_TIMEOUT_SECONDS'))
 
 
 def _get_latest_values(session: Session, plant_id: int) -> ValuesResponse | None:
