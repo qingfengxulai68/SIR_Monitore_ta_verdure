@@ -16,7 +16,6 @@ connect_args = {"check_same_thread": False} if "sqlite" in os.environ.get('DATAB
 
 engine = create_engine(
     os.environ.get('DATABASE_URL', 'sqlite:///./terrarium.db'),
-    echo=bool(os.environ.get('DEBUG', 'True').lower() == 'true'),
     connect_args=connect_args,
 )
 
