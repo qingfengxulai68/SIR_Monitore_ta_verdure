@@ -4,8 +4,8 @@ import os
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import case, func, select
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import case, delete, func, select
 from sqlalchemy.orm import Session
 
 from app.auth.jwt import verify_jwt_user
@@ -13,7 +13,10 @@ from app.database import get_session
 from app.models.module import Module
 from app.models.plant import Plant
 from app.models.user import User
+from app.models.values import Values
 from app.schemas.module import CoupledPlantResponse, ModuleResponse
+from app.schemas.websocket import EntityChangeMessage, EntityChangePayload
+from app.websocket import ws_manager
 
 router = APIRouter(prefix="/modules", tags=["Modules"])
 
@@ -52,5 +55,61 @@ async def get_modules(
         )
         for module, plant, is_online_value in results
     ]
+
+
+@router.delete("/{module_id}/coupling", status_code=status.HTTP_204_NO_CONTENT)
+async def uncouple_module(
+    module_id: str,
+    session: Annotated[Session, Depends(get_session)],
+    _current_user: Annotated[User, Depends(verify_jwt_user)],
+) -> None:
+    """Uncouple a module by removing its associated plant."""
+    # Get module
+    module = session.execute(select(Module).where(Module.id == module_id)).scalars().first()
+    if not module:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
+
+    # Check if module is coupled
+    if not module.coupled:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Module is not coupled to any plant")
+
+    # Get associated plant
+    plant = session.execute(select(Plant).where(Plant.module_id == module_id)).scalars().first()
+    plant_id = plant.id if plant else None
+
+    # Delete plant and its values if exists
+    if plant:
+        session.execute(delete(Values).where(Values.plant_id == plant.id))
+        session.delete(plant)
+
+    # Uncouple module
+    module.coupled = False
+    session.add(module)
+    session.commit()
+
+    # Broadcast ENTITY_CHANGE for module update (now available)
+    await ws_manager.emit_entity_change(
+        EntityChangeMessage(
+            payload=EntityChangePayload(
+                entity="module",
+                action="update",
+                id=module_id,
+            )
+        )
+    )
+
+    # Broadcast ENTITY_CHANGE for plant deletion if existed
+    if plant_id:
+        await ws_manager.emit_entity_change(
+            EntityChangeMessage(
+                payload=EntityChangePayload(
+                    entity="plant",
+                    action="delete",
+                    id=plant_id,
+                )
+            )
+        )
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

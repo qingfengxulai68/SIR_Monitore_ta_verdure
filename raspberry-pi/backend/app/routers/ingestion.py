@@ -21,7 +21,7 @@ from app.schemas.websocket import (
     ModuleConnectionMessage,
     ModuleConnectionPayload,
 )
-from app.services.websocket_manager import ws_manager
+from app.websocket import ws_manager
 
 router = APIRouter(prefix="/ingestion", tags=["Ingestion"])
 

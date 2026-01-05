@@ -32,35 +32,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "~/components/ui/alert-dialog"
-import { toast } from "sonner"
-import { deletePlant, type Plant, type LatestValues } from "~/lib/api/plants"
+import { useDeletePlant } from "~/hooks/use-plants"
+import type { PlantResponse } from "~/lib/types"
 
 interface PlantsStatusProps {
-  plants: Plant[]
-  sensorData: Record<string, LatestValues>
-  onDataChange: () => void
+  plants: PlantResponse[]
 }
 
-export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusProps) {
+export function PlantsStatus({ plants }: PlantsStatusProps) {
   const navigate = useNavigate()
+  const deleteMutation = useDeletePlant()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null)
+  const [plantToDelete, setPlantToDelete] = useState<PlantResponse | null>(null)
 
   const plantsWithAlerts = plants.filter((plant) => plant.status === "alert")
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!plantToDelete) return
 
-    try {
-      await deletePlant(plantToDelete.id)
-      toast.success(`${plantToDelete.name} has been removed.`)
-      onDataChange()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete plant.")
-    }
-
-    setDeleteDialogOpen(false)
-    setPlantToDelete(null)
+    deleteMutation.mutate(plantToDelete.id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false)
+        setPlantToDelete(null)
+      }
+    })
   }
 
   if (plants.length === 0) {
@@ -101,7 +96,7 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {plantsWithAlerts.map((plant) => {
-            const data = sensorData[plant.moduleId]
+            const data = plant.latestValues
             const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
 
             return (

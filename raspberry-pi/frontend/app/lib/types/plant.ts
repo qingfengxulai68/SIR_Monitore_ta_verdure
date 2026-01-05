@@ -11,39 +11,39 @@ const LIGHT_MAX = parseFloat(env.VITE_LIGHT_MAX as string)
 const TEMP_MIN = parseFloat(env.VITE_TEMP_MIN as string)
 const TEMP_MAX = parseFloat(env.VITE_TEMP_MAX as string)
 
-// Local threshold range
+// Thresholds type definition
 export type ThresholdRange = {
   min: number
   max: number
 }
 
-// Local thresholds type
-export type Thresholds = {
+export type PlantThresholds = {
   soilMoist: ThresholdRange
   humidity: ThresholdRange
   light: ThresholdRange
   temp: ThresholdRange
 }
 
-// Local latest values type
-export type LatestValues = {
+// Latest values type definition
+export type PlantMetrics = {
   soilMoist: number
   humidity: number
   light: number
   temp: number
+  timestamp: string
 }
 
-// Local plant status type
+// Plant status type definition
 export type PlantStatus = "ok" | "alert" | "offline"
 
-// Local plant type
-export type Plant = {
+// Plant response type definition
+export interface PlantResponse {
   id: number
   name: string
   moduleId: string
   status: PlantStatus
-  latestValues: LatestValues | null
-  thresholds: Thresholds
+  latestValues: PlantMetrics
+  thresholds: PlantThresholds
 }
 
 // Base threshold range schema - validates min < max
@@ -54,7 +54,7 @@ const thresholdRangeBaseSchema = z
   })
   .refine((data) => data.min < data.max, {
     message: "Min must be less than max",
-    path: ["min"] // Show error on min field
+    path: ["min"]
   })
 
 // Soil moisture threshold with range validation
@@ -109,7 +109,7 @@ const thresholdsRequestSchema = z.object({
   temp: tempThresholdSchema
 })
 
-// Request schema and type for creating a plant
+// Schema for creating a plant
 export const plantCreateRequestSchema = z.object({
   name: z.string().trim().min(1, "Plant name is required").max(100),
   moduleId: z.string().trim().min(1, "Module is required").max(50),
@@ -118,7 +118,7 @@ export const plantCreateRequestSchema = z.object({
 
 export type PlantCreateRequest = z.infer<typeof plantCreateRequestSchema>
 
-// Request schema for updating plant general info
+// Schema for updating plant general info
 export const plantUpdateInfoRequestSchema = z.object({
   name: z.string().trim().min(1, "Plant name is required").max(100),
   moduleId: z.string().trim().min(1, "Module is required").max(50).optional()
@@ -126,9 +126,12 @@ export const plantUpdateInfoRequestSchema = z.object({
 
 export type PlantUpdateInfoRequest = z.infer<typeof plantUpdateInfoRequestSchema>
 
-// Request schema for updating plant thresholds
+// Schema for updating plant thresholds
 export const plantUpdateThresholdsRequestSchema = z.object({
   thresholds: thresholdsRequestSchema
 })
 
 export type PlantUpdateThresholdsRequest = z.infer<typeof plantUpdateThresholdsRequestSchema>
+
+// Plant update request type definition
+export type PlantUpdateRequest = PlantUpdateInfoRequest | PlantUpdateThresholdsRequest

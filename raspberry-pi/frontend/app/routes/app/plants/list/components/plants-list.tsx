@@ -37,58 +37,36 @@ import { Badge } from "~/components/ui/badge"
 import { Input } from "~/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "~/components/ui/empty"
-import { toast } from "sonner"
-import { deletePlant, type Plant } from "~/lib/api/plants"
+import { useDeletePlant } from "~/hooks/use-plants"
+import type { PlantResponse } from "~/lib/types"
 
 interface PlantsListProps {
-  plants: Plant[]
-  onDataChange: () => void
+  data: PlantResponse[]
 }
 
-export function PlantsList({ plants, onDataChange }: PlantsListProps) {
+export function PlantsList({ data }: PlantsListProps) {
   const navigate = useNavigate()
+  const deletePlantMutation = useDeletePlant()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null)
+  const [plantToDelete, setPlantToDelete] = useState<PlantResponse | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
 
-  const filteredPlants = plants.filter((plant) => plant.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredPlants = data.filter((plant) => plant.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
-  const checkPlantStatus = (plant: Plant): "ok" | "alert" | "offline" => {
-    const data = plant.latestValues
-    if (!data) return "offline"
-
-    const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
-
-    if (
-      isOutOfRange(data.soilMoist, plant.thresholds.soilMoist.min, plant.thresholds.soilMoist.max) ||
-      isOutOfRange(data.humidity, plant.thresholds.humidity.min, plant.thresholds.humidity.max) ||
-      isOutOfRange(data.temp, plant.thresholds.temp.min, plant.thresholds.temp.max) ||
-      isOutOfRange(data.light, plant.thresholds.light.min, plant.thresholds.light.max)
-    ) {
-      return "alert"
-    }
-
-    return "ok"
-  }
-
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!plantToDelete) return
 
-    try {
-      await deletePlant(plantToDelete.id)
-      toast.success(`${plantToDelete.name} has been removed.`)
-      onDataChange()
-    } catch (err) {
-      toast.error("Failed to delete plant.")
-    } finally {
-      setDeleteDialogOpen(false)
-      setPlantToDelete(null)
-    }
-  }
-
-  if (plants.length === 0) {
-    return null
+    deletePlantMutation.mutate(plantToDelete.id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false)
+        setPlantToDelete(null)
+      },
+      onError: () => {
+        setDeleteDialogOpen(false)
+        setPlantToDelete(null)
+      }
+    })
   }
 
   if (filteredPlants.length === 0) {
@@ -152,12 +130,11 @@ export function PlantsList({ plants, onDataChange }: PlantsListProps) {
         </div>
 
         {/* List content */}
-        {/* List content */}
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredPlants.map((plant) => {
               const data = plant.latestValues
-              const status = checkPlantStatus(plant)
+              const status = plant.status
               const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
 
               return (
@@ -207,7 +184,7 @@ export function PlantsList({ plants, onDataChange }: PlantsListProps) {
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    {data ? (
+                    {status !== "offline" ? (
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -304,7 +281,7 @@ export function PlantsList({ plants, onDataChange }: PlantsListProps) {
               <TableBody>
                 {filteredPlants.map((plant) => {
                   const data = plant.latestValues
-                  const status = checkPlantStatus(plant)
+                  const status = plant.status
                   const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
 
                   return (

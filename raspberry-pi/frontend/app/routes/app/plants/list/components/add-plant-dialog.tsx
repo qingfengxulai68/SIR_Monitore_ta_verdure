@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Sprout, Thermometer, Sun, Cloud, Loader2 } from "lucide-react"
@@ -16,11 +15,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { Input } from "~/components/ui/input"
 import { Button } from "~/components/ui/button"
 import { ScrollArea } from "~/components/ui/scroll-area"
-import { toast } from "sonner"
-import { getAllModules, type Module } from "~/lib/api/modules"
-import { createPlant, type PlantCreateRequest, plantCreateRequestSchema } from "~/lib/api/plants"
 import { Spinner } from "~/components/ui/spinner"
 import { ErrorWithRetry } from "~/components/other/error-with-retry"
+import { useCreatePlant } from "~/hooks/use-plants"
+import { useModules } from "~/hooks/use-modules"
+import { plantCreateRequestSchema, type PlantCreateRequest } from "~/lib/types"
 
 // Read threshold ranges from environment variables (Vite) with fallbacks
 const env = import.meta.env
@@ -36,14 +35,11 @@ const TEMP_MAX = parseFloat(env.VITE_TEMP_MAX as string)
 interface CreatePlantDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCreated: () => void
 }
 
-export function CreatePlantDialog({ open, onOpenChange, onCreated }: CreatePlantDialogProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [availableModules, setAvailableModules] = useState<Module[]>([])
-  const [modulesLoading, setModulesLoading] = useState(false)
-  const [modulesError, setModulesError] = useState<string | null>(null)
+export function CreatePlantDialog({ open, onOpenChange }: CreatePlantDialogProps) {
+  const { data: availableModules = [], isLoading: modulesLoading, error: modulesError } = useModules(false)
+  const createMutation = useCreatePlant()
 
   const form = useForm<PlantCreateRequest>({
     resolver: zodResolver(plantCreateRequestSchema),
@@ -65,36 +61,13 @@ export function CreatePlantDialog({ open, onOpenChange, onCreated }: CreatePlant
       onChange(value === "" ? "" : parseFloat(value))
     }
 
-  const loadModules = async () => {
-    setModulesLoading(true)
-    setModulesError(null)
-    try {
-      const modules = await getAllModules(false)
-      setAvailableModules(modules)
-    } catch (err) {
-      setModulesError(err instanceof Error ? err.message : "Failed to load modules")
-    } finally {
-      setModulesLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadModules()
-  }, [])
-
-  const onSubmit = async (data: PlantCreateRequest) => {
-    setIsLoading(true)
-
-    try {
-      await createPlant(data)
-      toast.success(`${data.name} has been added successfully.`)
-      onOpenChange(false)
-      onCreated()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create plant.")
-    } finally {
-      setIsLoading(false)
-    }
+  const onSubmit = (data: PlantCreateRequest) => {
+    createMutation.mutate(data, {
+      onSuccess: () => {
+        form.reset()
+        onOpenChange(false)
+      }
+    })
   }
 
   return (
@@ -110,7 +83,7 @@ export function CreatePlantDialog({ open, onOpenChange, onCreated }: CreatePlant
             <Spinner />
           </div>
         ) : modulesError ? (
-          <ErrorWithRetry error={modulesError} onRetry={loadModules} />
+          <ErrorWithRetry error={modulesError.message} onRetry={() => {}} />
         ) : (
           <>
             <ScrollArea className="max-h-[60vh] pr-4">
@@ -365,11 +338,16 @@ export function CreatePlantDialog({ open, onOpenChange, onCreated }: CreatePlant
             </ScrollArea>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={createMutation.isPending}
+              >
                 Cancel
               </Button>
-              <Button type="submit" form="create-plant-form" disabled={isLoading}>
-                {isLoading ? <Spinner /> : "Create Plant"}
+              <Button type="submit" form="create-plant-form" disabled={createMutation.isPending}>
+                {createMutation.isPending ? <Spinner /> : "Create Plant"}
               </Button>
             </DialogFooter>
           </>

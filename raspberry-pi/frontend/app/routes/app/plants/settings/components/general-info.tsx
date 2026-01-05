@@ -1,54 +1,50 @@
-import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { toast } from "sonner"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
 import { Field, FieldGroup, FieldError, FieldLabel } from "~/components/ui/field"
 import { Spinner } from "~/components/ui/spinner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
-import type { Module } from "~/lib/api/modules"
-import {
-  updatePlantInfo,
-  type Plant,
-  plantUpdateInfoRequestSchema,
-  type PlantUpdateInfoRequest
-} from "~/lib/api/plants"
+import { useUpdatePlant } from "~/hooks/use-plants"
+import type { ModuleResponse, PlantResponse } from "~/lib/types"
+import { plantUpdateInfoRequestSchema, type PlantUpdateInfoRequest } from "~/lib/types"
 
 interface GeneralInformationProps {
-  plant: Plant
-  onPlantUpdate?: (plant: Plant) => void
-  modules: Module[]
+  data: PlantResponse
+  modules: ModuleResponse[]
 }
 
-export function GeneralInformation({ plant, onPlantUpdate, modules }: GeneralInformationProps) {
-  const [isSaving, setIsSaving] = useState(false)
+export function GeneralInformation({ data, modules }: GeneralInformationProps) {
+  const updateMutation = useUpdatePlant()
 
   const generalForm = useForm<PlantUpdateInfoRequest>({
     resolver: zodResolver(plantUpdateInfoRequestSchema),
     defaultValues: {
-      name: plant.name,
-      moduleId: plant.moduleId
+      name: data.name,
+      moduleId: data.moduleId
     }
   })
 
   // Filter modules to include uncoupled modules plus the current module
-  const filteredModules = modules.filter((module) => !module.coupled || module.id === plant.moduleId)
+  const filteredModules = modules.filter((module) => !module.coupled || module.id === data.moduleId)
 
-  const handleSubmit = async (data: PlantUpdateInfoRequest) => {
-    setIsSaving(true)
-
-    try {
-      const updatedPlant = await updatePlantInfo(plant.id, data)
-      toast.success("General information updated successfully.")
-      generalForm.reset({ name: data.name, moduleId: data.moduleId })
-      onPlantUpdate?.(updatedPlant)
-    } catch (err) {
-      toast.error((err as Error).message)
-    } finally {
-      setIsSaving(false)
-    }
+  const handleSubmit = (formData: PlantUpdateInfoRequest) => {
+    updateMutation.mutate(
+      {
+        plantId: data.id,
+        data: {
+          name: formData.name,
+          moduleId: formData.moduleId,
+          thresholds: data.thresholds
+        }
+      },
+      {
+        onSuccess: () => {
+          generalForm.reset({ name: formData.name, moduleId: formData.moduleId })
+        }
+      }
+    )
   }
 
   return (
@@ -104,8 +100,8 @@ export function GeneralInformation({ plant, onPlantUpdate, modules }: GeneralInf
             </div>
 
             <div className="flex justify-end pt-2">
-              <Button type="submit" disabled={isSaving || !generalForm.formState.isDirty} size="sm">
-                {isSaving ? <Spinner /> : "Update"}
+              <Button type="submit" disabled={updateMutation.isPending || !generalForm.formState.isDirty} size="sm">
+                {updateMutation.isPending ? <Spinner /> : "Update"}
               </Button>
             </div>
           </FieldGroup>

@@ -4,7 +4,7 @@ import os
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -28,7 +28,7 @@ from app.schemas.websocket import (
     EntityChangeMessage,
     EntityChangePayload,
 )
-from app.services.websocket_manager import ws_manager
+from app.websocket import ws_manager
 
 router = APIRouter(prefix="/plants", tags=["Plants"])
 
@@ -48,7 +48,13 @@ def _get_latest_values(session: Session, plant_id: int) -> ValuesResponse | None
     ).scalars().first()
     if not latest:
         return None
-    return ValuesResponse(soilMoist=latest.soil_moist, humidity=latest.humidity, light=latest.light, temp=latest.temp)
+    return ValuesResponse(
+        soilMoist=latest.soil_moist,
+        humidity=latest.humidity,
+        light=latest.light,
+        temp=latest.temp,
+        timestamp=latest.timestamp,
+    )
 
 
 def _calculate_status(session: Session, plant: Plant, latest_values: ValuesResponse | None) -> Literal["ok", "alert", "offline"]:
@@ -122,12 +128,12 @@ async def get_plant(
         ),
     )
 
-@router.post("", response_model=PlantResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_plant(
     request: PlantCreateRequest,
     session: Annotated[Session, Depends(get_session)],
     _current_user: Annotated[User, Depends(verify_jwt_user)],
-) -> PlantResponse:
+) -> Response:
     """Create a new plant with module coupling."""
     # Get module
     module = session.execute(select(Module).where(Module.id == request.moduleId)).scalars().first()
@@ -182,27 +188,15 @@ async def create_plant(
         )
     )
 
-    return PlantResponse(
-        id=plant.id,
-        name=plant.name,
-        moduleId=plant.module_id,
-        status=_calculate_status(session, plant, latest_values),
-        latestValues=latest_values,
-        thresholds=ThresholdsResponse(
-            soilMoist=ThresholdRangeResponse(min=plant.min_soil_moist, max=plant.max_soil_moist),
-            humidity=ThresholdRangeResponse(min=plant.min_humidity, max=plant.max_humidity),
-            light=ThresholdRangeResponse(min=plant.min_light, max=plant.max_light),
-            temp=ThresholdRangeResponse(min=plant.min_temp, max=plant.max_temp),
-        ),
-    )
+    return Response(status_code=status.HTTP_201_CREATED, headers={"Location": f"/plants/{plant.id}"})
 
-@router.put("/{plant_id}", response_model=PlantResponse)
+@router.put("/{plant_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_plant(
     plant_id: int,
     request: PlantUpdateRequest,
     session: Annotated[Session, Depends(get_session)],
     _current_user: Annotated[User, Depends(verify_jwt_user)],
-) -> PlantResponse:
+) -> None:
     """Update a plant's details."""
     plant = session.execute(select(Plant).where(Plant.id == plant_id)).scalars().first()
     if not plant:
@@ -280,20 +274,7 @@ async def update_plant(
             )
         )
 
-    latest_values = _get_latest_values(session, plant.id)
-    return PlantResponse(
-        id=plant.id,
-        name=plant.name,
-        moduleId=plant.module_id,
-        status=_calculate_status(session, plant, latest_values),
-        latestValues=latest_values,
-        thresholds=ThresholdsResponse(
-            soilMoist=ThresholdRangeResponse(min=plant.min_soil_moist, max=plant.max_soil_moist),
-            humidity=ThresholdRangeResponse(min=plant.min_humidity, max=plant.max_humidity),
-            light=ThresholdRangeResponse(min=plant.min_light, max=plant.max_light),
-            temp=ThresholdRangeResponse(min=plant.min_temp, max=plant.max_temp),
-        ),
-    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete("/{plant_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -1,15 +1,15 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect } from "react"
 import type { Route } from "./+types/page"
 import { useNavigate, redirect } from "react-router"
 import { ScrollArea } from "~/components/ui/scroll-area"
-import { toast } from "sonner"
-import { getPlant, type Plant } from "~/lib/api/plants"
-import { getAllModules, type Module } from "~/lib/api/modules"
+import { usePlant } from "~/hooks/use-plants"
+import { useModules } from "~/hooks/use-modules"
 import { useHeader } from "~/components/nav/header/header-provider"
 import { GeneralInformation } from "~/routes/app/plants/settings/components/general-info"
 import { SensorThresholds } from "~/routes/app/plants/settings/components/sensor-thresholds"
 import { Spinner } from "~/components/ui/spinner"
 import { ErrorWithRetry } from "~/components/other/error-with-retry"
+import { toast } from "sonner"
 
 export function meta({ params }: Route.MetaArgs) {
   return [{ title: `Plant: ${params.id} - Terrarium` }, { name: "description", content: "Edit plant configuration." }]
@@ -31,49 +31,32 @@ export default function PlantSettings({ params }: Route.ComponentProps) {
   const navigate = useNavigate()
   const { setHeaderContent } = useHeader()
 
-  const [plant, setPlant] = useState<Plant | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [modules, setModules] = useState<Module[]>([])
+  const plantId = parseInt(id)
 
-  const loadData = async () => {
-    setIsLoading(true)
-    setError(null)
+  const { data, isLoading: plantLoading, error: plantError, refetch: refetchPlant } = usePlant(plantId)
+  const { data: modules = [], isLoading: modulesLoading, refetch: refetchModules } = useModules()
 
-    try {
-      const [plantData, modules] = await Promise.all([getPlant(parseInt(id)), getAllModules()])
-
-      if (!plantData) {
-        toast.error("Plant not found")
-        navigate("/app/plants")
-        return
-      }
-
-      setPlant(plantData)
-      setModules(modules)
-      setHeaderContent({
-        breadcrumbs: [{ label: "Plants", href: "/app/plants" }, { label: plantData.name }]
-      })
-    } catch (err) {
-      setError((err as Error).message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const isLoading = plantLoading || modulesLoading
+  const error = plantError
 
   useEffect(() => {
-    setHeaderContent({
-      breadcrumbs: [{ label: "Plants", href: "/app/plants" }, { label: "..." }]
-    })
-    loadData()
-  }, [])
+    if (data) {
+      setHeaderContent({
+        breadcrumbs: [{ label: "Plants", href: "/app/plants" }, { label: data.name }]
+      })
+    } else {
+      setHeaderContent({
+        breadcrumbs: [{ label: "Plants", href: "/app/plants" }, { label: "..." }]
+      })
+    }
+  }, [data])
 
-  const handlePlantUpdate = (updatedPlant: Plant) => {
-    setPlant(updatedPlant)
-    setHeaderContent({
-      breadcrumbs: [{ label: "Plants", href: "/app/plants" }, { label: updatedPlant.name }]
-    })
-  }
+  useEffect(() => {
+    if (plantError && !plantLoading) {
+      toast.error("Plant not found")
+      navigate("/app/plants")
+    }
+  }, [plantError, plantLoading])
 
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] p-6">
@@ -83,12 +66,18 @@ export default function PlantSettings({ params }: Route.ComponentProps) {
             <Spinner />
           </div>
         ) : error ? (
-          <ErrorWithRetry error={error} onRetry={loadData} />
+          <ErrorWithRetry
+            error={error.message}
+            onRetry={() => {
+              refetchPlant()
+              refetchModules()
+            }}
+          />
         ) : (
-          plant && (
+          data && (
             <>
-              <GeneralInformation plant={plant} onPlantUpdate={handlePlantUpdate} modules={modules} />
-              <SensorThresholds plant={plant} onPlantUpdate={handlePlantUpdate} />
+              <GeneralInformation data={data} modules={modules} />
+              <SensorThresholds data={data} />
             </>
           )
         )}

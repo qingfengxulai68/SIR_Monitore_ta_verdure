@@ -1,33 +1,26 @@
-import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Droplets, Cloud, Thermometer, Sun } from "lucide-react"
-import { toast } from "sonner"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
 import { Field, FieldGroup, FieldError, FieldLabel } from "~/components/ui/field"
 import { Spinner } from "~/components/ui/spinner"
-import {
-  updatePlantThresholds,
-  type Plant,
-  plantUpdateThresholdsRequestSchema,
-  type PlantUpdateThresholdsRequest,
-  type ThresholdRange
-} from "~/lib/api/plants"
+import { useUpdatePlant } from "~/hooks/use-plants"
+import type { PlantResponse, PlantThresholds } from "~/lib/types"
+import { plantUpdateThresholdsRequestSchema, type PlantUpdateThresholdsRequest } from "~/lib/types"
 
 interface SensorThresholdsProps {
-  plant: Plant
-  onPlantUpdate?: (plant: Plant) => void
+  data: PlantResponse
 }
 
-export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps) {
-  const [isSaving, setIsSaving] = useState(false)
+export function SensorThresholds({ data }: SensorThresholdsProps) {
+  const updateMutation = useUpdatePlant()
 
   const thresholdsForm = useForm<PlantUpdateThresholdsRequest>({
     resolver: zodResolver(plantUpdateThresholdsRequestSchema),
     defaultValues: {
-      thresholds: plant.thresholds
+      thresholds: data.thresholds
     }
   })
 
@@ -37,19 +30,22 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
       onChange(value === "" ? "" : parseFloat(value))
     }
 
-  const handleSubmit = async (data: PlantUpdateThresholdsRequest) => {
-    setIsSaving(true)
-
-    try {
-      await updatePlantThresholds(plant.id, data)
-      toast.success("Sensor thresholds updated successfully.")
-      thresholdsForm.reset(data)
-      onPlantUpdate?.({ ...plant, thresholds: data.thresholds })
-    } catch (err) {
-      toast.error((err as Error).message)
-    } finally {
-      setIsSaving(false)
-    }
+  const handleSubmit = (formData: PlantUpdateThresholdsRequest) => {
+    updateMutation.mutate(
+      {
+        plantId: data.id,
+        data: {
+          name: data.name,
+          moduleId: data.moduleId,
+          thresholds: formData.thresholds
+        }
+      },
+      {
+        onSuccess: () => {
+          thresholdsForm.reset(formData)
+        }
+      }
+    )
   }
 
   return (
@@ -256,11 +252,11 @@ export function SensorThresholds({ plant, onPlantUpdate }: SensorThresholdsProps
             <div className="flex justify-end pt-6">
               <Button
                 type="submit"
-                disabled={isSaving || !thresholdsForm.formState.isDirty}
+                disabled={updateMutation.isPending || !thresholdsForm.formState.isDirty}
                 size="sm"
                 className="gap-2"
               >
-                {isSaving ? <Spinner /> : "Update"}
+                {updateMutation.isPending ? <Spinner /> : "Update"}
               </Button>
             </div>
           </FieldGroup>

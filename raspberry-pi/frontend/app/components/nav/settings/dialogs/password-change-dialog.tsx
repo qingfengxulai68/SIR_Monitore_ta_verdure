@@ -1,6 +1,5 @@
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { toast } from "sonner"
 import { Input } from "~/components/ui/input"
 import { Button } from "~/components/ui/button"
 import { Field, FieldGroup, FieldLabel, FieldError } from "~/components/ui/field"
@@ -12,12 +11,9 @@ import {
   DialogHeader,
   DialogTitle
 } from "~/components/ui/dialog"
-import {
-  changePasswordRequestSchema as passwordChangeSchema,
-  type changePasswordRequest as PasswordChangeFormData
-} from "~/lib/auth"
-import { changePassword } from "~/lib/auth"
 import { Spinner } from "~/components/ui/spinner"
+import { useChangePassword } from "~/hooks/use-auth"
+import { changePasswordRequestSchema, type ChangePasswordRequest } from "~/lib/types"
 
 interface PasswordChangeDialogProps {
   open: boolean
@@ -25,8 +21,10 @@ interface PasswordChangeDialogProps {
 }
 
 export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialogProps) {
-  const form = useForm<PasswordChangeFormData>({
-    resolver: zodResolver(passwordChangeSchema),
+  const changePasswordMutation = useChangePassword()
+
+  const form = useForm<ChangePasswordRequest>({
+    resolver: zodResolver(changePasswordRequestSchema),
     defaultValues: {
       currentPassword: "",
       newPassword: "",
@@ -34,24 +32,26 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
     }
   })
 
-  const onSubmit = async (data: PasswordChangeFormData) => {
-    try {
-      await changePassword(data.currentPassword, data.newPassword)
-      toast.success("Your password has been updated successfully.")
-      onOpenChange(false)
-    } catch (error) {
-      const errorMessage = (error as Error).message
-
-      // If it's a current password error, set it on the field
-      if (errorMessage.toLowerCase().includes("current password")) {
-        form.setError("currentPassword", {
-          type: "manual",
-          message: errorMessage
-        })
-      } else {
-        alert(errorMessage)
+  const onSubmit = async (data: ChangePasswordRequest) => {
+    changePasswordMutation.mutate(
+      { currentPassword: data.currentPassword, newPassword: data.newPassword, confirmPassword: data.confirmPassword },
+      {
+        onSuccess: () => {
+          onOpenChange(false)
+          form.reset()
+        },
+        onError: (error) => {
+          const errorMessage = (error as Error).message
+          // If it's a current password error, set it on the field
+          if (errorMessage.toLowerCase().includes("current password")) {
+            form.setError("currentPassword", {
+              type: "manual",
+              message: errorMessage
+            })
+          }
+        }
       }
-    }
+    )
   }
 
   return (
@@ -121,12 +121,12 @@ export function PasswordChangeDialog({ open, onOpenChange }: PasswordChangeDialo
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={form.formState.isSubmitting}
+            disabled={changePasswordMutation.isPending}
           >
             Cancel
           </Button>
-          <Button type="submit" form="password-change-form" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? <Spinner /> : "Update"}
+          <Button type="submit" form="password-change-form" disabled={changePasswordMutation.isPending}>
+            {changePasswordMutation.isPending ? <Spinner /> : "Update"}
           </Button>
         </DialogFooter>
       </DialogContent>

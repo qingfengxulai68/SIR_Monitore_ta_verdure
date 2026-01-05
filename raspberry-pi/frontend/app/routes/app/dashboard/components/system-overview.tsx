@@ -1,15 +1,13 @@
 import { Flower2, Cpu, AlertCircle, Activity } from "lucide-react"
 import { Card, CardHeader, CardTitle } from "~/components/ui/card"
-import type { Plant } from "~/lib/api/plants"
-import type { Module } from "~/lib/api/modules"
+import type { PlantResponse, ModuleResponse } from "~/lib/types"
 
 interface SystemOverviewProps {
-  plants: Plant[]
-  modules: Module[]
-  sensorData: Record<string, any>
+  plants: PlantResponse[]
+  modules: ModuleResponse[]
 }
 
-export function SystemOverview({ plants, modules, sensorData }: SystemOverviewProps) {
+export function SystemOverview({ plants, modules }: SystemOverviewProps) {
   const plantsWithAlerts = plants.filter((plant) => plant.status === "alert")
   const systemHealth =
     plants.length > 0 ? Math.round(((plants.length - plantsWithAlerts.length) / plants.length) * 100) : 100

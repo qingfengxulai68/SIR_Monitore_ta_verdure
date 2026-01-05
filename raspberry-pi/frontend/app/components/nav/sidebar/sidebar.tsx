@@ -7,7 +7,7 @@ import { SidebarMain } from "~/components/nav/sidebar/sidebar-main"
 import { SidebarUser } from "~/components/nav/sidebar/sidebar-user"
 import { SidebarTitle } from "~/components/nav/sidebar/sidebar-title"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "~/components/ui/sidebar"
-import { getUser } from "~/lib/auth"
+import { getUser } from "~/hooks/use-auth"
 
 // Application data
 const appData = {

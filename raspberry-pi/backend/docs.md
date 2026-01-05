@@ -13,119 +13,116 @@ Cette documentation répertorie les endpoints disponibles dans l'API backend (Fa
 - **JWT Bearer:** Les endpoints protégés utilisent un header `Authorization: Bearer <token>`.
 - **API Key:** L'ingestion IoT utilise un header `X-API-KEY: <key>`.
 
----
-
 ## 1. Endpoints REST
 
 ### Authentication (préfixe `/auth`)
 
 - **`POST /auth/login`**
-- **Description:** Authentifie un utilisateur et renvoie un token JWT.
-- **WebSocket Broadcast:** Aucun.
-- **Request:** `{ "username": "...", "password": "..." }`
-- **Response (200):** `{ "token": "...", "user": { "id": 1, "username": "..." } }`
+  - **Description:** Authentifie un utilisateur et renvoie un token JWT.
+  - **WebSocket Broadcast:** Aucun.
+  - **Request:** `{ "username": "...", "password": "..." }`
+  - **Response (200):** `{ "token": "...", "user": { "id": 1, "username": "..." } }`
 
 - **`POST /auth/change-password`**
-- **Description:** Change le mot de passe de l'utilisateur courant.
-- **Auth:** Bearer JWT.
-- **Request:** `{ "currentPassword": "...", "newPassword": "..." }`
-- **Response:** 204 No Content.
+  - **Description:** Change le mot de passe de l'utilisateur courant.
+  - **Auth:** Bearer JWT.
+  - **Request:** `{ "currentPassword": "...", "newPassword": "..." }`
+  - **Response:** 204 No Content.
 
 ### Ingestion (préfixe `/ingestion`)
 
 - **`POST /ingestion/`**
-- **Description:** Réception des données brutes depuis les modules physiques (ESP32).
-- **Auth:** Header `X-API-KEY`.
-- **WebSocket Broadcast:**
+  - **Description:** Réception des données brutes depuis les modules physiques (ESP32).
+  - **Auth:** Header `X-API-KEY`.
+  - **WebSocket Broadcast:**
+    1. `PLANT_METRICS` (Toujours : diffusion des nouvelles valeurs).
+    2. `MODULE_CONNECTION` (Conditionnel : si le module était considéré "Hors ligne", il repasse "En ligne").
+  - **Request:**
 
-1. `PLANT_METRICS` (Toujours : diffusion des nouvelles valeurs).
-2. `MODULE_CONNECTION` (Conditionnel : si le module était considéré "Hors ligne", il repasse "En ligne").
+    ```json
+    {
+      "moduleId": "ESP32-A1",
+      "soilMoist": 45.0,
+      "humidity": 60.0,
+      "light": 1200,
+      "temp": 24.5
+    }
+    ```
 
-- **Request:**
-
-```json
-{
-  "moduleId": "ESP32-A1",
-  "soilMoist": 45.0,
-  "humidity": 60.0,
-  "light": 1200,
-  "temp": 24.5
-}
-```
-
-- **Response:** 204 No Content.
+  - **Response:** 204 No Content.
 
 ### Modules (préfixe `/modules`)
 
 - **`GET /modules`**
-- **Description:** Récupère l'inventaire complet des modules.
-- **Auth:** Bearer JWT.
-- **Query Params:** `?coupled=true/false` (optionnel).
-- **Response (200):** Liste de `ModuleResponse` :
+  - **Description:** Récupère l'inventaire complet des modules.
+  - **Auth:** Bearer JWT.
+  - **Query Params:** `?coupled=true/false` (optionnel).
+  - **Response (200):** Liste de `ModuleResponse` :
 
-```json
-[
-  {
-    "id": "ESP32-A1",
-    "isOnline": true,
-    "coupled": true,
-    "coupledPlant": { "id": 12, "name": "Basilic" }
-  }
-]
-```
+    ```json
+    [
+      {
+        "id": "ESP32-A1",
+        "isOnline": true,
+        "coupled": true,
+        "coupledPlant": { "id": 12, "name": "Basilic" }
+      }
+    ]
+    ```
+
+- **`DELETE /modules/{module_id}/coupling`**
+  - **Description:** Libère un module en supprimant la plante associée.
+  - **Auth:** Bearer JWT.
+  - **WebSocket Broadcast:**
+    1. `ENTITY_CHANGE` (Entity: `module`, Action: `update`) → Le module redevient "Disponible".
+    2. `ENTITY_CHANGE` (Entity: `plant`, Action: `delete`) → Si une plante était couplée.
+  - **Response:** 204 No Content.
 
 ### Plants (préfixe `/plants`)
 
 - **`GET /plants`**
-- **Description:** Récupère toutes les plantes avec leur statut, dernières valeurs et seuils (pour l'initialisation du Dashboard).
-- **Auth:** Bearer JWT.
-- **Response (200):** Liste de `PlantResponse`.
+  - **Description:** Récupère toutes les plantes avec leur statut, dernières valeurs et seuils (pour l'initialisation du Dashboard).
+  - **Auth:** Bearer JWT.
+  - **Response (200):** Liste de `PlantResponse`.
 
 - **`GET /plants/{plant_id}`**
-- **Description:** Récupère une plante spécifique.
-- **Auth:** Bearer JWT.
-- **Response (200):** `PlantResponse`.
+  - **Description:** Récupère une plante spécifique.
+  - **Auth:** Bearer JWT.
+  - **Response (200):** `PlantResponse`.
 
 - **`POST /plants`**
-- **Description:** Crée une nouvelle plante et y assigne un module.
-- **Auth:** Bearer JWT.
-- **WebSocket Broadcast:**
-
-1. `ENTITY_CHANGE` (Entity: `plant`, Action: `create`) → Pour afficher la plante.
-2. `ENTITY_CHANGE` (Entity: `module`, Action: `update`, ID: `moduleId`) → Pour marquer le module comme "Assigné" dans l'inventaire.
-
-- **Request:** `{ "name": "...", "moduleId": "...", "thresholds": { ... } }`
-- **Response (201):** `PlantResponse`.
+  - **Description:** Crée une nouvelle plante et y assigne un module.
+  - **Auth:** Bearer JWT.
+  - **WebSocket Broadcast:**
+    1. `ENTITY_CHANGE` (Entity: `plant`, Action: `create`) → Pour afficher la plante.
+    2. `ENTITY_CHANGE` (Entity: `module`, Action: `update`, ID: `moduleId`) → Pour marquer le module comme "Assigné" dans l'inventaire.
+  - **Request:** `{ "name": "...", "moduleId": "...", "thresholds": { ... } }`
+  - **Response (201):** `Response`.
 
 - **`PUT /plants/{plant_id}`**
-- **Description:** Met à jour une plante (nom, seuils ou changement de module).
-- **Auth:** Bearer JWT.
-- **WebSocket Broadcast:**
-
-1. `ENTITY_CHANGE` (Entity: `plant`, Action: `update`).
-2. _Si changement de module :_ `ENTITY_CHANGE` (Entity: `module`, Action: `update`) pour l'ancien ET le nouveau module.
-
-- **Request:** `{ "name": "...", "moduleId": "...", "thresholds": { ... } }`
-- **Response (200):** `PlantResponse`.
+  - **Description:** Met à jour une plante (nom, seuils ou changement de module).
+  - **Auth:** Bearer JWT.
+  - **WebSocket Broadcast:**
+    1. `ENTITY_CHANGE` (Entity: `plant`, Action: `update`).
+    2. _Si changement de module :_ `ENTITY_CHANGE` (Entity: `module`, Action: `update`) pour l'ancien ET le nouveau module.
+  - **Request:** `{ "name": "...", "moduleId": "...", "thresholds": { ... } }`
+  - **Response :** 204 No Content.
 
 - **`DELETE /plants/{plant_id}`**
-- **Description:** Supprime une plante et libère le module associé.
-- **Auth:** Bearer JWT.
-- **WebSocket Broadcast:**
-
-1. `ENTITY_CHANGE` (Entity: `plant`, Action: `delete`).
-2. `ENTITY_CHANGE` (Entity: `module`, Action: `update`, ID: `coupledModuleId`) → Le module redevient "Disponible".
-
-- **Response:** 204 No Content.
+  - **Description:** Supprime une plante et libère le module associé.
+  - **Auth:** Bearer JWT.
+  - **WebSocket Broadcast:**
+    1. `ENTITY_CHANGE` (Entity: `plant`, Action: `delete`).
+    2. `ENTITY_CHANGE` (Entity: `module`, Action: `update`, ID: `coupledModuleId`) → Le module redevient "Disponible".
+  - **Response:** 204 No Content.
 
 ### Settings (préfixe `/settings`)
 
 - **`GET /settings/alerts`**
 - **`POST /settings/alerts/enable`**
 - **`POST /settings/alerts/disable`**
-- Gestion standard de la configuration (pas de WebSocket nécessaire).
 
----
+> Gestion standard de la configuration (pas de WebSocket nécessaire).
 
 ## 2. WebSocket Protocol (Real-Time)
 
@@ -193,35 +190,3 @@ Le système utilise une connexion unique pour maintenir l'état de l'application
 ### Messages Client → Serveur
 
 - `PING`: Keep-alive (Réponse serveur: `PONG`).
-
----
-
-## 3. Modèles de Données Principaux
-
-**PlantResponse:**
-
-```json
-{
-  "id": 1,
-  "name": "Monstera",
-  "moduleId": "ESP32-001",
-  "status": "ok",
-  "latestValues": { "temp": 22.0, "humidity": 50, ... },
-  "thresholds": {
-    "temp": { "min": 18, "max": 28 },
-    ...
-  }
-}
-
-```
-
-**ModuleResponse:**
-
-```json
-{
-  "id": "ESP32-001",
-  "isOnline": true,
-  "coupled": true,
-  "coupledPlant": { "id": 1, "name": "Monstera" }
-}
-```

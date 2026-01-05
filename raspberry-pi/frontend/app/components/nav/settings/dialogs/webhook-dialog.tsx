@@ -1,7 +1,5 @@
-import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { toast } from "sonner"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Field, FieldError, FieldGroup } from "~/components/ui/field"
@@ -13,18 +11,20 @@ import {
   DialogHeader,
   DialogTitle
 } from "~/components/ui/dialog"
-import { enableAlerts, type AlertsEnableRequest, alertsEnableRequestSchema } from "~/lib/api/settings"
+import { useEnableAlerts } from "~/hooks/use-settings"
+import { alertsEnableRequestSchema, type AlertsEnableRequest } from "~/lib/types"
 import { Spinner } from "~/components/ui/spinner"
 
 interface WebhookDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   currentWebhook: string
-  onSave: (webhook: string) => void
   mode?: "add" | "edit"
 }
 
-export function WebhookDialog({ open, onOpenChange, currentWebhook, onSave, mode = "add" }: WebhookDialogProps) {
+export function WebhookDialog({ open, onOpenChange, currentWebhook, mode = "add" }: WebhookDialogProps) {
+  const enableAlertsMutation = useEnableAlerts()
+
   const form = useForm<AlertsEnableRequest>({
     resolver: zodResolver(alertsEnableRequestSchema),
     defaultValues: {
@@ -32,15 +32,12 @@ export function WebhookDialog({ open, onOpenChange, currentWebhook, onSave, mode
     }
   })
 
-  const onSubmit = async (data: AlertsEnableRequest) => {
-    try {
-      await enableAlerts(data)
-      onSave(data.discordWebhookUrl)
-      toast.success(mode === "add" ? "Webhook added successfully." : "Webhook updated successfully.")
-      onOpenChange(false)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save webhook.")
-    }
+  const onSubmit = (data: AlertsEnableRequest) => {
+    enableAlertsMutation.mutate(data, {
+      onSuccess: () => {
+        onOpenChange(false)
+      }
+    })
   }
 
   return (
@@ -61,7 +58,7 @@ export function WebhookDialog({ open, onOpenChange, currentWebhook, onSave, mode
                     {...field}
                     placeholder="https://discord.com/api/webhooks/..."
                     aria-invalid={fieldState.invalid}
-                    disabled={form.formState.isSubmitting}
+                    disabled={enableAlertsMutation.isPending}
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -74,12 +71,12 @@ export function WebhookDialog({ open, onOpenChange, currentWebhook, onSave, mode
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={form.formState.isSubmitting}
+            disabled={enableAlertsMutation.isPending}
           >
             Cancel
           </Button>
-          <Button type="submit" form="webhook-form" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? <Spinner /> : "Save"}
+          <Button type="submit" form="webhook-form" disabled={enableAlertsMutation.isPending}>
+            {enableAlertsMutation.isPending ? <Spinner /> : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

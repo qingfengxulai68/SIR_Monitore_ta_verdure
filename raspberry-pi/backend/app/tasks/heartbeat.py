@@ -1,7 +1,6 @@
 """Heartbeat checker background task."""
 
 import asyncio
-import logging
 import os
 from datetime import UTC, datetime
 
@@ -18,9 +17,7 @@ from app.schemas.websocket import (
     PlantMetricsPayload,
     PlantMetricsValues,
 )
-from app.services.websocket_manager import ws_manager
-
-logger = logging.getLogger(__name__)
+from app.websocket import ws_manager
 
 
 def _is_module_online(module: Module) -> bool:
@@ -46,7 +43,6 @@ class HeartbeatChecker:
             return
         self._running = True
         self._task = asyncio.create_task(self._run())
-        logger.info("Heartbeat checker started")
 
     async def stop(self) -> None:
         """Stop the heartbeat checker."""
@@ -57,7 +53,6 @@ class HeartbeatChecker:
                 await self._task
             except asyncio.CancelledError:
                 pass
-        logger.info("Heartbeat checker stopped")
 
     async def _run(self) -> None:
         """Main loop for heartbeat checking."""
@@ -65,7 +60,7 @@ class HeartbeatChecker:
             try:
                 await self._check_heartbeats()
             except Exception as e:
-                logger.error(f"Error in heartbeat checker: {e}")
+                pass
             await asyncio.sleep(int(os.environ.get('HEARTBEAT_CHECK_INTERVAL_SECONDS', '60')))
 
     async def _check_heartbeats(self) -> None:
@@ -83,7 +78,6 @@ class HeartbeatChecker:
                     self._offline_modules.add(module.id)
                     plant = session.execute(select(Plant).where(Plant.module_id == module.id)).scalars().first()
                     if plant:
-                        logger.warning(f"Module {module.id} (Plant: {plant.name}) went offline")
                         # Broadcast MODULE_CONNECTION when module goes offline
                         await ws_manager.emit_module_connection(
                             ModuleConnectionMessage(

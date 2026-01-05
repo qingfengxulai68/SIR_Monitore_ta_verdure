@@ -11,8 +11,9 @@ import {
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "~/components/ui/sidebar"
-import { logout, type User } from "~/lib/auth"
+import type { User } from "~/lib/types"
 import { AppSettings } from "~/components/nav/settings/settings"
+import { logout } from "~/hooks/use-auth"
 
 export function SidebarUser({ user }: { user: User }) {
   const { isMobile } = useSidebar()
@@ -20,7 +21,6 @@ export function SidebarUser({ user }: { user: User }) {
 
   const handleLogout = () => {
     logout()
-    window.location.href = "/"
   }
 
   // Get initials for avatar fallback

@@ -1,17 +1,16 @@
 import type { Route } from "./+types/signin"
-import { useState } from "react"
-import { redirect, useNavigate } from "react-router"
+import { redirect } from "react-router"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Sprout } from "lucide-react"
-import { toast } from "sonner"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
 import { Field, FieldGroup, FieldLabel, FieldError } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
-import { login, isAuthenticated } from "~/lib/auth"
-import { loginRequestSchema, type loginRequest } from "~/lib/auth"
+import { isAuthenticated } from "~/hooks/use-auth"
 import { Spinner } from "~/components/ui/spinner"
+import { useLogin } from "~/hooks/use-auth"
+import { loginRequestSchema, type LoginRequest } from "~/lib/types"
 
 // Client-side loader to redirect authenticated users
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
@@ -26,10 +25,9 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function SignInPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const navigate = useNavigate()
+  const loginMutation = useLogin()
 
-  const form = useForm<loginRequest>({
+  const form = useForm<LoginRequest>({
     resolver: zodResolver(loginRequestSchema),
     defaultValues: {
       username: "",
@@ -37,18 +35,8 @@ export default function SignInPage() {
     }
   })
 
-  const onSubmit = async (data: loginRequest) => {
-    setIsLoading(true)
-
-    try {
-      await login(data.username, data.password)
-      navigate("/app/")
-    } catch (error) {
-      toast.error((error as Error).message)
-      form.reset()
-    } finally {
-      setIsLoading(false)
-    }
+  const onSubmit = (data: LoginRequest) => {
+    loginMutation.mutate(data)
   }
 
   return (
@@ -113,8 +101,8 @@ export default function SignInPage() {
                     )}
                   />
                   <Field>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? <Spinner /> : "Sign In"}
+                    <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                      {loginMutation.isPending ? <Spinner /> : "Sign In"}
                     </Button>
                   </Field>
                 </FieldGroup>

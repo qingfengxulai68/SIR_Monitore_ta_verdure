@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import type { Route } from "./+types/page"
-import { getAllPlants, type Plant } from "~/lib/api/plants"
-import { getAllModules, type Module } from "~/lib/api/modules"
+import { useModules } from "~/hooks/use-modules"
+import { usePlants } from "~/hooks/use-plants"
 import { useHeader } from "~/components/nav/header/header-provider"
 import { SystemOverview } from "./components/system-overview"
 import { PlantsStatus } from "./components/plants-status"
@@ -17,42 +17,18 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function DashboardPage() {
-  const [plants, setPlants] = useState<Plant[]>([])
-  const [modules, setModules] = useState<Module[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  // TODO: Define proper SensorData type when WebSocket is implemented
-  const [sensorData, setSensorData] = useState<Record<string, any>>({})
+  const { data: plants = [], isLoading: plantsLoading, error: plantsError, refetch: refetchPlants } = usePlants()
+  const { data: modules = [], isLoading: modulesLoading, error: modulesError, refetch: refetchModules } = useModules()
 
   const { setHeaderContent } = useHeader()
+
+  const isLoading = plantsLoading || modulesLoading
+  const error = plantsError || modulesError
 
   useEffect(() => {
     setHeaderContent({
       breadcrumbs: [{ label: "Dashboard" }]
     })
-  }, [])
-
-  const loadData = async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const [plantsData, modulesData] = await Promise.all([getAllPlants(), getAllModules()])
-
-      setPlants(plantsData)
-      setModules(modulesData)
-
-      // TODO: Load initial sensor data via WebSocket/API
-    } catch (err) {
-      setError((err as Error).message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadData()
-    // TODO: Implement WebSocket connection for real-time sensor updates
-    // TODO: Remove when WebSocket is implemented
   }, [])
 
   return (
@@ -63,11 +39,17 @@ export default function DashboardPage() {
             <Spinner />
           </div>
         ) : error ? (
-          <ErrorWithRetry error={error} onRetry={loadData} />
+          <ErrorWithRetry
+            error={error.message}
+            onRetry={() => {
+              refetchPlants()
+              refetchModules()
+            }}
+          />
         ) : (
           <>
-            <SystemOverview plants={plants} modules={modules} sensorData={sensorData} />
-            <PlantsStatus plants={plants} sensorData={sensorData} onDataChange={loadData} />
+            <SystemOverview plants={plants} modules={modules} />
+            <PlantsStatus plants={plants} />
           </>
         )}
       </main>

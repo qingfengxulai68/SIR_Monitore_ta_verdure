@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models.module import Module
+from app.models.plant import Plant
 from app.models.settings import Settings
 from app.models.user import Base
 
@@ -87,6 +88,54 @@ def init_modules() -> None:
         ]
         for module in sample_modules:
             session.add(module)
+        session.commit()
+    finally:
+        session.close()
+
+
+# Initialize sample plants
+def init_plants() -> None:
+    session = SessionLocal()
+    try:
+        # Check if plants already exist
+        existing_plants = session.execute(select(Plant)).scalars().first()
+        if existing_plants is not None:
+            return
+
+        # Create sample plants
+        sample_plants = [
+            Plant(
+                name="Tomato",
+                module_id="ESP32-001",
+                min_soil_moist=20.0,
+                max_soil_moist=60.0,
+                min_humidity=40.0,
+                max_humidity=70.0,
+                min_light=10000.0,
+                max_light=30000.0,
+                min_temp=15.0,
+                max_temp=25.0,
+            ),
+            Plant(
+                name="Lettuce",
+                module_id="ESP32-003",
+                min_soil_moist=30.0,
+                max_soil_moist=70.0,
+                min_humidity=50.0,
+                max_humidity=80.0,
+                min_light=8000.0,
+                max_light=25000.0,
+                min_temp=10.0,
+                max_temp=20.0,
+            ),
+        ]
+        for plant in sample_plants:
+            session.add(plant)
+            # Update module coupled status
+            module = session.execute(select(Module).where(Module.id == plant.module_id)).scalars().first()
+            if module:
+                module.coupled = True
+                session.add(module)
         session.commit()
     finally:
         session.close()

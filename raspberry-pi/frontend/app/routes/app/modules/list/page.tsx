@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import type { Route } from "./+types/page"
 import { Spinner } from "~/components/ui/spinner"
-import { getAllModules, type Module } from "~/lib/api/modules"
+import { useModules } from "~/hooks/use-modules"
 import { useHeader } from "~/components/nav/header/header-provider"
 import ModulesEmpty from "./components/modules-empty"
 import { ModulesList } from "./components/modules-list"
@@ -13,32 +13,13 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function ModulesListPage() {
-  const [modules, setModules] = useState<Module[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data = [], isLoading, error, refetch } = useModules()
   const { setHeaderContent } = useHeader()
 
   useEffect(() => {
     setHeaderContent({
       breadcrumbs: [{ label: "Modules" }]
     })
-  }, [])
-
-  const loadModules = async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const data = await getAllModules()
-      setModules(data)
-    } catch (err) {
-      setError((err as Error).message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadModules()
   }, [])
 
   return (
@@ -49,11 +30,11 @@ export default function ModulesListPage() {
             <Spinner />
           </div>
         ) : error ? (
-          <ErrorWithRetry error={error} onRetry={loadModules} />
-        ) : modules.length === 0 ? (
+          <ErrorWithRetry error={error.message} onRetry={refetch} />
+        ) : !data || data.length === 0 ? (
           <ModulesEmpty />
         ) : (
-          <ModulesList modules={modules} />
+          <ModulesList data={data} />
         )}
       </main>
     </ScrollArea>

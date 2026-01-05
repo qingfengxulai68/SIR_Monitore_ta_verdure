@@ -1,6 +1,5 @@
 """JWT utilities for authentication."""
 
-import logging
 import os
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
@@ -14,8 +13,6 @@ from sqlalchemy.orm import Session
 
 from app.database import get_session
 from app.models.user import User
-
-logger = logging.getLogger(__name__)
 
 security = HTTPBearer(auto_error=False)
 
@@ -49,13 +46,10 @@ def decode_token(token: str) -> dict | None:
         )
         return payload
     except jwt.ExpiredSignatureError:
-        logger.warning("Token has expired")
         return None
     except jwt.InvalidTokenError as e:
-        logger.warning(f"Invalid token: {e}")
         return None
     except Exception as e:
-        logger.error(f"Unexpected error decoding token: {e}")
         return None
 
 

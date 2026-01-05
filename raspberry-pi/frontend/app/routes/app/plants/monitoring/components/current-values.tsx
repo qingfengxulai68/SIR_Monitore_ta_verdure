@@ -1,19 +1,20 @@
 import { Droplets, Thermometer, Cloud, Sun } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
-import type { Plant, SensorData } from "~/lib/mocks"
+import type { PlantResponse } from "~/lib/types"
 
 interface CurrentValuesProps {
-  plant: Plant
-  currentData: SensorData | null
+  plant: PlantResponse
 }
 
 const getStatusColor = (value: number, min: number, max: number) => {
-  const range = max - min
   if (value < min || value > max) return "text-destructive"
   return ""
 }
 
-export function CurrentValues({ plant, currentData }: CurrentValuesProps) {
+export function CurrentValues({ plant }: CurrentValuesProps) {
+  const currentData = plant.latestValues
+  const isOffline = plant.status === "offline"
+
   return (
     <div className="grid gap-4 md:grid-cols-4">
       <Card className="gap-0">
@@ -24,17 +25,17 @@ export function CurrentValues({ plant, currentData }: CurrentValuesProps) {
           </div>
           <CardTitle
             className={`text-3xl ${
-              currentData
-                ? getStatusColor(currentData.moisture, plant.thresholds.moisture.min, plant.thresholds.moisture.max)
+              currentData && !isOffline
+                ? getStatusColor(currentData.soilMoist, plant.thresholds.soilMoist.min, plant.thresholds.soilMoist.max)
                 : ""
             }`}
           >
-            {currentData ? `${currentData.moisture}%` : "—"}
+            {currentData && !isOffline ? `${currentData.soilMoist}%` : "—"}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground">
-            Range: {plant.thresholds.moisture.min}% - {plant.thresholds.moisture.max}%
+            Range: {plant.thresholds.soilMoist.min}% - {plant.thresholds.soilMoist.max}%
           </p>
         </CardContent>
       </Card>
@@ -47,12 +48,12 @@ export function CurrentValues({ plant, currentData }: CurrentValuesProps) {
           </div>
           <CardTitle
             className={`text-3xl ${
-              currentData
+              currentData && !isOffline
                 ? getStatusColor(currentData.humidity, plant.thresholds.humidity.min, plant.thresholds.humidity.max)
                 : ""
             }`}
           >
-            {currentData ? `${currentData.humidity}%` : "—"}
+            {currentData && !isOffline ? `${currentData.humidity}%` : "—"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -70,21 +71,17 @@ export function CurrentValues({ plant, currentData }: CurrentValuesProps) {
           </div>
           <CardTitle
             className={`text-3xl ${
-              currentData
-                ? getStatusColor(
-                    currentData.temperature,
-                    plant.thresholds.temperature.min,
-                    plant.thresholds.temperature.max
-                  )
+              currentData && !isOffline
+                ? getStatusColor(currentData.temp, plant.thresholds.temp.min, plant.thresholds.temp.max)
                 : ""
             }`}
           >
-            {currentData ? `${currentData.temperature}°C` : "—"}
+            {currentData && !isOffline ? `${currentData.temp}°C` : "—"}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground">
-            Range: {plant.thresholds.temperature.min}°C - {plant.thresholds.temperature.max}°C
+            Range: {plant.thresholds.temp.min}°C - {plant.thresholds.temp.max}°C
           </p>
         </CardContent>
       </Card>
@@ -97,12 +94,12 @@ export function CurrentValues({ plant, currentData }: CurrentValuesProps) {
           </div>
           <CardTitle
             className={`text-3xl ${
-              currentData
+              currentData && !isOffline
                 ? getStatusColor(currentData.light, plant.thresholds.light.min, plant.thresholds.light.max)
                 : ""
             }`}
           >
-            {currentData ? `${currentData.light.toLocaleString()}` : "—"}
+            {currentData && !isOffline ? `${currentData.light.toLocaleString()}` : "—"}
           </CardTitle>
         </CardHeader>
         <CardContent>

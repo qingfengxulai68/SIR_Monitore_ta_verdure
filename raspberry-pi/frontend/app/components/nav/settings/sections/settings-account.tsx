@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Input } from "~/components/ui/input"
 import { Button } from "~/components/ui/button"
-import { getUser } from "~/lib/auth"
+import { getUser } from "~/hooks/use-auth"
 import { PasswordChangeDialog } from "../dialogs/password-change-dialog"
 
 export function AccountSection() {
