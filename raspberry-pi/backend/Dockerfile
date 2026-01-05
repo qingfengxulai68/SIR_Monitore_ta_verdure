@@ -20,6 +20,30 @@ RUN uv sync --frozen --no-cache
 # Since dependencies are already installed, this layer builds instantly
 COPY . .
 
+# Environment variables with defaults (override with --env-file or -e flags)
+ENV APP_NAME="Terrarium API" \
+    DATABASE_URL="sqlite:///./terrarium.db" \
+    DEBUG="False" \
+    JWT_SECRET_KEY="change-this-secret-key-in-production" \
+    JWT_ALGORITHM="HS256" \
+    JWT_EXPIRATION_HOURS="24" \
+    API_KEY="change-this-api-key-in-production" \
+    ADMIN_USERNAME="admin" \
+    ADMIN_PASSWORD="change-this-password-in-production" \
+    HEARTBEAT_TIMEOUT_SECONDS="120" \
+    HEARTBEAT_CHECK_INTERVAL_SECONDS="60" \
+    SOIL_MOIST_MIN="0" \
+    SOIL_MOIST_MAX="100" \
+    HUMIDITY_MIN="0" \
+    HUMIDITY_MAX="100" \
+    LIGHT_MIN="0" \
+    LIGHT_MAX="50000" \
+    TEMP_MIN="0" \
+    TEMP_MAX="50"
+
+# Expose port 80 for the API
+EXPOSE 80
+
 # Run the application using the executable in the virtual environment
 # --host 0.0.0.0 is mandatory to be reachable from outside the container
 CMD ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "80", "--host", "0.0.0.0"]

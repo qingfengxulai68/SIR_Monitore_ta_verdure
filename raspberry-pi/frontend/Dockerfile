@@ -10,6 +10,10 @@ WORKDIR /app
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
+# Build-time env for WebSocket base URL (Vite needs VITE_ prefix to embed at build time)
+ARG VITE_WS_BASE_URL
+ENV VITE_WS_BASE_URL=${VITE_WS_BASE_URL}
+
 # Build-time env for sensor thresholds (Vite needs VITE_ prefix to embed at build time)
 ARG VITE_SOIL_MOIST_MIN
 ARG VITE_SOIL_MOIST_MAX

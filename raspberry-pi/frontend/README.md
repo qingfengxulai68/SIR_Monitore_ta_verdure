@@ -51,16 +51,25 @@ If you want, I can add usage examples, screenshots, or CI config next.
 
 ## Environment variables
 
-- **VITE_API_BASE_URL**: The frontend reads the API base URL from the Vite env var `VITE_API_BASE_URL`. For local development, create a `.env` file in the project root with:
+### Core API and WebSocket URLs
+
+- **VITE_API_BASE_URL**: The frontend reads the API base URL from the Vite env var `VITE_API_BASE_URL`.
+- **VITE_WS_BASE_URL**: The frontend reads the WebSocket base URL from the Vite env var `VITE_WS_BASE_URL`.
+
+For local development, create a `.env` file in the project root with:
 
 ```text
 VITE_API_BASE_URL="http://localhost:8000"
+VITE_WS_BASE_URL="ws://localhost:8000"
 ```
 
-During a production Docker build you can override the value using a build-arg. Example:
+During a production Docker build you can override the values using build-args. Example:
 
 ```bash
-docker build --build-arg VITE_API_BASE_URL="https://api.example.com" -t terrarium-front .
+docker build \
+  --build-arg VITE_API_BASE_URL="https://api.example.com" \
+  --build-arg VITE_WS_BASE_URL="wss://api.example.com" \
+  -t terrarium-front .
 ```
 
 ### Threshold env vars (client-exposed)
@@ -84,10 +93,21 @@ The Dockerfile sets the build ARG and `ENV` so Vite can embed the value at build
 
 This repository includes a multi-stage `Dockerfile` that builds the app and serves the static assets with Nginx.
 
-- To build the image (you should provide `VITE_API_BASE_URL` at build time if you want to set the API base URL embedded in the static build):
+- To build the image (you should provide build-time environment variables for API and WebSocket URLs):
 
 ```bash
-docker build --build-arg VITE_API_BASE_URL="https://api.example.com" -t terrarium-front .
+docker build \
+  --build-arg VITE_API_BASE_URL="https://api.example.com" \
+  --build-arg VITE_WS_BASE_URL="wss://api.example.com" \
+  --build-arg VITE_SOIL_MOIST_MIN="20" \
+  --build-arg VITE_SOIL_MOIST_MAX="80" \
+  --build-arg VITE_HUMIDITY_MIN="40" \
+  --build-arg VITE_HUMIDITY_MAX="70" \
+  --build-arg VITE_LIGHT_MIN="100" \
+  --build-arg VITE_LIGHT_MAX="10000" \
+  --build-arg VITE_TEMP_MIN="15" \
+  --build-arg VITE_TEMP_MAX="30" \
+  -t terrarium-front .
 ```
 
 - Run the container (serve on port 5000):
@@ -98,6 +118,7 @@ docker run -p 5000:80 terrarium-front
 
 Notes:
 - The image is multi-stage: the first stage runs `npm run build` and the second stage serves `build/client` with Nginx.
-- `VITE_API_BASE_URL` is read at *build time* by Vite and embedded into the generated static files. If you don't pass `--build-arg`, no API URL will be injected into the build and the app will use whatever runtime / dev `.env` provides.
+- All `VITE_*` environment variables are read at *build time* by Vite and embedded into the generated static files. If you don't pass `--build-arg`, the app will use whatever values are in your dev `.env` file at build time.
+- The `VITE_API_BASE_URL` and `VITE_WS_BASE_URL` are essential for production deployment. The sensor threshold variables have sensible defaults but can be customized.
 - Adjust `nginx.conf` or ports as needed for your environment or reverse-proxy setup.
 

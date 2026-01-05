@@ -9,29 +9,25 @@ Backend pour la gestion du terrarium, propulsé par **FastAPI**, **SQLModel** et
 - 🖥️ **Gestion des Modules**: Enregistrement et suivi du statut de connectivité
 - 📊 **Ingestion de Données**: Réception temps réel des données des capteurs
 - ⚡ **WebSocket**: Mises à jour en temps réel (statut plantes, connectivité modules)
-- 🔔 **Alertes Discord**: Notifications webhook avec throttling (1/heure par plante)
-- 📈 **Historique**: Données capteurs avec échantillonnage automatique
+- � **Historique**: Données capteurs horodatées
+- ⏱️ **Heartbeat**: Surveillance automatique de la connectivité des modules
 
 ## 📁 Structure du Projet
 
 ```
 app/
 ├── main.py              # Point d'entrée FastAPI
-├── config.py            # Configuration (env variables)
 ├── database.py          # Setup base de données
 ├── websocket.py         # Handler WebSocket
 ├── auth/                # Authentification
 │   ├── api_key.py       # Vérification API Key (ingestion)
-│   ├── dependencies.py  # Dépendances FastAPI
 │   └── jwt.py           # Utilitaires JWT
 ├── models/              # Modèles SQLModel
 │   ├── user.py
 │   ├── module.py
 │   ├── plant.py
-│   ├── threshold.py
-│   ├── sensor_data.py
 │   ├── settings.py
-│   └── alert_history.py
+│   └── values.py
 ├── routers/             # Routes API
 │   ├── auth.py          # /auth/*
 │   ├── modules.py       # /modules/*
@@ -39,15 +35,14 @@ app/
 │   ├── settings.py      # /settings/*
 │   └── ingestion.py     # /ingestion/*
 ├── schemas/             # Schémas Pydantic
-├── services/            # Logique métier
-│   ├── plant_service.py
-│   ├── module_service.py
-│   ├── alert_service.py
-│   └── websocket_manager.py
-├── tasks/               # Tâches de fond
-│   └── heartbeat.py     # Vérification heartbeat modules
-└── utils/
-    └── rate_limiter.py  # Rate limiting ingestion
+│   ├── auth.py
+│   ├── module.py
+│   ├── plant.py
+│   ├── settings.py
+│   ├── values.py
+│   └── websocket.py
+└── tasks/               # Tâches de fond
+    └── heartbeat.py     # Vérification heartbeat modules
 ```
 
 ## ⚡ Prérequis
@@ -63,8 +58,39 @@ pip install uv
 1. **Configurer l'environnement**
 
    ```bash
-   cp .env.example .env
-   # Éditer .env avec vos secrets !
+   # Créer un fichier .env avec les variables suivantes:
+   cat > .env << 'EOF'
+   # Application
+   APP_NAME="Terrarium API"
+   DATABASE_URL="sqlite:///./terrarium.db"
+   DEBUG="True"
+
+   # JWT Authentication
+   JWT_SECRET_KEY="your-super-secret-key-change-in-production"
+   JWT_ALGORITHM="HS256"
+   JWT_EXPIRATION_HOURS="24"
+
+   # API Key for ESP32 ingestion
+   API_KEY="your-api- --port 8000key-change-in-production"
+
+   # Admin User (created on first run)
+   ADMIN_USERNAME="admin"
+   ADMIN_PASSWORD="admin123"
+
+   # Module Heartbeat
+   HEARTBEAT_TIMEOUT_SECONDS="120"
+   HEARTBEAT_CHECK_INTERVAL_SECONDS="60"
+
+   # Sensor Value Ranges (for validation)
+   SOIL_MOIST_MIN="0"
+   SOIL_MOIST_MAX="100"
+   HUMIDITY_MIN="0"
+   HUMIDITY_MAX="100"
+   LIGHT_MIN="0"
+   LIGHT_MAX="50000"
+   TEMP_MIN="0"
+   TEMP_MAX="50"
+   EOF
    ```
 
 2. **Installer les dépendances**
@@ -85,71 +111,6 @@ L'API sera accessible sur : [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
-
-## 🔌 Endpoints API
-
-### Authentification (`/auth`)
-
-| Méthode | Endpoint                | Description          | Auth |
-| ------- | ----------------------- | -------------------- | ---- |
-| POST    | `/auth/login`           | Connexion            | -    |
-| POST    | `/auth/register`        | Inscription          | -    |
-| POST    | `/auth/change-password` | Changer mot de passe | JWT  |
-
-### Modules (`/modules`)
-
-| Méthode | Endpoint                | Description       | Auth |
-| ------- | ----------------------- | ----------------- | ---- |
-| GET     | `/modules`              | Liste des modules | JWT  |
-| GET     | `/modules?coupled=true` | Modules couplés   | JWT  |
-
-### Plantes (`/plants`)
-
-| Méthode | Endpoint                          | Description       | Auth |
-| ------- | --------------------------------- | ----------------- | ---- |
-| GET     | `/plants`                         | Liste des plantes | JWT  |
-| POST    | `/plants`                         | Créer une plante  | JWT  |
-| GET     | `/plants/{id}`                    | Détails plante    | JWT  |
-| PUT     | `/plants/{id}`                    | Modifier plante   | JWT  |
-| DELETE  | `/plants/{id}`                    | Supprimer plante  | JWT  |
-| GET     | `/plants/{id}/history?period=24h` | Historique        | JWT  |
-
-### Paramètres (`/settings`)
-
-| Méthode | Endpoint                   | Description        | Auth |
-| ------- | -------------------------- | ------------------ | ---- |
-| GET     | `/settings/alerts`         | État des alertes   | JWT  |
-| POST    | `/settings/alerts/enable`  | Activer alertes    | JWT  |
-| POST    | `/settings/alerts/disable` | Désactiver alertes | JWT  |
-
-### Ingestion (`/ingestion`)
-
-| Méthode | Endpoint                 | Description      | Auth    |
-| ------- | ------------------------ | ---------------- | ------- |
-| POST    | `/ingestion/sensor-data` | Données capteurs | API Key |
-
-## ⚡ WebSocket
-
-Connecter à `/ws?token=<jwt-token>` pour les mises à jour temps réel.
-
-### Événements Serveur → Client
-
-- `plant:update` - Nouvelles données capteurs
-- `plant:offline` - Module déconnecté (timeout)
-- `module:status` - Changement statut connectivité
-
-### Événements Client → Serveur
-
-```javascript
-// S'abonner aux updates d'une plante
-socket.send(JSON.stringify({ event: "subscribe:plant", data: 1 }));
-
-// Se désabonner
-socket.send(JSON.stringify({ event: "unsubscribe:plant", data: 1 }));
-
-// Ping (keep-alive)
-socket.send(JSON.stringify({ event: "ping" }));
-```
 
 ## 🐳 Docker
 
