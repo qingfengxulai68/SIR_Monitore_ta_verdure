@@ -13,15 +13,12 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "~/components/ui/sidebar"
 import type { User } from "~/lib/types"
 import { AppSettings } from "~/components/nav/settings/settings"
-import { logout } from "~/hooks/use-auth"
+import { useLogout } from "~/hooks/use-auth"
 
 export function SidebarUser({ user }: { user: User }) {
   const { isMobile } = useSidebar()
   const [settingsOpen, setSettingsOpen] = useState(false)
-
-  const handleLogout = () => {
-    logout()
-  }
+  const handleLogout = useLogout()
 
   // Get initials for avatar fallback
   const initials = user.username.slice(0, 2).toUpperCase()

@@ -68,12 +68,9 @@ export function isAuthenticated(): boolean {
   return useAuthStore.getState().isAuthenticated
 }
 
-// Logout utility
-export function logout(): void {
-  const navigate = useNavigate()
+// Clear auth state (without navigation) - for use in utilities
+export function clearAuthStore(): void {
   useAuthStore.getState().logout()
-  toast.info("Logged out")
-  navigate("/public/signin")
 }
 
 // ============================================================================
@@ -98,6 +95,17 @@ export function useLogin() {
       toast.error(error.message)
     }
   })
+}
+
+// Hook to logout
+export function useLogout() {
+  const navigate = useNavigate()
+
+  return () => {
+    useAuthStore.getState().logout()
+    toast.info("Logged out")
+    navigate("/")
+  }
 }
 
 // Hook to change password
