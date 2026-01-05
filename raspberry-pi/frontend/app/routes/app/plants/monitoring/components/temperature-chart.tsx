@@ -1,6 +1,7 @@
 import { Thermometer } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { CustomTooltip } from "./custom-tooltip"
 
 interface ChartData {
   time: string
@@ -34,7 +35,7 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
             <XAxis dataKey="time" fontSize={12} />
             <YAxis domain={[0, 50]} fontSize={12} />
-            <Tooltip />
+            <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"
               dataKey="temperature"
