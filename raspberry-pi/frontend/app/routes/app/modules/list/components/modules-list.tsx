@@ -102,27 +102,29 @@ export function ModulesList({ data }: ModulesListProps) {
             {filteredModules.map((module) => (
               <Card key={module.id} className="transition-all hover:shadow-sm border-muted gap-0">
                 <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-2 h-7">
                     <CardTitle className="text-base font-mono font-semibold">{module.id}</CardTitle>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 -mt-1 -mr-2">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setModuleToUncouple(module)
-                            setUncoupleDialogOpen(true)
-                          }}
-                          className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
-                        >
-                          <Unlink className="h-4 w-4 text-destructive" />
-                          Release
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {module.coupledPlant && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 -mt-1 -mr-2">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setModuleToUncouple(module)
+                              setUncoupleDialogOpen(true)
+                            }}
+                            className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
+                          >
+                            <Unlink className="h-4 w-4 text-destructive" />
+                            Release
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -181,29 +183,31 @@ export function ModulesList({ data }: ModulesListProps) {
                       )}
                     </TableCell>
                     <TableCell className="pr-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setModuleToUncouple(module)
-                              setUncoupleDialogOpen(true)
-                            }}
-                            className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
-                          >
-                            <Unlink className="h-4 w-4 text-destructive" />
-                            Release
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {module.coupledPlant && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setModuleToUncouple(module)
+                                setUncoupleDialogOpen(true)
+                              }}
+                              className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
+                            >
+                              <Unlink className="h-4 w-4 text-destructive" />
+                              Release
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
