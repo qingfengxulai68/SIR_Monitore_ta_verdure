@@ -1,6 +1,8 @@
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { useState } from "react"
 import { Toaster } from "~/components/ui/sonner"
-import { ThemeProvider } from "~/components/theme-provider"
+import { ThemeProvider } from "~/components/other/theme-provider"
 import type { Route } from "./+types/root"
 import "./app.css"
 
@@ -40,11 +42,38 @@ export function HydrateFallback() {
 }
 
 export default function App() {
+  // 🔹 Initialize QueryClient (one instance per user session)
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // Disable automatic refetch on window focus
+            refetchOnWindowFocus: false,
+            // Disable refetch on component remount
+            refetchOnMount: false,
+            // Keep cached data for 5 minutes after last use
+            gcTime: 5 * 60 * 1000,
+            // By default, data is fresh for 0ms (unless overridden with staleTime: Infinity)
+            staleTime: 0,
+            // Automatic retry on error (configured by `retry`; here set to 1)
+            retry: 1
+          },
+          mutations: {
+            // Retries disabled for mutations
+            retry: false
+          }
+        }
+      })
+  )
+
   return (
-    <ThemeProvider>
-      <Toaster />
-      <Outlet />
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <Toaster />
+        <Outlet />
+      </ThemeProvider>
+    </QueryClientProvider>
   )
 }
 

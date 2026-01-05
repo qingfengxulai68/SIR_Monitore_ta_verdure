@@ -32,53 +32,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "~/components/ui/alert-dialog"
-import { toast } from "sonner"
-import { mockDeletePlant, type Plant, type SensorData } from "~/lib/mocks"
+import { useDeletePlant } from "~/hooks/use-plants"
+import type { PlantResponse } from "~/lib/types"
 
 interface PlantsStatusProps {
-  plants: Plant[]
-  sensorData: Record<string, SensorData>
-  onDataChange: () => void
+  plants: PlantResponse[]
 }
 
-export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusProps) {
+export function PlantsStatus({ plants }: PlantsStatusProps) {
   const navigate = useNavigate()
+  const deleteMutation = useDeletePlant()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null)
+  const [plantToDelete, setPlantToDelete] = useState<PlantResponse | null>(null)
 
-  const checkPlantStatus = (plant: Plant, data: SensorData | undefined) => {
-    if (!data) return "unknown"
+  const plantsWithAlerts = plants.filter((plant) => plant.status === "alert")
 
-    const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
-
-    if (
-      isOutOfRange(data.moisture, plant.thresholds.moisture.min, plant.thresholds.moisture.max) ||
-      isOutOfRange(data.humidity, plant.thresholds.humidity.min, plant.thresholds.humidity.max) ||
-      isOutOfRange(data.temperature, plant.thresholds.temperature.min, plant.thresholds.temperature.max) ||
-      isOutOfRange(data.light, plant.thresholds.light.min, plant.thresholds.light.max)
-    ) {
-      return "alert"
-    }
-
-    return "ok"
-  }
-
-  const plantsWithAlerts = plants.filter((plant) => checkPlantStatus(plant, sensorData[plant.moduleId]) === "alert")
-
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!plantToDelete) return
 
-    const success = await mockDeletePlant(plantToDelete.id)
-
-    if (success) {
-      toast.success(`${plantToDelete.name} has been removed.`)
-      onDataChange()
-    } else {
-      toast.error("Failed to delete plant.")
-    }
-
-    setDeleteDialogOpen(false)
-    setPlantToDelete(null)
+    deleteMutation.mutate(plantToDelete.id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false)
+        setPlantToDelete(null)
+      }
+    })
   }
 
   if (plants.length === 0) {
@@ -119,7 +96,7 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {plantsWithAlerts.map((plant) => {
-            const data = sensorData[plant.moduleId]
+            const data = plant.latestValues
             const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
 
             return (
@@ -168,16 +145,16 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-1.5 text-muted-foreground">
                           <Droplets className="h-3.5 w-3.5" />
-                          <span className="text-xs font-medium">Moisture</span>
+                          <span className="text-xs font-medium">Soil Moisture</span>
                         </div>
                         <p
                           className={`text-lg tabular-nums ${
-                            isOutOfRange(data.moisture, plant.thresholds.moisture.min, plant.thresholds.moisture.max)
+                            isOutOfRange(data.soilMoist, plant.thresholds.soilMoist.min, plant.thresholds.soilMoist.max)
                               ? "text-destructive"
                               : "text-foreground"
                           }`}
                         >
-                          {data.moisture}%
+                          {data.soilMoist}%
                         </p>
                       </div>
 
@@ -188,16 +165,12 @@ export function PlantsStatus({ plants, sensorData, onDataChange }: PlantsStatusP
                         </div>
                         <p
                           className={`text-lg tabular-nums ${
-                            isOutOfRange(
-                              data.temperature,
-                              plant.thresholds.temperature.min,
-                              plant.thresholds.temperature.max
-                            )
+                            isOutOfRange(data.temp, plant.thresholds.temp.min, plant.thresholds.temp.max)
                               ? "text-destructive"
                               : "text-foreground"
                           }`}
                         >
-                          {data.temperature}°C
+                          {data.temp}°C
                         </p>
                       </div>
 

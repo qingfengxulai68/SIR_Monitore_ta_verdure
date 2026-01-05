@@ -1,57 +1,50 @@
-import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { toast } from "sonner"
-
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
 import { Field, FieldGroup, FieldError, FieldLabel } from "~/components/ui/field"
 import { Spinner } from "~/components/ui/spinner"
-import { mockUpdatePlant, type Plant } from "~/lib/mocks"
-
-const generalInfoSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100, "Name too long")
-})
-
-type GeneralInfoFormData = z.infer<typeof generalInfoSchema>
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
+import { useUpdatePlant } from "~/hooks/use-plants"
+import type { ModuleResponse, PlantResponse } from "~/lib/types"
+import { plantUpdateInfoRequestSchema, type PlantUpdateInfoRequest } from "~/lib/types"
 
 interface GeneralInformationProps {
-  plant: Plant
-  onPlantUpdate?: (plant: Plant) => void
+  data: PlantResponse
+  modules: ModuleResponse[]
 }
 
-export function GeneralInformation({ plant, onPlantUpdate }: GeneralInformationProps) {
-  const [isSaving, setIsSaving] = useState(false)
+export function GeneralInformation({ data, modules }: GeneralInformationProps) {
+  const updateMutation = useUpdatePlant()
 
-  const generalForm = useForm<GeneralInfoFormData>({
-    resolver: zodResolver(generalInfoSchema),
+  const generalForm = useForm<PlantUpdateInfoRequest>({
+    resolver: zodResolver(plantUpdateInfoRequestSchema),
     defaultValues: {
-      name: plant.name
+      name: data.name,
+      moduleId: data.moduleId
     }
   })
 
-  const handleSubmit = async (data: GeneralInfoFormData) => {
-    setIsSaving(true)
+  // Filter modules to include uncoupled modules plus the current module
+  const filteredModules = modules.filter((module) => !module.coupled || module.id === data.moduleId)
 
-    try {
-      await mockUpdatePlant(plant.id, {
-        name: data.name,
-        moduleId: plant.moduleId,
-        thresholds: plant.thresholds
-      })
-
-      toast.success("General information updated successfully.")
-
-      generalForm.reset({ name: data.name })
-
-      onPlantUpdate?.({ ...plant, name: data.name })
-    } catch {
-      toast.error("Failed to save changes.")
-    } finally {
-      setIsSaving(false)
-    }
+  const handleSubmit = (formData: PlantUpdateInfoRequest) => {
+    updateMutation.mutate(
+      {
+        plantId: data.id,
+        data: {
+          name: formData.name,
+          moduleId: formData.moduleId,
+          thresholds: data.thresholds
+        }
+      },
+      {
+        onSuccess: () => {
+          generalForm.reset({ name: formData.name, moduleId: formData.moduleId })
+        }
+      }
+    )
   }
 
   return (
@@ -82,15 +75,33 @@ export function GeneralInformation({ plant, onPlantUpdate }: GeneralInformationP
                 )}
               />
 
-              <Field>
-                <FieldLabel htmlFor="module">Module</FieldLabel>
-                <Input id="module" value={plant.moduleId || ""} disabled />
-              </Field>
+              <Controller
+                name="moduleId"
+                control={generalForm.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Module</FieldLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id={field.name} aria-invalid={fieldState.invalid}>
+                        <SelectValue placeholder="Select a module" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredModules.map((module) => (
+                          <SelectItem key={module.id} value={module.id.toString()}>
+                            Module #{module.id}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
             </div>
 
             <div className="flex justify-end pt-2">
-              <Button type="submit" disabled={isSaving || !generalForm.formState.isDirty} size="sm">
-                {isSaving ? <Spinner /> : "Update"}
+              <Button type="submit" disabled={updateMutation.isPending || !generalForm.formState.isDirty} size="sm">
+                {updateMutation.isPending ? <Spinner /> : "Update"}
               </Button>
             </div>
           </FieldGroup>

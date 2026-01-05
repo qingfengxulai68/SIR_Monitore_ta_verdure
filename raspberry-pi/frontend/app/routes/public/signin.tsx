@@ -1,25 +1,22 @@
 import type { Route } from "./+types/signin"
-import { useState } from "react"
-import { redirect, useNavigate } from "react-router"
+import { redirect } from "react-router"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Sprout } from "lucide-react"
-import { toast } from "sonner"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
 import { Field, FieldGroup, FieldLabel, FieldError } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
-import { mockLogin } from "~/lib/mocks"
-import { loginSchema, type LoginFormData } from "~/lib/validation"
-import { useAuthStore } from "~/store/auth"
+import { isAuthenticated } from "~/hooks/use-auth"
 import { Spinner } from "~/components/ui/spinner"
+import { useLogin } from "~/hooks/use-auth"
+import { loginRequestSchema, type LoginRequest } from "~/lib/types"
 
+// Client-side loader to redirect authenticated users
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  const isLoggedIn = useAuthStore.getState().isAuthenticated
-  if (isLoggedIn) {
+  if (isAuthenticated()) {
     return redirect("/app/")
   }
-
   return null
 }
 
@@ -28,37 +25,18 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function SignInPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const navigate = useNavigate()
+  const loginMutation = useLogin()
 
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<LoginRequest>({
+    resolver: zodResolver(loginRequestSchema),
     defaultValues: {
       username: "",
       password: ""
     }
   })
 
-  const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true)
-
-    try {
-      const result = await mockLogin(data.username, data.password)
-
-      if (result.success && result.token && result.user) {
-        useAuthStore.getState().login(result.user, result.token)
-        toast.success("Welcome back!")
-        navigate("/app/")
-      } else {
-        toast.error(result.error || "Invalid credentials")
-        form.reset()
-      }
-    } catch {
-      toast.error("Something went wrong. Please try again.")
-      form.reset()
-    } finally {
-      setIsLoading(false)
-    }
+  const onSubmit = (data: LoginRequest) => {
+    loginMutation.mutate(data)
   }
 
   return (
@@ -123,8 +101,8 @@ export default function SignInPage() {
                     )}
                   />
                   <Field>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? <Spinner /> : "Sign In"}
+                    <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                      {loginMutation.isPending ? <Spinner /> : "Sign In"}
                     </Button>
                   </Field>
                 </FieldGroup>

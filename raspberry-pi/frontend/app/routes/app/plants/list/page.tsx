@@ -1,31 +1,26 @@
 import { useEffect, useState } from "react"
 import type { Route } from "./+types/page"
-import { Flower2, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Button } from "~/components/ui/button"
-import { Skeleton } from "~/components/ui/skeleton"
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "~/components/ui/empty"
-import { mockGetPlants, mockGetCurrentSensorData, type Plant, type SensorData } from "~/lib/mocks"
-import { useHeader } from "~/hooks/use-header"
+import { Spinner } from "~/components/ui/spinner"
+import { useHeader } from "~/components/nav/header/header-provider"
 import { CreatePlantDialog } from "./components/add-plant-dialog"
-import { PlantsHeader } from "./components/plants-header"
 import { PlantsList } from "./components/plants-list"
+import { PlantsEmpty } from "./components/plants-empty"
 import { ScrollArea } from "~/components/ui/scroll-area"
+import { ErrorWithRetry } from "~/components/other/error-with-retry"
+import { usePlants } from "~/hooks/use-plants"
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "All Plants - Terrarium" }, { name: "description", content: "List of all registered plants." }]
 }
 
 export default function PlantsListPage() {
-  const [plants, setPlants] = useState<Plant[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sensorData, setSensorData] = useState<Record<string, SensorData>>({})
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
-  const { setHeaderContent } = useHeader()
+  const { data = [], isLoading, error, refetch } = usePlants()
 
-  const filteredPlants = plants.filter((plant) => plant.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const { setHeaderContent } = useHeader()
 
   useEffect(() => {
     setHeaderContent({
@@ -37,82 +32,24 @@ export default function PlantsListPage() {
         </Button>
       )
     })
-  }, [setHeaderContent])
-
-  const loadPlants = async () => {
-    const data = await mockGetPlants()
-    setPlants(data)
-    setIsLoading(false)
-
-    // Load initial sensor data
-    const initialSensorData: Record<string, SensorData> = {}
-    data.forEach((plant) => {
-      initialSensorData[plant.moduleId] = mockGetCurrentSensorData(plant.moduleId)
-    })
-    setSensorData(initialSensorData)
-  }
-
-  useEffect(() => {
-    loadPlants()
-
-    // Update sensor data every 5 seconds
-    const interval = setInterval(() => {
-      setPlants((currentPlants) => {
-        const updatedSensorData: Record<string, SensorData> = {}
-        currentPlants.forEach((plant) => {
-          updatedSensorData[plant.moduleId] = mockGetCurrentSensorData(plant.moduleId)
-        })
-        setSensorData(updatedSensorData)
-        return currentPlants
-      })
-    }, 5000)
-
-    return () => clearInterval(interval)
   }, [])
 
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] p-6">
       <main className="space-y-6">
         {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-10 w-80" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-64 w-full" />
-              ))}
-            </div>
+          <div className="flex items-center justify-center h-64">
+            <Spinner />
           </div>
-        ) : plants.length === 0 ? (
-          <Empty className="border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Flower2 />
-              </EmptyMedia>
-              <EmptyTitle>No plants yet</EmptyTitle>
-              <EmptyDescription>
-                Get started by adding your first plant to monitor its environment and health.
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button onClick={() => setCreateDialogOpen(true)} size="sm" variant={"outline"}>
-                Add Plant
-              </Button>
-            </EmptyContent>
-          </Empty>
+        ) : error ? (
+          <ErrorWithRetry error={error.message} onRetry={refetch} />
+        ) : !data || data.length === 0 ? (
+          <PlantsEmpty onAddPlant={() => setCreateDialogOpen(true)} />
         ) : (
-          <>
-            <PlantsHeader
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              filteredCount={filteredPlants.length}
-            />
-            <PlantsList plants={filteredPlants} sensorData={sensorData} viewMode={viewMode} onDataChange={loadPlants} />
-          </>
+          <PlantsList data={data} />
         )}
 
-        <CreatePlantDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} onCreated={loadPlants} />
+        {createDialogOpen && <CreatePlantDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />}
       </main>
     </ScrollArea>
   )
