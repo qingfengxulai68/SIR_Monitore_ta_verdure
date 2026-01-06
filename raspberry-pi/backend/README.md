@@ -1,142 +1,80 @@
-# 🌱 Terrarium API - Système IoT de Monitoring de Plantes
+# Backend - Terrarium API
 
-Backend pour la gestion du terrarium, propulsé par **FastAPI**, **SQLModel** et **uv**.
+RESTful API and WebSocket manager for the terrarium monitoring system. Developed with **FastAPI** and **Python**.
 
-## ✨ Fonctionnalités
+## Technologies
 
-- 🔐 **Authentification**: JWT pour utilisateurs, API Key pour communication M2M (ESP32)
-- 🌱 **Gestion des Plantes**: CRUD avec seuils de capteurs personnalisables
-- 🖥️ **Gestion des Modules**: Enregistrement et suivi du statut de connectivité
-- 📊 **Ingestion de Données**: Réception temps réel des données des capteurs
-- ⚡ **WebSocket**: Mises à jour en temps réel (statut plantes, connectivité modules)
-- � **Historique**: Données capteurs horodatées
-- ⏱️ **Heartbeat**: Surveillance automatique de la connectivité des modules
+- **Framework**: FastAPI
+- **Server**: Uvicorn
+- **Database**: SQLAlchemy (Compatible with SQLite, PostgreSQL, etc.)
+- **Validation**: Pydantic
+- **Authentication**: JWT (for frontend) & API Key (for ESP32)
+- **Dependency Management**: uv
+- **Formatting**: Ruff is configured to ensure consistent code style
 
-## 📁 Structure du Projet
+## Structure
 
 ```
-app/
-├── main.py              # Point d'entrée FastAPI
-├── database.py          # Setup base de données
-├── websocket.py         # Handler WebSocket
-├── auth/                # Authentification
-│   ├── api_key.py       # Vérification API Key (ingestion)
-│   └── jwt.py           # Utilitaires JWT
-├── models/              # Modèles SQLModel
-│   ├── user.py
-│   ├── module.py
-│   ├── plant.py
-│   ├── settings.py
-│   └── values.py
-├── routers/             # Routes API
-│   ├── auth.py          # /auth/*
-│   ├── modules.py       # /modules/*
-│   ├── plants.py        # /plants/*
-│   ├── settings.py      # /settings/*
-│   └── ingestion.py     # /ingestion/*
-├── schemas/             # Schémas Pydantic
-│   ├── auth.py
-│   ├── module.py
-│   ├── plant.py
-│   ├── settings.py
-│   ├── values.py
-│   └── websocket.py
-└── tasks/               # Tâches de fond
-    └── heartbeat.py     # Vérification heartbeat modules
+backend/
+├── app/
+│   ├── auth/           # Authentication (JWT, API Keys)
+│   ├── models/         # Database models (SQLAlchemy)
+│   ├── routers/        # API Routes (Endpoints)
+│   ├── schemas/        # Validation schemas (Pydantic)
+│   ├── tasks/          # Background tasks (Heartbeat, etc.)
+│   ├── database.py     # Database configuration
+│   ├── main.py         # Application entry point
+│   └── websocket.py    # WebSocket manager
+├── Dockerfile          # Docker configuration (based on uv)
+├── pyproject.toml      # Project dependencies and configuration
+└── ...
 ```
 
-## ⚡ Prérequis
+## Local Quickstart
 
-Ce projet utilise [uv](https://github.com/astral-sh/uv) pour la gestion ultra-rapide du projet Python.
+1.  **Install dependencies**
+    
+    This project uses **uv** for dependency management.
 
-```bash
-pip install uv
-```
+    ```bash
+    uv sync
+    ```
 
-## 🚀 Développement (Local)
+2.  **Environment Configuration**
+    Create a `.env` file at the root of the `backend` folder with the following values:
 
-1. **Configurer l'environnement**
+    | Variable | Description | Example (Local) |
+    | :--- | :--- | :--- |
+    | `DATABASE_URL` | DB connection URL | `sqlite:///./terrarium.db` |
+    | `JWT_SECRET_KEY` | Secret key for JWT tokens | `a-very-secret-string` |
+    | `API_KEY` | API Key for sensors (ESP32) | `your-secret-api-key` |
+    | `ADMIN_USERNAME` | Initial admin username | `admin` |
+    | `ADMIN_PASSWORD` | Initial admin password | `demo1234` |
 
-   ```bash
-   # Créer un fichier .env avec les variables suivantes:
-   cat > .env << 'EOF'
-   # Application
-   APP_NAME="Terrarium API"
-   DATABASE_URL="sqlite:///./terrarium.db"
-   DEBUG="True"
+3.  **Start Development Server**
+    ```bash
+    uv run fastapi dev app/main.py
+    ```
+    The API will be accessible at `http://localhost:8000`.
+    Interactive documentation (Swagger UI) is available at `http://localhost:8000/docs`.
 
-   # JWT Authentication
-   JWT_SECRET_KEY="your-super-secret-key-change-in-production"
-   JWT_ALGORITHM="HS256"
-   JWT_EXPIRATION_HOURS="24"
+## Docker Deployment
 
-   # API Key for ESP32 ingestion
-   API_KEY="your-api- --port 8000key-change-in-production"
+The backend contains an optimized `Dockerfile` using `uv` for fast builds.
 
-   # Admin User (created on first run)
-   ADMIN_USERNAME="admin"
-   ADMIN_PASSWORD="admin123"
+1.  **Build Image**
+    ```bash
+    docker build -t terrarium-backend .
+    ```
 
-   # Module Heartbeat
-   HEARTBEAT_TIMEOUT_SECONDS="120"
-   HEARTBEAT_CHECK_INTERVAL_SECONDS="60"
-
-   # Sensor Value Ranges (for validation)
-   SOIL_MOIST_MIN="0"
-   SOIL_MOIST_MAX="100"
-   HUMIDITY_MIN="0"
-   HUMIDITY_MAX="100"
-   LIGHT_MIN="0"
-   LIGHT_MAX="50000"
-   TEMP_MIN="0"
-   TEMP_MAX="50"
-   EOF
-   ```
-
-2. **Installer les dépendances**
-
-   ```bash
-   uv sync
-   ```
-
-3. **Lancer l'application**
-
-   ```bash
-   uv run fastapi dev
-   ```
-
-L'API sera accessible sur : [http://127.0.0.1:8000](http://127.0.0.1:8000)
-
-## 📚 Documentation API
-
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-## 🐳 Docker
-
-### Construire l'image
-
-```bash
-docker build -t terrarium-api .
-```
-
-### Lancer le conteneur
-
-```bash
-docker run -p 8000:80 --env-file .env terrarium-api
-```
-
-## 🔒 Sécurité
-
-1. **Changer tous les secrets** dans `.env`
-2. Utiliser **HTTPS** en production
-3. Configurer **CORS** appropriément
-4. Utiliser des **API Keys** robustes pour M2M
-
-## 🗄️ Base de Données
-
-SQLite pour le développement. Pour PostgreSQL en production:
-
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/terrarium
-```
+2.  **Run Container**
+    ```bash
+    docker run -d -p 8000:80 \
+      -e DATABASE_URL="sqlite:///./terrarium.db" \
+      -e JWT_SECRET_KEY="your-secret" \
+      -e API_KEY="your-key" \
+      -e ADMIN_USERNAME="admin" \
+      -e ADMIN_PASSWORD="secure-password" \
+      -v $(pwd)/data:/app/data \
+      terrarium-backend
+    ```

@@ -11,6 +11,8 @@ __pycache__/
 
 # --- Virtual Environments ---
 venv/
+.venv/
+.python-version
 
 # --- Environment Variables ---
 .env
@@ -26,5 +28,16 @@ venv/
 *.DS_Store
 Thumbs.db
 
+# --- Version Control ---
+.gitignore
+.git
+
 # --- Database Files ---
 terrarium.db
+
+# --- README ---
+README.md
+
+# --- Docker ---
+Dockerfile
+.dockerignore

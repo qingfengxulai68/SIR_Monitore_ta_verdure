@@ -28,7 +28,7 @@ from app.schemas.websocket import (
     EntityChangeMessage,
     EntityChangePayload,
 )
-from app.utils import is_module_online
+from backend.app.common.utils import is_module_online
 from app.websocket import ws_manager
 
 router = APIRouter(prefix="/plants", tags=["Plants"])

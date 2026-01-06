@@ -1,7 +1,7 @@
 [project]
-name = "terrarium-api"
+name = "terrarium-backend"
 version = "0.1.0"
-description = "FastAPI Backend : Système IoT de Monitoring de Plantes"
+description = "FastAPI Backend: IoT System for Plant Monitoring"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

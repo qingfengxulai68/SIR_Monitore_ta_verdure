@@ -1,7 +1,9 @@
 """Terrarium API - Plant Monitoring System Backend."""
 
 import os
+import tomllib
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 from dotenv import load_dotenv
@@ -9,6 +11,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
+
+# Load project metadata from pyproject.toml
+pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+with open(pyproject_path, "rb") as f:
+    pyproject_data = tomllib.load(f)
+
+PROJECT_NAME = pyproject_data["project"]["name"]
+PROJECT_VERSION = pyproject_data["project"]["version"]
+PROJECT_DESCRIPTION = pyproject_data["project"]["description"]
 
 from app.database import create_db_and_tables, init_admin_user, init_modules, init_plants, init_settings
 from app.routers import (
@@ -50,9 +61,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title='Terrarium API',
-    description="IoT Plant Monitoring System Backend",
-    version="0.1.0",
+    title=PROJECT_NAME,
+    description=PROJECT_DESCRIPTION,
+    version=PROJECT_VERSION,
     lifespan=lifespan,
 )
 
@@ -80,7 +91,8 @@ app.websocket("/ws")(websocket_endpoint)
 async def root() -> dict:
     """Root endpoint - API health check."""
     return {
-        "name": 'Terrarium API',
-        "status": "healthy",
-        "version": "0.1.0",
+        "name": app.title,
+        "version": app.version,
+        "description": app.description,
+        "status": "healthy"
     }

@@ -1,8 +1,9 @@
 """Value and sensor data schemas."""
 
 import datetime
-import os
 from pydantic import BaseModel, Field
+
+from backend.app.common.constants import SENSOR_THRESHOLDS
 
 
 # Values
@@ -21,7 +22,7 @@ class ValuesAddRequest(BaseModel):
     """Sensor data ingestion request schema."""
 
     moduleId: str = Field(..., min_length=1, max_length=50)
-    soilMoist: float = Field(..., ge=float(os.environ.get('SOIL_MOIST_MIN')), le=float(os.environ.get('SOIL_MOIST_MAX')))
-    humidity: float = Field(..., ge=float(os.environ.get('HUMIDITY_MIN')), le=float(os.environ.get('HUMIDITY_MAX')))
-    light: float = Field(..., ge=float(os.environ.get('LIGHT_MIN')), le=float(os.environ.get('LIGHT_MAX')))
-    temp: float = Field(..., ge=float(os.environ.get('TEMP_MIN')), le=float(os.environ.get('TEMP_MAX')))
+    soilMoist: float = Field(..., ge=SENSOR_THRESHOLDS["SOIL_MOIST"]["MIN"], le=SENSOR_THRESHOLDS["SOIL_MOIST"]["MAX"])
+    humidity: float = Field(..., ge=SENSOR_THRESHOLDS["HUMIDITY"]["MIN"], le=SENSOR_THRESHOLDS["HUMIDITY"]["MAX"])
+    light: float = Field(..., ge=SENSOR_THRESHOLDS["LIGHT"]["MIN"], le=SENSOR_THRESHOLDS["LIGHT"]["MAX"])
+    temp: float = Field(..., ge=SENSOR_THRESHOLDS["TEMP"]["MIN"], le=SENSOR_THRESHOLDS["TEMP"]["MAX"])

@@ -9,6 +9,7 @@ from sqlalchemy import case, delete, func, select
 from sqlalchemy.orm import Session
 
 from app.auth.jwt import verify_jwt_user
+from backend.app.common.constants import HEARTBEAT_TIMEOUT_SECONDS
 from app.database import get_session
 from app.models.module import Module
 from app.models.plant import Plant
@@ -32,7 +33,7 @@ async def get_modules(
     now = datetime.now(UTC)
     is_online = case(
         (Module.last_seen.is_(None), False),
-        (func.julianday(now) - func.julianday(Module.last_seen) <= int(os.environ.get('HEARTBEAT_TIMEOUT_SECONDS')) / 86400.0, True),
+        (func.julianday(now) - func.julianday(Module.last_seen) <= HEARTBEAT_TIMEOUT_SECONDS / 86400.0, True),
         else_=False
     ).label("is_online")
     

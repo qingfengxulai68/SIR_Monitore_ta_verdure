@@ -1,21 +1,35 @@
 # --- Dependencies & Cache ---
-node_modules
-.react-router
+node_modules/
+.react-router/
 
-# --- Local Build ---
-build
-dist
-
-# --- Development & Formatting Configs ---
-.prettierrc
-.prettierignore
-.gitignore
-
-# --- Docker & Documentation ---
-Dockerfile
-.dockerignore
-README.md
+# --- Build ---
+build/
 
 # --- IDE Settings ---
-.vscode
-.idea
+.vscode/
+.idea/
+
+# --- Miscellaneous ---
+*.bak
+*.swp
+*.tmp
+*.DS_Store
+Thumbs.db
+
+# --- Environment ---
+.env
+
+# --- Formatting Configs ---
+.prettierrc
+.prettierignore
+
+# --- Version Control ---
+.gitignore
+.git
+
+# --- README ---
+README.md
+
+# --- Docker ---
+Dockerfile
+.dockerignore

@@ -20,17 +20,17 @@ import { ErrorWithRetry } from "~/components/other/error-with-retry"
 import { useCreatePlant } from "~/hooks/use-plants"
 import { useModules } from "~/hooks/use-modules"
 import { plantCreateRequestSchema, type PlantCreateRequest } from "~/lib/types"
+import { SENSOR_THRESHOLDS } from "~/lib/constants"
 
-// Read threshold ranges from environment variables (Vite) with fallbacks
-const env = import.meta.env
-const SOIL_MOIST_MIN = parseFloat(env.VITE_SOIL_MOIST_MIN as string)
-const SOIL_MOIST_MAX = parseFloat(env.VITE_SOIL_MOIST_MAX as string)
-const HUMIDITY_MIN = parseFloat(env.VITE_HUMIDITY_MIN as string)
-const HUMIDITY_MAX = parseFloat(env.VITE_HUMIDITY_MAX as string)
-const LIGHT_MIN = parseFloat(env.VITE_LIGHT_MIN as string)
-const LIGHT_MAX = parseFloat(env.VITE_LIGHT_MAX as string)
-const TEMP_MIN = parseFloat(env.VITE_TEMP_MIN as string)
-const TEMP_MAX = parseFloat(env.VITE_TEMP_MAX as string)
+// Read threshold ranges from constants
+const SOIL_MOIST_MIN = SENSOR_THRESHOLDS.SOIL_MOIST.MIN
+const SOIL_MOIST_MAX = SENSOR_THRESHOLDS.SOIL_MOIST.MAX
+const HUMIDITY_MIN = SENSOR_THRESHOLDS.HUMIDITY.MIN
+const HUMIDITY_MAX = SENSOR_THRESHOLDS.HUMIDITY.MAX
+const LIGHT_MIN = SENSOR_THRESHOLDS.LIGHT.MIN
+const LIGHT_MAX = SENSOR_THRESHOLDS.LIGHT.MAX
+const TEMP_MIN = SENSOR_THRESHOLDS.TEMP.MIN
+const TEMP_MAX = SENSOR_THRESHOLDS.TEMP.MAX
 
 interface CreatePlantDialogProps {
   open: boolean

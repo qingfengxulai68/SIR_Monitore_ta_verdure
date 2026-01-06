@@ -1,15 +1,15 @@
 """Module heartbeat checker background task."""
 
 import asyncio
-import os
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
+from backend.app.common.constants import HEARTBEAT_CHECK_INTERVAL_SECONDS
 from app.database import engine
 from app.models.module import Module
 from app.models.plant import Plant
 from app.schemas.websocket import ModuleConnectionMessage, ModuleConnectionPayload
-from app.utils import is_module_online
+from backend.app.common.utils import is_module_online
 from app.websocket import ws_manager
 
 
@@ -40,7 +40,7 @@ class HeartbeatChecker:
 
     async def _run(self) -> None:
         """Main loop for heartbeat checking."""
-        interval = int(os.environ.get('HEARTBEAT_CHECK_INTERVAL_SECONDS', 30))
+        interval = HEARTBEAT_CHECK_INTERVAL_SECONDS
         while self._running:
             try:
                 await self._check_heartbeats()

@@ -1,7 +1,20 @@
-.DS_Store
-.env
-/node_modules/
+# --- Dependencies & Cache ---
+node_modules/
+.react-router/
 
-# React Router
-/.react-router/
-/build/
+# --- Build ---
+build/
+
+# --- IDE Settings ---
+.vscode/
+.idea/
+
+# --- Miscellaneous ---
+*.bak
+*.swp
+*.tmp
+*.DS_Store
+Thumbs.db
+
+# --- Environment ---
+.env

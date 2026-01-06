@@ -1,9 +1,9 @@
 """Values model for storing plant measurements (time series)."""
 
-import os
 from datetime import datetime, timezone
 from sqlalchemy import CheckConstraint, Column, DateTime, Float, ForeignKey, Integer
 
+from backend.app.common.constants import SENSOR_THRESHOLDS
 from app.models.user import Base
 
 
@@ -13,10 +13,10 @@ class Values(Base):
     __tablename__ = "values"
 
     __table_args__ = (
-        CheckConstraint(f'soil_moist >= {float(os.environ.get("SOIL_MOIST_MIN"))} AND soil_moist <= {float(os.environ.get("SOIL_MOIST_MAX"))}', name='check_soil_moist_bounds'),
-        CheckConstraint(f'humidity >= {float(os.environ.get("HUMIDITY_MIN"))} AND humidity <= {float(os.environ.get("HUMIDITY_MAX"))}', name='check_humidity_bounds'),
-        CheckConstraint(f'light >= {float(os.environ.get("LIGHT_MIN"))} AND light <= {float(os.environ.get("LIGHT_MAX"))}', name='check_light_bounds'),
-        CheckConstraint(f'temp >= {float(os.environ.get("TEMP_MIN"))} AND temp <= {float(os.environ.get("TEMP_MAX"))}', name='check_temp_bounds'),
+        CheckConstraint(f'soil_moist >= {SENSOR_THRESHOLDS["SOIL_MOIST"]["MIN"]} AND soil_moist <= {SENSOR_THRESHOLDS["SOIL_MOIST"]["MAX"]}', name='check_soil_moist_bounds'),
+        CheckConstraint(f'humidity >= {SENSOR_THRESHOLDS["HUMIDITY"]["MIN"]} AND humidity <= {SENSOR_THRESHOLDS["HUMIDITY"]["MAX"]}', name='check_humidity_bounds'),
+        CheckConstraint(f'light >= {SENSOR_THRESHOLDS["LIGHT"]["MIN"]} AND light <= {SENSOR_THRESHOLDS["LIGHT"]["MAX"]}', name='check_light_bounds'),
+        CheckConstraint(f'temp >= {SENSOR_THRESHOLDS["TEMP"]["MIN"]} AND temp <= {SENSOR_THRESHOLDS["TEMP"]["MAX"]}', name='check_temp_bounds'),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)

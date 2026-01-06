@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.api_key import verify_api_key
+from backend.app.common.constants import HEARTBEAT_TIMEOUT_SECONDS
 from app.database import get_session
 from app.models.module import Module
 from app.models.plant import Plant
@@ -50,7 +51,7 @@ async def ingest_sensor_data(
     # Check if module was offline before (for MODULE_CONNECTION event)
     was_offline = not module.last_seen or (
         (datetime.now(UTC) - module.last_seen.replace(tzinfo=UTC)).total_seconds()
-        > int(os.environ.get("HEARTBEAT_TIMEOUT_SECONDS"))
+        > HEARTBEAT_TIMEOUT_SECONDS
     )
 
     # Update last_seen
