@@ -28,17 +28,10 @@ from app.schemas.websocket import (
     EntityChangeMessage,
     EntityChangePayload,
 )
+from app.utils import is_module_online
 from app.websocket import ws_manager
 
 router = APIRouter(prefix="/plants", tags=["Plants"])
-
-
-def _is_module_online(module: Module | None) -> bool:
-    """Check if module is online."""
-    if not module or not module.last_seen:
-        return False
-    last_seen = module.last_seen.replace(tzinfo=UTC) if module.last_seen.tzinfo is None else module.last_seen
-    return (datetime.now(UTC) - last_seen).total_seconds() <= int(os.environ.get('HEARTBEAT_TIMEOUT_SECONDS'))
 
 
 def _get_latest_values(session: Session, plant_id: int) -> ValuesResponse | None:
@@ -60,7 +53,7 @@ def _get_latest_values(session: Session, plant_id: int) -> ValuesResponse | None
 def _calculate_status(session: Session, plant: Plant, latest_values: ValuesResponse | None) -> Literal["ok", "alert", "offline"]:
     """Calculate plant status."""
     module = session.execute(select(Module).where(Module.id == plant.module_id)).scalars().first()
-    if not _is_module_online(module):
+    if not module or not is_module_online(module):
         return "offline"
     if not latest_values:
         return "ok"

@@ -1,48 +1,32 @@
-"""Heartbeat checker background task."""
+"""Module heartbeat checker background task."""
 
 import asyncio
 import os
-from datetime import UTC, datetime
-
 from sqlalchemy import select
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from app.database import engine
 from app.models.module import Module
 from app.models.plant import Plant
-from app.schemas.websocket import (
-    ModuleConnectionMessage,
-    ModuleConnectionPayload,
-    PlantMetricsMessage,
-    PlantMetricsPayload,
-    PlantMetricsValues,
-)
+from app.schemas.websocket import ModuleConnectionMessage, ModuleConnectionPayload
+from app.utils import is_module_online
 from app.websocket import ws_manager
-
-
-def _is_module_online(module: Module) -> bool:
-    """Check if module is online."""
-    if not module.last_seen:
-        return False
-    last_seen = module.last_seen.replace(tzinfo=UTC) if module.last_seen.tzinfo is None else module.last_seen
-    return (datetime.now(UTC) - last_seen).total_seconds() <= int(os.environ.get('HEARTBEAT_TIMEOUT_SECONDS'))
 
 
 class HeartbeatChecker:
     """Background task for checking module heartbeats."""
 
     def __init__(self) -> None:
-        """Initialize the heartbeat checker."""
         self._running = False
         self._task: asyncio.Task | None = None
         self._offline_modules: set[str] = set()
+        self._session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     async def start(self) -> None:
         """Start the heartbeat checker."""
-        if self._running:
-            return
-        self._running = True
-        self._task = asyncio.create_task(self._run())
+        if not self._running:
+            self._running = True
+            self._task = asyncio.create_task(self._run())
 
     async def stop(self) -> None:
         """Stop the heartbeat checker."""
@@ -56,29 +40,32 @@ class HeartbeatChecker:
 
     async def _run(self) -> None:
         """Main loop for heartbeat checking."""
+        interval = int(os.environ.get('HEARTBEAT_CHECK_INTERVAL_SECONDS', 30))
         while self._running:
             try:
                 await self._check_heartbeats()
-            except Exception as e:
+            except Exception:
                 pass
-            await asyncio.sleep(int(os.environ.get('HEARTBEAT_CHECK_INTERVAL_SECONDS')))
+            await asyncio.sleep(interval)
 
     async def _check_heartbeats(self) -> None:
         """Check all modules for heartbeat timeout."""
-        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        session = SessionLocal()
-        try:
-            # Get coupled modules directly
-            modules = session.execute(select(Module).where(Module.coupled == True)).scalars().all()  # noqa: E712
+        with self._session_factory() as session:
+            modules = session.execute(
+                select(Module).where(Module.coupled.is_(True))
+            ).scalars().all()
 
             for module in modules:
-                is_online = _is_module_online(module)
+                is_online = is_module_online(module)
+                was_offline = module.id in self._offline_modules
 
-                if not is_online and module.id not in self._offline_modules:
+                if not is_online and not was_offline:
                     self._offline_modules.add(module.id)
-                    plant = session.execute(select(Plant).where(Plant.module_id == module.id)).scalars().first()
+                    plant = session.execute(
+                        select(Plant).where(Plant.module_id == module.id)
+                    ).scalars().first()
+                    
                     if plant:
-                        # Broadcast MODULE_CONNECTION when module goes offline
                         await ws_manager.emit_module_connection(
                             ModuleConnectionMessage(
                                 payload=ModuleConnectionPayload(
@@ -88,11 +75,8 @@ class HeartbeatChecker:
                                 )
                             )
                         )
-
-                elif is_online and module.id in self._offline_modules:
+                elif is_online and was_offline:
                     self._offline_modules.discard(module.id)
-        finally:
-            session.close()
 
 
 # Global heartbeat checker instance
