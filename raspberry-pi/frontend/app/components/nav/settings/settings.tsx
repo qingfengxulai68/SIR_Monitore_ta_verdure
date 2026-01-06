@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { User, Bell, Palette } from "lucide-react"
+import { User, Bell, Palette, Info } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "~/components/ui/dialog"
 import {
   Breadcrumb,
@@ -22,6 +22,7 @@ import {
 import { AccountSection } from "./sections/settings-account"
 import { AlertsSection } from "./sections/settings-alerts"
 import { AppearanceSection } from "./sections/settings-appearance"
+import { AboutSection } from "./sections/settings-about"
 
 interface AppSettingsProps {
   open: boolean
@@ -66,6 +67,14 @@ export function AppSettings({ open, onOpenChange }: AppSettingsProps) {
                         </button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={activeSection === "about"}>
+                        <button onClick={() => setActiveSection("about")}>
+                          <Info className="h-4 w-4" />
+                          <span>About</span>
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -82,7 +91,13 @@ export function AppSettings({ open, onOpenChange }: AppSettingsProps) {
                     <BreadcrumbSeparator className="hidden md:block" />
                     <BreadcrumbItem>
                       <BreadcrumbPage>
-                        {activeSection === "account" ? "Account" : activeSection === "alerts" ? "Alerts" : "Appearance"}
+                        {activeSection === "account"
+                          ? "Account"
+                          : activeSection === "alerts"
+                            ? "Alerts"
+                            : activeSection === "appearance"
+                              ? "Appearance"
+                              : "About"}
                       </BreadcrumbPage>
                     </BreadcrumbItem>
                   </BreadcrumbList>
@@ -94,8 +109,10 @@ export function AppSettings({ open, onOpenChange }: AppSettingsProps) {
                 <AccountSection />
               ) : activeSection === "alerts" ? (
                 <AlertsSection />
-              ) : (
+              ) : activeSection === "appearance" ? (
                 <AppearanceSection />
+              ) : (
+                <AboutSection />
               )}
             </div>
           </main>
