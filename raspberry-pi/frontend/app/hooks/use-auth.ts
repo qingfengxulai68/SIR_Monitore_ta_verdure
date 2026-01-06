@@ -11,12 +11,11 @@ import type { LoginRequest, LoginResponse, ChangePasswordRequest, User } from "~
 // ============================================================================
 
 type AuthState = {
-  isAuthenticated: boolean
   token: string | null
   user: User | null
   login: (userData: User, token: string) => void
   logout: () => void
-} & ({ isAuthenticated: false; token: null; user: null } | { isAuthenticated: true; token: string; user: User })
+} & ({ token: null; user: null } | { token: string; user: User })
 
 const useAuthStore = create<AuthState>()(
   persist(
@@ -28,15 +27,13 @@ const useAuthStore = create<AuthState>()(
       login: (userData: User, token: string) =>
         set({
           user: userData,
-          token: token,
-          isAuthenticated: true
+          token: token
         }),
 
       logout: () =>
         set({
           user: null,
-          token: null,
-          isAuthenticated: false
+          token: null
         })
     }),
     {
@@ -65,12 +62,7 @@ export function getUser(): User {
 
 // Check if user is authenticated
 export function isAuthenticated(): boolean {
-  return useAuthStore.getState().isAuthenticated
-}
-
-// Clear auth state (without navigation) - for use in utilities
-export function clearAuthStore(): void {
-  useAuthStore.getState().logout()
+  return useAuthStore.getState().token !== null && useAuthStore.getState().user !== null
 }
 
 // ============================================================================

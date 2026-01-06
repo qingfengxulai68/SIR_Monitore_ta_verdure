@@ -9,6 +9,7 @@ import { useSystemWebSocket } from "~/hooks/use-websocket"
 
 // Client-side loader to enforce authentication
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+  console.log("AppLayout clientLoader called")
   if (!isAuthenticated()) {
     throw redirect("/")
   }

@@ -23,7 +23,7 @@ export function useSystemWebSocket() {
     onOpen: () => {
       toast.success("[Websocket] Connection established")
     },
-    onClose: () => toast.error("[Websocket] Connection lost"),
+    onClose: () => toast.error("[Websocket] Connection closed"),
     onError: () => toast.error("[Websocket] Connection error"),
     onMessage: (event) => {
       const message = JSON.parse(event.data) as IncomingWebSocketMessage

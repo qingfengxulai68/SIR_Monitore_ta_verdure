@@ -66,7 +66,7 @@ class WebSocketManager:
 # Global WebSocket manager instance
 ws_manager = WebSocketManager()
 
-
+# WebSocket endpoint
 async def websocket_endpoint(
     websocket: WebSocket,
     token: Annotated[str | None, Query()] = None,
