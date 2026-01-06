@@ -179,7 +179,7 @@ export function ModulesList({ data }: ModulesListProps) {
                           {module.coupledPlant.name}
                         </Link>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell className="pr-4">

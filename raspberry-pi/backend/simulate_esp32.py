@@ -6,15 +6,11 @@ import random
 import time
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # Configuration
 API_URL = "http://localhost:8000/ingestion/"
-API_KEY = os.environ.get("API_KEY")
-MODULE_IDS = ["ESP32-001", "ESP32-003"]  # List of modules to simulate
+API_KEY = "H8XIds5mGjfMaLYA-BWmKV9r5DX2aCdyu2nBVPElEkM"
+MODULE_IDS = ["ESP32-001" ]  # List of modules to simulate "ESP32-003"
 INTERVAL_SECONDS = 5  # Send data every 5 seconds
 
 

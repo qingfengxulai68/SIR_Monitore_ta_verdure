@@ -30,7 +30,7 @@ export function CurrentValues({ plant }: CurrentValuesProps) {
                 : ""
             }`}
           >
-            {currentData && !isOffline ? `${currentData.soilMoist}%` : "—"}
+            {currentData && !isOffline ? `${currentData.soilMoist}%` : "-"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -53,7 +53,7 @@ export function CurrentValues({ plant }: CurrentValuesProps) {
                 : ""
             }`}
           >
-            {currentData && !isOffline ? `${currentData.humidity}%` : "—"}
+            {currentData && !isOffline ? `${currentData.humidity}%` : "-"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -76,7 +76,7 @@ export function CurrentValues({ plant }: CurrentValuesProps) {
                 : ""
             }`}
           >
-            {currentData && !isOffline ? `${currentData.temp}°C` : "—"}
+            {currentData && !isOffline ? `${currentData.temp}°C` : "-"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -99,7 +99,7 @@ export function CurrentValues({ plant }: CurrentValuesProps) {
                 : ""
             }`}
           >
-            {currentData && !isOffline ? `${currentData.light.toLocaleString()}` : "—"}
+            {currentData && !isOffline ? `${currentData.light.toLocaleString()}` : "-"}
           </CardTitle>
         </CardHeader>
         <CardContent>

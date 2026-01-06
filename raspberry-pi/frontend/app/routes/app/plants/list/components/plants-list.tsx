@@ -11,7 +11,8 @@ import {
   Cloud,
   Sun,
   LayoutGrid,
-  Table as TableIcon
+  Table as TableIcon,
+  WifiOff
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import {
@@ -255,8 +256,9 @@ export function PlantsList({ data }: PlantsListProps) {
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-6 text-muted-foreground">
-                        <p className="text-sm">No sensor data</p>
+                      <div className="text-center py-5">
+                        <WifiOff className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">No recent data available</p>
                       </div>
                     )}
                   </CardContent>
@@ -315,7 +317,7 @@ export function PlantsList({ data }: PlantsListProps) {
                             {data.soilMoist}%
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell className="py-4">
@@ -330,7 +332,7 @@ export function PlantsList({ data }: PlantsListProps) {
                             {data.temp}°C
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell className="py-4">
@@ -345,7 +347,7 @@ export function PlantsList({ data }: PlantsListProps) {
                             {data.humidity}%
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell className="py-4">
@@ -360,7 +362,7 @@ export function PlantsList({ data }: PlantsListProps) {
                             {data.light.toLocaleString()}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell className="py-4 pr-4">

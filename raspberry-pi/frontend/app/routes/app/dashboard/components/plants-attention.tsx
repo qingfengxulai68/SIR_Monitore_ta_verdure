@@ -10,10 +10,12 @@ import {
   Settings,
   Trash2,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  WifiOff
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { Button } from "~/components/ui/button"
+import { Badge } from "~/components/ui/badge"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "~/components/ui/empty"
 import {
   DropdownMenu,
@@ -35,17 +37,19 @@ import {
 import { useDeletePlant } from "~/hooks/use-plants"
 import type { PlantResponse } from "~/lib/types"
 
-interface PlantsStatusProps {
+interface PlantsAttentionProps {
   plants: PlantResponse[]
 }
 
-export function PlantsStatus({ plants }: PlantsStatusProps) {
+export function PlantsAttention({ plants }: PlantsAttentionProps) {
   const navigate = useNavigate()
   const deleteMutation = useDeletePlant()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [plantToDelete, setPlantToDelete] = useState<PlantResponse | null>(null)
 
   const plantsWithAlerts = plants.filter((plant) => plant.status === "alert")
+  const offlinePlants = plants.filter((plant) => plant.status === "offline")
+  const plantsNeedingAttention = [...plantsWithAlerts, ...offlinePlants]
 
   const handleDelete = () => {
     if (!plantToDelete) return
@@ -62,7 +66,7 @@ export function PlantsStatus({ plants }: PlantsStatusProps) {
     return (
       <>
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Your Plants</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Plants Needing Attention</h2>
           <p className="text-sm text-muted-foreground">No plants added yet. Start monitoring your plant collection.</p>
         </div>
         <Empty className="border">
@@ -85,26 +89,35 @@ export function PlantsStatus({ plants }: PlantsStatusProps) {
     )
   }
 
-  if (plantsWithAlerts.length > 0) {
+  if (plantsNeedingAttention.length > 0) {
     return (
       <>
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Your Plants</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Plants Needing Attention</h2>
           <p className="text-sm text-muted-foreground">
-            {plantsWithAlerts.length} {plantsWithAlerts.length === 1 ? "plant needs" : "plants need"} immediate action
+            {plantsWithAlerts.length > 0 && offlinePlants.length > 0
+              ? `${plantsWithAlerts.length} ${plantsWithAlerts.length === 1 ? "alert" : "alerts"} and ${offlinePlants.length} offline`
+              : plantsWithAlerts.length > 0
+                ? `${plantsWithAlerts.length} ${plantsWithAlerts.length === 1 ? "plant needs" : "plants need"} immediate action`
+                : `${offlinePlants.length} ${offlinePlants.length === 1 ? "plant is" : "plants are"} offline`}
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {plantsWithAlerts.map((plant) => {
+          {plantsNeedingAttention.map((plant) => {
             const data = plant.latestValues
             const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
+            const isOffline = plant.status === "offline"
+            const isAlert = plant.status === "alert"
 
             return (
               <Card key={plant.id} className="group transition-all hover:shadow-sm border-muted gap-0">
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <CardTitle className="text-base font-semibold truncate">{plant.name}</CardTitle>
+                      <Badge variant={isAlert ? "destructive" : "secondary"} className="mt-1.5 text-xs">
+                        {isAlert ? "Alert" : "Offline"}
+                      </Badge>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -140,7 +153,7 @@ export function PlantsStatus({ plants }: PlantsStatusProps) {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  {data && (
+                  {!isOffline ? (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -206,6 +219,11 @@ export function PlantsStatus({ plants }: PlantsStatusProps) {
                         </p>
                       </div>
                     </div>
+                  ) : (
+                    <div className="text-center py-5">
+                      <WifiOff className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">No recent data available</p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -237,8 +255,8 @@ export function PlantsStatus({ plants }: PlantsStatusProps) {
   return (
     <>
       <div>
-        <h2 className="text-lg font-semibold tracking-tight">Your Plants</h2>
-        <p className="text-sm text-muted-foreground">Real-time monitoring of your plant collection</p>
+        <h2 className="text-lg font-semibold tracking-tight">Plants Needing Attention</h2>
+        <p className="text-sm text-muted-foreground">All plants are healthy and connected</p>
       </div>
       <Empty className="border">
         <EmptyHeader>
