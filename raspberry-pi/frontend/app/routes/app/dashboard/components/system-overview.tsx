@@ -1,10 +1,10 @@
 import { Flower2, Cpu, AlertCircle, WifiOff } from "lucide-react"
 import { Card, CardHeader, CardTitle } from "~/components/ui/card"
-import type { PlantResponse, ModuleResponse } from "~/lib/types"
+import type { Plant, Module } from "~/lib/types"
 
 interface SystemOverviewProps {
-  plants: PlantResponse[]
-  modules: ModuleResponse[]
+  plants: Plant[]
+  modules: Module[]
 }
 
 export function SystemOverview({ plants, modules }: SystemOverviewProps) {

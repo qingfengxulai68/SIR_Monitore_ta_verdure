@@ -6,8 +6,8 @@ export type User = {
   username: string
 }
 
-// Response type for login
-export type LoginResponse = {
+// Login response type definition
+export type Login = {
   token: string
   user: User
 }

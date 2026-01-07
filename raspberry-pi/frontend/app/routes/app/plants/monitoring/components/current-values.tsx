@@ -1,9 +1,9 @@
 import { Droplets, Thermometer, Cloud, Sun } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
-import type { PlantResponse } from "~/lib/types"
+import type { Plant } from "~/lib/types"
 
 interface CurrentValuesProps {
-  plant: PlantResponse
+  plant: Plant
 }
 
 const getStatusColor = (value: number, min: number, max: number) => {

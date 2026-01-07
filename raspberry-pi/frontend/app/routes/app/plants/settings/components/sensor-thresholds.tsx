@@ -6,21 +6,21 @@ import { Input } from "~/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
 import { Field, FieldGroup, FieldError, FieldLabel } from "~/components/ui/field"
 import { Spinner } from "~/components/ui/spinner"
-import { useUpdatePlant } from "~/hooks/use-plants"
-import type { PlantResponse, PlantThresholds } from "~/lib/types"
+import { useUpdatePlant } from "~/lib/hooks/use-plants"
+import type { Plant } from "~/lib/types"
 import { plantUpdateThresholdsRequestSchema, type PlantUpdateThresholdsRequest } from "~/lib/types"
 
 interface SensorThresholdsProps {
-  data: PlantResponse
+  plant: Plant
 }
 
-export function SensorThresholds({ data }: SensorThresholdsProps) {
+export function SensorThresholds({ plant }: SensorThresholdsProps) {
   const updateMutation = useUpdatePlant()
 
   const thresholdsForm = useForm<PlantUpdateThresholdsRequest>({
     resolver: zodResolver(plantUpdateThresholdsRequestSchema),
     defaultValues: {
-      thresholds: data.thresholds
+      thresholds: plant.thresholds
     }
   })
 
@@ -33,10 +33,10 @@ export function SensorThresholds({ data }: SensorThresholdsProps) {
   const handleSubmit = (formData: PlantUpdateThresholdsRequest) => {
     updateMutation.mutate(
       {
-        plantId: data.id,
+        plantId: plant.id,
         data: {
-          name: data.name,
-          moduleId: data.moduleId,
+          name: plant.name,
+          moduleId: plant.moduleId,
           thresholds: formData.thresholds
         }
       },

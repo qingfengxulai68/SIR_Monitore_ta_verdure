@@ -1,22 +1,19 @@
 import { useEffect } from "react"
 import type { Route } from "./+types/page"
+import { Spinner } from "~/components/ui/spinner"
 import { useModules } from "~/lib/hooks/use-modules"
 import { usePlants } from "~/lib/hooks/use-plants"
 import { useHeader } from "~/layout/header/header-provider"
-import { SystemOverview } from "./components/system-overview"
-import { PlantsAttention } from "./components/plants-attention"
+import ModulesEmpty from "./components/modules-empty"
+import { ModulesBrowser } from "./components/modules-browser"
 import { ScrollArea } from "~/components/ui/scroll-area"
-import { Spinner } from "~/components/ui/spinner"
 import { ErrorWithRetry } from "~/components/other/error-with-retry"
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Dashboard - Terrarium" },
-    { name: "description", content: "Overview of all active plants and modules." }
-  ]
+  return [{ title: "Modules - Terrarium" }, { name: "description", content: "Manage system modules." }]
 }
 
-export default function DashboardPage() {
+export default function ModulesBrowserPage() {
   const { data: plants = [], isLoading: plantsLoading, error: plantsError, refetch: refetchPlants } = usePlants()
   const { data: modules = [], isLoading: modulesLoading, error: modulesError, refetch: refetchModules } = useModules()
 
@@ -27,7 +24,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setHeaderContent({
-      breadcrumbs: [{ label: "Dashboard" }]
+      breadcrumbs: [{ label: "Modules" }]
     })
   }, [])
 
@@ -46,11 +43,10 @@ export default function DashboardPage() {
               refetchModules()
             }}
           />
+        ) : !modules || modules.length === 0 ? (
+          <ModulesEmpty />
         ) : (
-          <>
-            <SystemOverview plants={plants} modules={modules} />
-            <PlantsAttention plants={plants} />
-          </>
+          <ModulesBrowser modules={modules} plants={plants} />
         )}
       </main>
     </ScrollArea>

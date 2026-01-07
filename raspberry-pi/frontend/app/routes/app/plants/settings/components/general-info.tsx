@@ -6,37 +6,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { Field, FieldGroup, FieldError, FieldLabel } from "~/components/ui/field"
 import { Spinner } from "~/components/ui/spinner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
-import { useUpdatePlant } from "~/hooks/use-plants"
-import type { ModuleResponse, PlantResponse } from "~/lib/types"
+import { useUpdatePlant } from "~/lib/hooks/use-plants"
+import type { Module, Plant } from "~/lib/types"
 import { plantUpdateInfoRequestSchema, type PlantUpdateInfoRequest } from "~/lib/types"
 
 interface GeneralInformationProps {
-  data: PlantResponse
-  modules: ModuleResponse[]
+  plant: Plant
+  modules: Module[]
 }
 
-export function GeneralInformation({ data, modules }: GeneralInformationProps) {
+export function GeneralInformation({ plant, modules }: GeneralInformationProps) {
   const updateMutation = useUpdatePlant()
 
   const generalForm = useForm<PlantUpdateInfoRequest>({
     resolver: zodResolver(plantUpdateInfoRequestSchema),
     defaultValues: {
-      name: data.name,
-      moduleId: data.moduleId
+      name: plant.name,
+      moduleId: plant.moduleId
     }
   })
 
   // Filter modules to include uncoupled modules plus the current module
-  const filteredModules = modules.filter((module) => !module.coupled || module.id === data.moduleId)
+  const filteredModules = modules.filter((module) => !module.coupled || module.id === plant.moduleId)
 
   const handleSubmit = (formData: PlantUpdateInfoRequest) => {
     updateMutation.mutate(
       {
-        plantId: data.id,
+        plantId: plant.id,
         data: {
           name: formData.name,
           moduleId: formData.moduleId,
-          thresholds: data.thresholds
+          thresholds: plant.thresholds
         }
       },
       {
