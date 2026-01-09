@@ -1,13 +1,13 @@
-"""Value and sensor data schemas."""
+"""Sensor values and sensor data schemas."""
 
 import datetime
 from pydantic import BaseModel, Field
 
-from backend.app.common.constants import SENSOR_THRESHOLDS
+from app.common.constants import SENSOR_THRESHOLDS
 
 
-# Values
-class ValuesResponse(BaseModel):
+# Values Responses
+class SensorValuesResponse(BaseModel):
     """Latest sensor values for a plant."""
 
     soilMoist: float
@@ -18,7 +18,7 @@ class ValuesResponse(BaseModel):
 
 
 # Values Requests
-class ValuesAddRequest(BaseModel):
+class SensorValuesAddRequest(BaseModel):
     """Sensor data ingestion request schema."""
 
     moduleId: str = Field(..., min_length=1, max_length=50)

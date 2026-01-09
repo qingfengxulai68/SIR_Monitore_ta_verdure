@@ -69,6 +69,7 @@ def init_settings() -> None:
     finally:
         session.close()
 
+# To remove in production:
 
 # Initialize sample modules
 def init_modules() -> None:

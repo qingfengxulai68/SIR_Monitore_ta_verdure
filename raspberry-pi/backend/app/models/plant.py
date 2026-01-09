@@ -2,7 +2,7 @@
 
 from sqlalchemy import CheckConstraint, Column, Float, ForeignKey, Integer, String
 
-from backend.app.common.constants import SENSOR_THRESHOLDS
+from app.common.constants import SENSOR_THRESHOLDS
 from app.models.user import Base
 
 

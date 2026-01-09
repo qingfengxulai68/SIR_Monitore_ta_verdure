@@ -1,7 +1,7 @@
 """Background tasks."""
 
-from app.tasks.heartbeat import HeartbeatChecker
+from app.tasks.module_heartbeat import ModuleHeartbeatChecker
 
 __all__ = [
-    "HeartbeatChecker",
+    "ModuleHeartbeatChecker",
 ]

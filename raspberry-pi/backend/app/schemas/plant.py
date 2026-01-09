@@ -1,11 +1,10 @@
 """Plant schemas."""
 
 from typing import Literal
-
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from backend.app.common.constants import SENSOR_THRESHOLDS
-from app.schemas.values import ValuesResponse
+from app.common.constants import SENSOR_THRESHOLDS
+from app.schemas.sensor_values import SensorValuesResponse
 
 
 # Thresholds Ranges
@@ -110,5 +109,5 @@ class PlantResponse(BaseModel):
     name: str
     moduleId: str
     status: Literal["ok", "alert", "offline"]
-    latestValues: ValuesResponse | None = None
+    latestValues: SensorValuesResponse | None = None
     thresholds: ThresholdsResponse

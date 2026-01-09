@@ -4,16 +4,15 @@ import asyncio
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
-from backend.app.common.constants import HEARTBEAT_CHECK_INTERVAL_SECONDS
+from app.common.constants import MODULE_HEARTBEAT_CHECK_INTERVAL_SECONDS
 from app.database import engine
 from app.models.module import Module
 from app.models.plant import Plant
-from app.schemas.websocket import ModuleConnectionMessage, ModuleConnectionPayload
-from backend.app.common.utils import is_module_online
+from app.common.utils import is_module_online
 from app.websocket import ws_manager
 
 
-class HeartbeatChecker:
+class ModuleHeartbeatChecker:
     """Background task for checking module heartbeats."""
 
     def __init__(self) -> None:
@@ -40,7 +39,7 @@ class HeartbeatChecker:
 
     async def _run(self) -> None:
         """Main loop for heartbeat checking."""
-        interval = HEARTBEAT_CHECK_INTERVAL_SECONDS
+        interval = MODULE_HEARTBEAT_CHECK_INTERVAL_SECONDS
         while self._running:
             try:
                 await self._check_heartbeats()
@@ -66,18 +65,10 @@ class HeartbeatChecker:
                     ).scalars().first()
                     
                     if plant:
-                        await ws_manager.emit_module_connection(
-                            ModuleConnectionMessage(
-                                payload=ModuleConnectionPayload(
-                                    moduleId=module.id,
-                                    isOnline=False,
-                                    coupledPlantId=plant.id,
-                                )
-                            )
-                        )
+                        await ws_manager.emit_module_connection(module.id, False, plant.id)
                 elif is_online and was_offline:
                     self._offline_modules.discard(module.id)
 
 
 # Global heartbeat checker instance
-heartbeat_checker = HeartbeatChecker()
+module_heartbeat_checker = ModuleHeartbeatChecker()

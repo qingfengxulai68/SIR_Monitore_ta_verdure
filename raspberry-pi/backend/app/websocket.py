@@ -3,14 +3,13 @@
 import asyncio
 import json
 import uuid
-from typing import Annotated
-
+from typing import Annotated, Literal
 from fastapi import Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from app.auth.jwt import decode_token
 
-
+# WebSocket Manager
 class WebSocketManager:
     """Manages WebSocket connections and broadcasts messages."""
 
@@ -50,18 +49,41 @@ class WebSocketManager:
         for connection_id in disconnected:
             await self.disconnect(connection_id)
 
-    async def emit_plant_metrics(self, message: BaseModel) -> None:
+    async def emit_plant_metrics(self, plant_id: int, values, status: Literal["ok", "alert", "offline"]) -> None:
         """Broadcast plant metrics to all clients."""
+        from app.schemas.websocket import PlantMetricsMessage, PlantMetricsPayload
+        message = PlantMetricsMessage(
+            payload=PlantMetricsPayload(
+                plantId=plant_id,
+                values=values,
+                status=status,
+            )
+        )
         await self.broadcast(message)
 
-    async def emit_module_connection(self, message: BaseModel) -> None:
+    async def emit_module_connection(self, module_id: str, is_online: bool, coupled_plant_id: int | None) -> None:
         """Broadcast module connection status to all clients."""
+        from app.schemas.websocket import ModuleConnectionMessage, ModuleConnectionPayload
+        message = ModuleConnectionMessage(
+            payload=ModuleConnectionPayload(
+                moduleId=module_id,
+                isOnline=is_online,
+                coupledPlantId=coupled_plant_id,
+            )
+        )
         await self.broadcast(message)
 
-    async def emit_entity_change(self, message: BaseModel) -> None:
+    async def emit_entity_change(self, entity: str, action: str, entity_id) -> None:
         """Broadcast entity changes to all clients."""
+        from app.schemas.websocket import EntityChangeMessage, EntityChangePayload
+        message = EntityChangeMessage(
+            payload=EntityChangePayload(
+                entity=entity,
+                action=action,
+                id=entity_id,
+            )
+        )
         await self.broadcast(message)
-
 
 # Global WebSocket manager instance
 ws_manager = WebSocketManager()

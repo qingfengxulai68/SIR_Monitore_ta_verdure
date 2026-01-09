@@ -1,22 +1,18 @@
 """Modules router."""
 
-import os
-from datetime import UTC, datetime
 from typing import Annotated
-
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import case, delete, func, select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.auth.jwt import verify_jwt_user
-from backend.app.common.constants import HEARTBEAT_TIMEOUT_SECONDS
+from app.common.utils import is_module_online
 from app.database import get_session
 from app.models.module import Module
 from app.models.plant import Plant
 from app.models.user import User
-from app.models.values import Values
-from app.schemas.module import CoupledPlantResponse, ModuleResponse
-from app.schemas.websocket import EntityChangeMessage, EntityChangePayload
+from app.models.sensor_values import SensorValues
+from app.schemas.module import ModuleResponse
 from app.websocket import ws_manager
 
 router = APIRouter(prefix="/modules", tags=["Modules"])
@@ -29,17 +25,9 @@ async def get_modules(
     coupled: Annotated[bool | None, Query()] = None,
 ) -> list[ModuleResponse]:
     """Get all modules with their connectivity status."""
-    # Calculate isOnline in SQL using CASE and datetime functions
-    now = datetime.now(UTC)
-    is_online = case(
-        (Module.last_seen.is_(None), False),
-        (func.julianday(now) - func.julianday(Module.last_seen) <= HEARTBEAT_TIMEOUT_SECONDS / 86400.0, True),
-        else_=False
-    ).label("is_online")
-    
     # Use LEFT JOIN to fetch modules and their coupled plants in a single query
     query = (
-        select(Module, Plant, is_online)
+        select(Module, Plant)
         .outerjoin(Plant, Module.id == Plant.module_id)
     )
     if coupled is not None:
@@ -51,14 +39,14 @@ async def get_modules(
         ModuleResponse(
             id=module.id,
             coupled=module.coupled,
-            coupledPlant=CoupledPlantResponse(id=plant.id, name=plant.name) if plant else None,
-            isOnline=is_online_value,
+            coupledPlantId=plant.id if plant else None,
+            isOnline=is_module_online(module),
         )
-        for module, plant, is_online_value in results
+        for module, plant in results
     ]
 
 
-@router.delete("/{module_id}/coupling", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{module_id}/coupling", status_code=204)
 async def uncouple_module(
     module_id: str,
     session: Annotated[Session, Depends(get_session)],
@@ -80,7 +68,7 @@ async def uncouple_module(
 
     # Delete plant and its values if exists
     if plant:
-        session.execute(delete(Values).where(Values.plant_id == plant.id))
+        session.execute(delete(SensorValues).where(SensorValues.plant_id == plant.id))
         session.delete(plant)
 
     # Uncouple module
@@ -89,28 +77,10 @@ async def uncouple_module(
     session.commit()
 
     # Broadcast ENTITY_CHANGE for module update (now available)
-    await ws_manager.emit_entity_change(
-        EntityChangeMessage(
-            payload=EntityChangePayload(
-                entity="module",
-                action="update",
-                id=module_id,
-            )
-        )
-    )
+    await ws_manager.emit_entity_change("module", "update", module_id)
 
     # Broadcast ENTITY_CHANGE for plant deletion if existed
     if plant_id:
-        await ws_manager.emit_entity_change(
-            EntityChangeMessage(
-                payload=EntityChangePayload(
-                    entity="plant",
-                    action="delete",
-                    id=plant_id,
-                )
-            )
-        )
+        await ws_manager.emit_entity_change("plant", "delete", plant_id)
 
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
+    

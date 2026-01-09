@@ -1,7 +1,6 @@
 """Authentication router."""
 
 from typing import Annotated
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -52,7 +51,7 @@ async def login(
     )
 
 
-@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/change-password", status_code=204)
 async def change_password(
     request: ChangePasswordRequest,
     current_user: Annotated[User, Depends(verify_jwt_user)],
@@ -71,4 +70,4 @@ async def change_password(
     session.add(current_user)
     session.commit()
 
-    return None
+    

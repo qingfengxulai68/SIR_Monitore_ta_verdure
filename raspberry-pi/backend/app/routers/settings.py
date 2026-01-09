@@ -1,8 +1,7 @@
 """Settings router."""
 
 from typing import Annotated
-
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -28,7 +27,7 @@ async def get_alerts(
     )
 
 
-@router.post("/alerts/enable", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/alerts/enable", status_code=204)
 async def enable_alerts(
     request: AlertsEnableRequest,
     session: Annotated[Session, Depends(get_session)],
@@ -42,7 +41,7 @@ async def enable_alerts(
     session.commit()
 
 
-@router.post("/alerts/disable", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/alerts/disable", status_code=204)
 async def disable_alerts(
     session: Annotated[Session, Depends(get_session)],
     _current_user: Annotated[User, Depends(verify_jwt_user)],

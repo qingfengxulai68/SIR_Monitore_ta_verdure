@@ -1,8 +1,8 @@
 """Application constants."""
 
-# Heartbeat configuration
-HEARTBEAT_TIMEOUT_SECONDS = 120
-HEARTBEAT_CHECK_INTERVAL_SECONDS = 60
+# Module heartbeat configuration
+MODULE_HEARTBEAT_TIMEOUT_SECONDS = 120
+MODULE_HEARTBEAT_CHECK_INTERVAL_SECONDS = 60
 
 # Sensor ranges
 SENSOR_THRESHOLDS = {

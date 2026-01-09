@@ -6,7 +6,7 @@ from app.schemas.auth import (
     LoginResponse,
     UserResponse,
 )
-from app.schemas.module import CoupledPlantResponse, ModuleResponse
+from app.schemas.module import ModuleResponse
 from app.schemas.plant import (
     PlantCreateRequest,
     PlantResponse,
@@ -16,9 +16,9 @@ from app.schemas.plant import (
     ThresholdsRequest,
     ThresholdsResponse,
 )
-from app.schemas.values import (
-    ValuesResponse,
-    ValuesAddRequest,
+from app.schemas.sensor_values import (
+    SensorValuesResponse,
+    SensorValuesAddRequest,
 
 )
 from app.schemas.settings import (
@@ -32,7 +32,6 @@ from app.schemas.websocket import (
     ModuleConnectionPayload,
     PlantMetricsMessage,
     PlantMetricsPayload,
-    PlantMetricsValues,
 )
 
 __all__ = [
@@ -43,7 +42,6 @@ __all__ = [
     "ChangePasswordRequest",
     # Module
     "ModuleResponse",
-    "CoupledPlantResponse",
     # Plant
     "PlantCreateRequest",
     "PlantUpdateRequest",
@@ -53,16 +51,15 @@ __all__ = [
     "ThresholdsRequest",
     "ThresholdsResponse",
     # Values
-    "ValuesResponse",
+    "SensorValuesResponse",
     # Sensor
-    "ValuesAddRequest",
+    "SensorValuesAddRequest",
     # Settings
     "AlertsResponse",
     "AlertsEnableRequest",
     # WebSocket
     "PlantMetricsMessage",
     "PlantMetricsPayload",
-    "PlantMetricsValues",
     "ModuleConnectionMessage",
     "ModuleConnectionPayload",
     "EntityChangeMessage",

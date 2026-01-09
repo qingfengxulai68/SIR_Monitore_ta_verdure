@@ -1,16 +1,16 @@
-"""Values model for storing plant measurements (time series)."""
+"""Sensor values model for storing plant measurements (time series)."""
 
 from datetime import datetime, timezone
 from sqlalchemy import CheckConstraint, Column, DateTime, Float, ForeignKey, Integer
 
-from backend.app.common.constants import SENSOR_THRESHOLDS
+from app.common.constants import SENSOR_THRESHOLDS
 from app.models.user import Base
 
 
-class Values(Base):
+class SensorValues(Base):
     """Sensor values database model (time series data)."""
 
-    __tablename__ = "values"
+    __tablename__ = "sensor_values"
 
     __table_args__ = (
         CheckConstraint(f'soil_moist >= {SENSOR_THRESHOLDS["SOIL_MOIST"]["MIN"]} AND soil_moist <= {SENSOR_THRESHOLDS["SOIL_MOIST"]["MAX"]}', name='check_soil_moist_bounds'),

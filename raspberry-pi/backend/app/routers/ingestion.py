@@ -1,27 +1,18 @@
 """Ingestion router for sensor data from ESP32/Python scripts."""
 
-import os
 from datetime import UTC, datetime
-from typing import Annotated, Literal
-
+from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.api_key import verify_api_key
-from backend.app.common.constants import HEARTBEAT_TIMEOUT_SECONDS
+from app.common.utils import calculate_plant_status, is_module_online
 from app.database import get_session
 from app.models.module import Module
 from app.models.plant import Plant
-from app.models.values import Values
-from app.schemas.values import ValuesAddRequest, ValuesResponse
-from app.schemas.websocket import (
-    PlantMetricsMessage,
-    PlantMetricsPayload,
-    PlantMetricsValues,
-    ModuleConnectionMessage,
-    ModuleConnectionPayload,
-)
+from app.models.sensor_values import SensorValues
+from app.schemas.sensor_values import SensorValuesAddRequest, SensorValuesResponse
 from app.websocket import ws_manager
 
 router = APIRouter(prefix="/ingestion", tags=["Ingestion"])
@@ -29,7 +20,7 @@ router = APIRouter(prefix="/ingestion", tags=["Ingestion"])
 
 @router.post("/", status_code=204)
 async def ingest_sensor_data(
-    request: ValuesAddRequest,
+    request: SensorValuesAddRequest,
     session: Annotated[Session, Depends(get_session)],
     _api_key: Annotated[str, Depends(verify_api_key)],
 ) -> None:
@@ -49,10 +40,7 @@ async def ingest_sensor_data(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plant not found for this module.")
 
     # Check if module was offline before (for MODULE_CONNECTION event)
-    was_offline = not module.last_seen or (
-        (datetime.now(UTC) - module.last_seen.replace(tzinfo=UTC)).total_seconds()
-        > HEARTBEAT_TIMEOUT_SECONDS
-    )
+    was_offline = not is_module_online(module)
 
     # Update last_seen
     now = datetime.now(UTC)
@@ -60,7 +48,7 @@ async def ingest_sensor_data(
     session.add(module)
 
     # Save sensor data
-    values = Values(
+    values = SensorValues(
         plant_id=plant.id,
         soil_moist=request.soilMoist,
         humidity=request.humidity,
@@ -71,47 +59,20 @@ async def ingest_sensor_data(
     session.commit()
 
     # Calculate plant status
-    def calculate_status() -> Literal["ok", "alert", "offline"]:
-        """Calculate plant status based on thresholds."""
-        if not (
-            plant.min_soil_moist <= request.soilMoist <= plant.max_soil_moist
-        ):
-            return "alert"
-        if not (plant.min_humidity <= request.humidity <= plant.max_humidity):
-            return "alert"
-        if not (plant.min_light <= request.light <= plant.max_light):
-            return "alert"
-        if not (plant.min_temp <= request.temp <= plant.max_temp):
-            return "alert"
-        return "ok"
-
-    plant_status = calculate_status()
+    current_new_values = SensorValuesResponse(
+        soilMoist=request.soilMoist,
+        humidity=request.humidity,
+        light=request.light,
+        temp=request.temp,
+        timestamp=now,
+    )
+    plant_status = calculate_plant_status(session, plant, current_new_values)
 
     # Broadcast PLANT_METRICS (always)
-    plant_metrics_msg = PlantMetricsMessage(
-        payload=PlantMetricsPayload(
-            plantId=plant.id,
-            values=PlantMetricsValues(
-                soilMoist=request.soilMoist,
-                humidity=request.humidity,
-                light=request.light,
-                temp=request.temp,
-                timestamp=now,
-            ),
-            status=plant_status,
-        )
-    )
-    await ws_manager.emit_plant_metrics(plant_metrics_msg)
+    await ws_manager.emit_plant_metrics(plant.id, current_new_values, plant_status)
 
     # Broadcast MODULE_CONNECTION (only if module was offline)
     if was_offline:
-        module_connection_msg = ModuleConnectionMessage(
-            payload=ModuleConnectionPayload(
-                moduleId=module.id,
-                isOnline=True,
-                coupledPlantId=plant.id,
-            )
-        )
-        await ws_manager.emit_module_connection(module_connection_msg)
+        await ws_manager.emit_module_connection(module.id, True, plant.id)
 
-    return None
+    
