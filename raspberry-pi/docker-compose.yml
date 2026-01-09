@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    container_name: monitor-backend
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - API_KEY=${API_KEY}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - API_BASE_URL=${API_BASE_URL}
+        - WS_BASE_URL=${WS_BASE_URL}
+    container_name: monitor-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
