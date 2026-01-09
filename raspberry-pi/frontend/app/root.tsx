@@ -1,8 +1,9 @@
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Toaster } from "~/components/ui/sonner"
 import { ThemeProvider } from "~/components/other/theme-provider"
+import { useLogout } from "~/lib/hooks/use-auth"
 import type { Route } from "./+types/root"
 import "./app.css"
 
@@ -15,7 +16,7 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    href: "https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap"
   }
 ]
 
@@ -42,25 +43,27 @@ export function HydrateFallback() {
 }
 
 export default function App() {
-  // 🔹 Initialize QueryClient (one instance per user session)
+  const logout = useLogout()
+
+  // Handle session expired events
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      logout()
+    }
+
+    window.addEventListener("auth:session-expired", handleSessionExpired)
+    return () => window.removeEventListener("auth:session-expired", handleSessionExpired)
+  }, [logout])
+
+  // Initialize QueryClient (one instance per user session)
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Disable automatic refetch on window focus
-            refetchOnWindowFocus: false,
-            // Disable refetch on component remount
-            refetchOnMount: false,
-            // Keep cached data for 5 minutes after last use
-            gcTime: 5 * 60 * 1000,
-            // By default, data is fresh for 0ms (unless overridden with staleTime: Infinity)
-            staleTime: 0,
-            // Automatic retry on error (configured by `retry`; here set to 1)
-            retry: 1
+            retry: false
           },
           mutations: {
-            // Retries disabled for mutations
             retry: false
           }
         }

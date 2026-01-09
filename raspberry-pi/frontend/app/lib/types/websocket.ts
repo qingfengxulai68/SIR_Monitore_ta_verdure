@@ -1,44 +1,44 @@
-import type { PlantMetrics, PlantStatus } from "./plant"
-
-// WebSocket message type (Server → Client)
-export type WebSocketMessageType = "PLANT_METRICS" | "MODULE_CONNECTION" | "ENTITY_CHANGE" | "PONG"
-
-// Base WebSocket message
-export interface WebSocketMessage<T = unknown> {
-  type: WebSocketMessageType
-  payload: T
-}
+import type { SensorValues } from "./sensor-values"
 
 // PLANT_METRICS - Sensor data update (Optimistic Update)
-export interface PlantMetricsPayload {
+export type PlantMetricsPayload = {
   plantId: number
-  values: PlantMetrics
-  status: PlantStatus
+  values: SensorValues
+  status: "ok" | "alert" | "offline"
 }
 
-export type PlantMetricsMessage = WebSocketMessage<PlantMetricsPayload>
+export type PlantMetricsMessage = {
+  type: "PLANT_METRICS"
+  payload: PlantMetricsPayload
+}
 
 // MODULE_CONNECTION - Module connection status change (Optimistic Update)
-export interface ModuleConnectionPayload {
+export type ModuleConnectionPayload = {
   moduleId: string
   isOnline: boolean
   coupledPlantId: number | null
 }
 
-export type ModuleConnectionMessage = WebSocketMessage<ModuleConnectionPayload>
+export type ModuleConnectionMessage = {
+  type: "MODULE_CONNECTION"
+  payload: ModuleConnectionPayload
+}
 
 // ENTITY_CHANGE - Cache invalidation signal (Refetch)
-export interface EntityChangePayload {
+export type EntityChangePayload = {
   entity: "plant" | "module"
   action: "create" | "update" | "delete"
   id: number | string
 }
 
-export type EntityChangeMessage = WebSocketMessage<EntityChangePayload>
+export type EntityChangeMessage = {
+  type: "ENTITY_CHANGE"
+  payload: EntityChangePayload
+}
 
 // Union of all possible messages
 export type IncomingWebSocketMessage =
   | PlantMetricsMessage
   | ModuleConnectionMessage
   | EntityChangeMessage
-  | WebSocketMessage<null> // For PONG
+  | { type: "PONG" }

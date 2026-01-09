@@ -12,11 +12,10 @@ from app.models.settings import Settings
 from app.models.user import Base
 
 # SQLite specific: check_same_thread=False for async
-connect_args = {"check_same_thread": False} if "sqlite" in os.environ.get('DATABASE_URL', 'sqlite:///./terrarium.db') else {}
+connect_args = {"check_same_thread": False} if "sqlite" in os.environ.get('DATABASE_URL') else {}
 
 engine = create_engine(
-    os.environ.get('DATABASE_URL', 'sqlite:///./terrarium.db'),
-    echo=bool(os.environ.get('DEBUG', 'True').lower() == 'true'),
+    os.environ.get('DATABASE_URL'),
     connect_args=connect_args,
 )
 
@@ -51,8 +50,8 @@ def init_admin_user() -> None:
 
         # Create admin user from environment
         admin = User(
-            username=os.environ.get('ADMIN_USERNAME', 'admin'),
-            password_hash=hash_password(os.environ.get('ADMIN_PASSWORD', 'demo1234')),
+            username=os.environ.get('ADMIN_USERNAME'),
+            password_hash=hash_password(os.environ.get('ADMIN_PASSWORD')),
         )
         session.add(admin)
         session.commit()
@@ -70,6 +69,7 @@ def init_settings() -> None:
     finally:
         session.close()
 
+# To remove in production:
 
 # Initialize sample modules
 def init_modules() -> None:

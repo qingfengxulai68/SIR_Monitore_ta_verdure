@@ -1,4 +1,30 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+*.manifest
+*.spec
+
+# --- Virtual Environments ---
+venv/
+
+# --- Environment Variables ---
 .env
-/__pycache__/
-*.pyc
+
+# --- IDE Settings ---
+.vscode/
+.idea/
+
+# --- Miscellaneous ---
+*.bak
+*.swp
+*.tmp
+*.DS_Store
+Thumbs.db
+
+# --- Database Files ---
 terrarium.db

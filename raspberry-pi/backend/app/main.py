@@ -1,14 +1,15 @@
-"""Terrarium API - Plant Monitoring System Backend."""
-
-import os
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+"""Terrarium API - Plant Monitoring System """
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
+
+import tomllib
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import AsyncGenerator
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import create_db_and_tables, init_admin_user, init_modules, init_plants, init_settings
 from app.routers import (
@@ -18,9 +19,20 @@ from app.routers import (
     plants_router,
     settings_router,
 )
-from app.tasks.heartbeat import heartbeat_checker
+from app.tasks.module_heartbeat import module_heartbeat_checker
 from app.websocket import websocket_endpoint
 
+
+load_dotenv()
+
+# Load project metadata from pyproject.toml
+pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+with open(pyproject_path, "rb") as f:
+    pyproject_data = tomllib.load(f)
+
+PROJECT_NAME = pyproject_data["project"]["name"]
+PROJECT_VERSION = pyproject_data["project"]["version"]
+PROJECT_DESCRIPTION = pyproject_data["project"]["description"]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -41,18 +53,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     init_plants()
 
     # Start heartbeat checker
-    await heartbeat_checker.start()
+    await module_heartbeat_checker.start()
 
     yield
 
     # Shutdown
-    await heartbeat_checker.stop()
+    await module_heartbeat_checker.stop()
 
 
 app = FastAPI(
-    title=os.environ.get('APP_NAME', 'Terrarium API'),
-    description="IoT Plant Monitoring System Backend",
-    version="0.1.0",
+    title=PROJECT_NAME,
+    description=PROJECT_DESCRIPTION,
+    version=PROJECT_VERSION,
     lifespan=lifespan,
 )
 
@@ -80,7 +92,8 @@ app.websocket("/ws")(websocket_endpoint)
 async def root() -> dict:
     """Root endpoint - API health check."""
     return {
-        "name": os.environ.get('APP_NAME', 'Terrarium API'),
-        "status": "healthy",
-        "version": "0.1.0",
+        "name": app.title,
+        "version": app.version,
+        "description": app.description,
+        "status": "healthy"
     }

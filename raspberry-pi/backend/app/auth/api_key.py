@@ -15,7 +15,7 @@ async def verify_api_key(api_key: str | None = Security(api_key_header)) -> str:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="API Key required",
         )
-    if api_key != os.environ.get('API_KEY', 'your-api-key-change-in-production'):
+    if api_key != os.environ.get('API_KEY'):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid API Key",

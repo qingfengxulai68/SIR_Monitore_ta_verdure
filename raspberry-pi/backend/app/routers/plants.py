@@ -1,18 +1,15 @@
 """Plants router."""
 
-import os
-from datetime import UTC, datetime, timedelta
-from typing import Annotated, Literal
-
-from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
-from sqlalchemy import delete, select
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from sqlalchemy import delete, select, func
 from sqlalchemy.orm import Session
 
 from app.auth.jwt import verify_jwt_user
 from app.database import get_session
 from app.models.module import Module
 from app.models.plant import Plant
-from app.models.values import Values
+from app.models.sensor_values import SensorValues
 from app.models.user import User
 from app.schemas.plant import (
     PlantCreateRequest,
@@ -21,59 +18,11 @@ from app.schemas.plant import (
     ThresholdRangeResponse,
     ThresholdsResponse,
 )
-from app.schemas.values import (
-    ValuesResponse,
-)
-from app.schemas.websocket import (
-    EntityChangeMessage,
-    EntityChangePayload,
-)
+from app.schemas.sensor_values import SensorValuesResponse
+from app.common.utils import calculate_plant_status
 from app.websocket import ws_manager
 
 router = APIRouter(prefix="/plants", tags=["Plants"])
-
-
-def _is_module_online(module: Module | None) -> bool:
-    """Check if module is online."""
-    if not module or not module.last_seen:
-        return False
-    last_seen = module.last_seen.replace(tzinfo=UTC) if module.last_seen.tzinfo is None else module.last_seen
-    return (datetime.now(UTC) - last_seen).total_seconds() <= int(os.environ.get('HEARTBEAT_TIMEOUT_SECONDS', '120'))
-
-
-def _get_latest_values(session: Session, plant_id: int) -> ValuesResponse | None:
-    """Get latest sensor values for a plant."""
-    latest = session.execute(
-        select(Values).where(Values.plant_id == plant_id).order_by(Values.timestamp.desc())  # type: ignore
-    ).scalars().first()
-    if not latest:
-        return None
-    return ValuesResponse(
-        soilMoist=latest.soil_moist,
-        humidity=latest.humidity,
-        light=latest.light,
-        temp=latest.temp,
-        timestamp=latest.timestamp,
-    )
-
-
-def _calculate_status(session: Session, plant: Plant, latest_values: ValuesResponse | None) -> Literal["ok", "alert", "offline"]:
-    """Calculate plant status."""
-    module = session.execute(select(Module).where(Module.id == plant.module_id)).scalars().first()
-    if not _is_module_online(module):
-        return "offline"
-    if not latest_values:
-        return "ok"
-    # Check thresholds
-    if not (plant.min_soil_moist <= latest_values.soilMoist <= plant.max_soil_moist):
-        return "alert"
-    if not (plant.min_humidity <= latest_values.humidity <= plant.max_humidity):
-        return "alert"
-    if not (plant.min_light <= latest_values.light <= plant.max_light):
-        return "alert"
-    if not (plant.min_temp <= latest_values.temp <= plant.max_temp):
-        return "alert"
-    return "ok"
 
 
 @router.get("", response_model=list[PlantResponse])
@@ -82,22 +31,60 @@ async def get_plants(
     _current_user: Annotated[User, Depends(verify_jwt_user)],
 ) -> list[PlantResponse]:
     """Get all plants."""
-    plants = session.execute(select(Plant)).scalars().all()
+    # Subquery to get max timestamp per plant
+    latest_timestamps_subq = (
+        select(SensorValues.plant_id, func.max(SensorValues.timestamp).label("max_timestamp"))
+        .group_by(SensorValues.plant_id)
+        .subquery()
+    )
+
+    # Get all plants with their latest values in a single query
+    query = (
+        select(Plant, SensorValues)
+        .outerjoin(latest_timestamps_subq, Plant.id == latest_timestamps_subq.c.plant_id)
+        .outerjoin(
+            SensorValues,
+            (SensorValues.plant_id == latest_timestamps_subq.c.plant_id)
+            & (SensorValues.timestamp == latest_timestamps_subq.c.max_timestamp),
+        )
+    )
+    results = session.execute(query).all()
+
     return [
         PlantResponse(
-            id=p.id,
-            name=p.name,
-            moduleId=p.module_id,
-            status=_calculate_status(session, p, lv := _get_latest_values(session, p.id)),
+            id=plant.id,
+            name=plant.name,
+            moduleId=plant.module_id,
+            status=calculate_plant_status(
+                session,
+                plant,
+                lv := (
+                    SensorValuesResponse(
+                        soilMoist=val.soil_moist,
+                        humidity=val.humidity,
+                        light=val.light,
+                        temp=val.temp,
+                        timestamp=val.timestamp,
+                    )
+                    if val
+                    else None
+                ),
+            ),
             latestValues=lv,
             thresholds=ThresholdsResponse(
-                soilMoist=ThresholdRangeResponse(min=p.min_soil_moist, max=p.max_soil_moist),
-                humidity=ThresholdRangeResponse(min=p.min_humidity, max=p.max_humidity),
-                light=ThresholdRangeResponse(min=p.min_light, max=p.max_light),
-                temp=ThresholdRangeResponse(min=p.min_temp, max=p.max_temp),
+                soilMoist=ThresholdRangeResponse(
+                    min=plant.min_soil_moist, max=plant.max_soil_moist
+                ),
+                humidity=ThresholdRangeResponse(
+                    min=plant.min_humidity, max=plant.max_humidity
+                ),
+                light=ThresholdRangeResponse(
+                    min=plant.min_light, max=plant.max_light
+                ),
+                temp=ThresholdRangeResponse(min=plant.min_temp, max=plant.max_temp),
             ),
         )
-        for p in plants
+        for plant, val in results
     ]
 
 @router.get("/{plant_id}", response_model=PlantResponse)
@@ -107,18 +94,37 @@ async def get_plant(
     _current_user: Annotated[User, Depends(verify_jwt_user)],
 ) -> PlantResponse:
     """Get a specific plant by ID."""
-    # Get plant
-    plant = session.execute(select(Plant).where(Plant.id == plant_id)).scalars().first()
-    if not plant:
+    # Get plant and latest values
+    query = (
+        select(Plant, SensorValues)
+        .outerjoin(SensorValues, SensorValues.plant_id == Plant.id)
+        .where(Plant.id == plant_id)
+        .order_by(SensorValues.timestamp.desc())
+        .limit(1)
+    )
+    result = session.execute(query).first()
+
+    if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plant not found")
 
-    # Get current values
-    latest_values = _get_latest_values(session, plant.id)
+    plant, latest_val_db = result
+
+    # Map to schema
+    latest_values = None
+    if latest_val_db:
+        latest_values = SensorValuesResponse(
+            soilMoist=latest_val_db.soil_moist,
+            humidity=latest_val_db.humidity,
+            light=latest_val_db.light,
+            temp=latest_val_db.temp,
+            timestamp=latest_val_db.timestamp,
+        )
+
     return PlantResponse(
         id=plant.id,
         name=plant.name,
         moduleId=plant.module_id,
-        status=_calculate_status(session, plant, latest_values),
+        status=calculate_plant_status(session, plant, latest_values),
         latestValues=latest_values,
         thresholds=ThresholdsResponse(
             soilMoist=ThresholdRangeResponse(min=plant.min_soil_moist, max=plant.max_soil_moist),
@@ -163,34 +169,15 @@ async def create_plant(
     session.commit()
     session.refresh(plant)
 
-    # Get current values
-    latest_values = _get_latest_values(session, plant.id)
-
     # Broadcast ENTITY_CHANGE for plant creation
-    await ws_manager.emit_entity_change(
-        EntityChangeMessage(
-            payload=EntityChangePayload(
-                entity="plant",
-                action="create",
-                id=plant.id,
-            )
-        )
-    )
+    await ws_manager.emit_entity_change("plant", "create", plant.id)
 
     # Broadcast ENTITY_CHANGE for module update (marked as coupled)
-    await ws_manager.emit_entity_change(
-        EntityChangeMessage(
-            payload=EntityChangePayload(
-                entity="module",
-                action="update",
-                id=request.moduleId,
-            )
-        )
-    )
+    await ws_manager.emit_entity_change("module", "update", request.moduleId)
 
     return Response(status_code=status.HTTP_201_CREATED, headers={"Location": f"/plants/{plant.id}"})
 
-@router.put("/{plant_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.put("/{plant_id}", status_code=204)
 async def update_plant(
     plant_id: int,
     request: PlantUpdateRequest,
@@ -198,6 +185,7 @@ async def update_plant(
     _current_user: Annotated[User, Depends(verify_jwt_user)],
 ) -> None:
     """Update a plant's details."""
+    # Get plant
     plant = session.execute(select(Plant).where(Plant.id == plant_id)).scalars().first()
     if not plant:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plant not found")
@@ -219,6 +207,7 @@ async def update_plant(
             old_module.coupled = False
             session.add(old_module)
 
+        # Couple new module
         new_module.coupled = True
         session.add(new_module)
         plant.module_id = request.moduleId
@@ -241,43 +230,17 @@ async def update_plant(
     session.refresh(plant)
 
     # Broadcast ENTITY_CHANGE for plant update
-    await ws_manager.emit_entity_change(
-        EntityChangeMessage(
-            payload=EntityChangePayload(
-                entity="plant",
-                action="update",
-                id=plant.id,
-            )
-        )
-    )
+    await ws_manager.emit_entity_change("plant", "update", plant.id)
 
     # If module changed, broadcast ENTITY_CHANGE for both old and new modules
     if module_changed:
         # Old module (now available)
-        await ws_manager.emit_entity_change(
-            EntityChangeMessage(
-                payload=EntityChangePayload(
-                    entity="module",
-                    action="update",
-                    id=old_module_id,
-                )
-            )
-        )
+        await ws_manager.emit_entity_change("module", "update", old_module_id)
         # New module (now coupled)
-        await ws_manager.emit_entity_change(
-            EntityChangeMessage(
-                payload=EntityChangePayload(
-                    entity="module",
-                    action="update",
-                    id=request.moduleId,
-                )
-            )
-        )
+        await ws_manager.emit_entity_change("module", "update", request.moduleId)
 
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.delete("/{plant_id}", status_code=status.HTTP_204_NO_CONTENT)
+    
+@router.delete("/{plant_id}", status_code=204)
 async def delete_plant(
     plant_id: int,
     session: Annotated[Session, Depends(get_session)],
@@ -293,7 +256,7 @@ async def delete_plant(
     coupled_module_id = plant.module_id
 
     # Delete sensor values
-    session.execute(delete(Values).where(Values.plant_id == plant.id))
+    session.execute(delete(SensorValues).where(SensorValues.plant_id == plant.id))
     session.delete(plant)
     session.commit()
 
@@ -305,23 +268,7 @@ async def delete_plant(
         session.commit()
 
     # Broadcast ENTITY_CHANGE for plant deletion
-    await ws_manager.emit_entity_change(
-        EntityChangeMessage(
-            payload=EntityChangePayload(
-                entity="plant",
-                action="delete",
-                id=plant_id,
-            )
-        )
-    )
+    await ws_manager.emit_entity_change("plant", "delete", plant_id)
 
     # Broadcast ENTITY_CHANGE for module update (now available)
-    await ws_manager.emit_entity_change(
-        EntityChangeMessage(
-            payload=EntityChangePayload(
-                entity="module",
-                action="update",
-                id=coupled_module_id,
-            )
-        )
-    )
+    await ws_manager.emit_entity_change("module", "update", coupled_module_id)

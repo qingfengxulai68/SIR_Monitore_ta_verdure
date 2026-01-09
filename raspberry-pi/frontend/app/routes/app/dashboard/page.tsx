@@ -1,10 +1,10 @@
 import { useEffect } from "react"
 import type { Route } from "./+types/page"
-import { useModules } from "~/hooks/use-modules"
-import { usePlants } from "~/hooks/use-plants"
-import { useHeader } from "~/components/nav/header/header-provider"
+import { useModules } from "~/lib/hooks/use-modules"
+import { usePlants } from "~/lib/hooks/use-plants"
+import { useHeader } from "~/layout/header/header-provider"
 import { SystemOverview } from "./components/system-overview"
-import { PlantsStatus } from "./components/plants-status"
+import { PlantsAttention } from "./components/plants-attention"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import { Spinner } from "~/components/ui/spinner"
 import { ErrorWithRetry } from "~/components/other/error-with-retry"
@@ -49,7 +49,7 @@ export default function DashboardPage() {
         ) : (
           <>
             <SystemOverview plants={plants} modules={modules} />
-            <PlantsStatus plants={plants} />
+            <PlantsAttention plants={plants} />
           </>
         )}
       </main>

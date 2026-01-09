@@ -7,10 +7,11 @@ import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
 import { Field, FieldGroup, FieldLabel, FieldError } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
-import { isAuthenticated } from "~/hooks/use-auth"
+import { isAuthenticated } from "~/lib/hooks/use-auth"
 import { Spinner } from "~/components/ui/spinner"
-import { useLogin } from "~/hooks/use-auth"
+import { useLogin } from "~/lib/hooks/use-auth"
 import { loginRequestSchema, type LoginRequest } from "~/lib/types"
+import { toast } from "sonner"
 
 // Client-side loader to redirect authenticated users
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
@@ -85,6 +86,7 @@ export default function SignInPage() {
                             href="#"
                             className="ml-auto text-sm underline-offset-4 hover:underline text-foreground"
                             tabIndex={-1}
+                            onClick={() => toast.info("Feature not available yet")}
                           >
                             Forgot your password?
                           </a>

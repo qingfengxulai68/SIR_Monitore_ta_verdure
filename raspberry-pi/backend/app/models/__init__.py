@@ -2,7 +2,7 @@
 
 from app.models.module import Module
 from app.models.plant import Plant
-from app.models.values import Values
+from app.models.sensor_values import SensorValues
 from app.models.settings import Settings
 from app.models.user import User
 

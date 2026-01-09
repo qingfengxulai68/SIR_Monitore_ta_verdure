@@ -1,4 +1,4 @@
-import { getToken, logout } from "~/hooks/use-auth"
+import { getToken } from "~/lib/hooks/use-auth"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 
@@ -53,10 +53,9 @@ async function apiRequest<TResponse>(config: RequestConfig): Promise<TResponse> 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, requestOptions)
 
     if (!response.ok) {
-      // Special case: 401 Unauthorized → Logout
+      // Special case: 401 Unauthorized → Dispatch event for logout
       if (response.status === 401) {
-        logout()
-        throw new ApiError(401, "Session expired", endpoint)
+        window.dispatchEvent(new CustomEvent("auth:session-expired"))
       }
 
       // Attempt to extract backend error message

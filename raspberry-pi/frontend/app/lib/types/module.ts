@@ -1,10 +1,7 @@
-// Module response type definition
-export interface ModuleResponse {
+// Module type definition
+export type Module = {
   id: string
   isOnline: boolean
   coupled: boolean
-  coupledPlant: {
-    id: number
-    name: string
-  } | null
+  coupledPlantId: number | null
 }

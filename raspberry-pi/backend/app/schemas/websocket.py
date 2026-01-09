@@ -2,28 +2,17 @@
 
 from datetime import datetime
 from typing import Literal
-
 from pydantic import BaseModel
 
-
-# WebSocket Message Types (The Holy Trinity)
-
-
-class PlantMetricsValues(BaseModel):
-    """Sensor values for PLANT_METRICS."""
-
-    soilMoist: float
-    humidity: float
-    light: float
-    temp: float
-    timestamp: datetime
+from app.schemas.sensor_values import SensorValuesResponse
 
 
+# PlantMetrics WebSocket event schemas
 class PlantMetricsPayload(BaseModel):
     """PLANT_METRICS WebSocket event payload."""
 
     plantId: int
-    values: PlantMetricsValues
+    values: SensorValuesResponse
     status: Literal["ok", "alert", "offline"]
 
 
@@ -34,6 +23,7 @@ class PlantMetricsMessage(BaseModel):
     payload: PlantMetricsPayload
 
 
+# ModuleConnection WebSocket event schemas
 class ModuleConnectionPayload(BaseModel):
     """MODULE_CONNECTION WebSocket event payload."""
 
@@ -49,6 +39,7 @@ class ModuleConnectionMessage(BaseModel):
     payload: ModuleConnectionPayload
 
 
+# EntityChange WebSocket event schemas
 class EntityChangePayload(BaseModel):
     """ENTITY_CHANGE WebSocket event payload."""
 

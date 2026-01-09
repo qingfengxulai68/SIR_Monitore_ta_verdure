@@ -1,16 +1,15 @@
-import { Flower2, Cpu, AlertCircle, Activity } from "lucide-react"
+import { Flower2, Cpu, AlertCircle, WifiOff } from "lucide-react"
 import { Card, CardHeader, CardTitle } from "~/components/ui/card"
-import type { PlantResponse, ModuleResponse } from "~/lib/types"
+import type { Plant, Module } from "~/lib/types"
 
 interface SystemOverviewProps {
-  plants: PlantResponse[]
-  modules: ModuleResponse[]
+  plants: Plant[]
+  modules: Module[]
 }
 
 export function SystemOverview({ plants, modules }: SystemOverviewProps) {
   const plantsWithAlerts = plants.filter((plant) => plant.status === "alert")
-  const systemHealth =
-    plants.length > 0 ? Math.round(((plants.length - plantsWithAlerts.length) / plants.length) * 100) : 100
+  const offlinePlants = plants.filter((plant) => plant.status === "offline")
   return (
     <>
       <div>
@@ -45,19 +44,17 @@ export function SystemOverview({ plants, modules }: SystemOverviewProps) {
               <AlertCircle className="h-4 w-4 text-destructive" />
               <CardTitle className="text-sm font-medium text-muted-foreground">Active Alerts</CardTitle>
             </div>
-            <p className={`text-3xl font-semibold ${plantsWithAlerts.length > 0 ? "text-destructive" : ""}`}>
-              {plantsWithAlerts.length}
-            </p>
+            <p className={`text-3xl font-semibold`}>{plantsWithAlerts.length}</p>
           </CardHeader>
         </Card>
 
         <Card className="gap-0">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-purple-600" />
-              <CardTitle className="text-sm font-medium text-muted-foreground">System Health</CardTitle>
+              <WifiOff className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Offline Plants</CardTitle>
             </div>
-            <p className="text-3xl font-semibold">{systemHealth}%</p>
+            <p className={`text-3xl font-semibold`}>{offlinePlants.length}</p>
           </CardHeader>
         </Card>
       </div>
