@@ -1,14 +1,14 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-// ADRESSE MAC DU RÉCEPTEUR (À remplacer par l'adresse de votre Pi ou 2ème ESP32)
+// ADRESSE MAC DU RÉCEPTEUR (À remplacer par l'adresse du Pi ou 2ème ESP32)
 uint8_t broadcastAddress[] = {0x80, 0xF3, 0xDA, 0x60, 0x40, 0xB8};
 
 // Structure des données à envoyer (doit être identique côté récepteur)
 typedef struct struct_message {
   int id;          // ID de la plante
   float temp;      // Température
-  int hum;         // Humidité
+  float hum;         // Humidité
   bool lowBattery; // Alerte batterie
 } struct_message;
 
@@ -51,7 +51,7 @@ void loop() {
   // Simulation de lecture de capteurs
   myData.id = 1;
   myData.temp = 24.5;
-  myData.hum = analogRead(34); // Exemple sur GPIO 34
+  myData.hum = 30.0;
   myData.lowBattery = false;
 
   // Envoi du message
