@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Cloud, Sun, Droplets, Thermometer } from "lucide-react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 
 import type { Metrics, Plant } from "~/lib/types"
@@ -12,7 +12,15 @@ const getChartColor = (key: string) => {
   return style.getPropertyValue(`--${key}`).trim()
 }
 
-export function Charts({ plant }: { plant: Plant }) {
+export function Charts({
+  plant,
+  showGrid,
+  showThresholds
+}: {
+  plant: Plant
+  showGrid: boolean
+  showThresholds: boolean
+}) {
   const [chartData, setChartData] = useState<Metrics[]>([])
 
   useEffect(() => {
@@ -42,10 +50,28 @@ export function Charts({ plant }: { plant: Plant }) {
         <CardContent>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={chartData} margin={{ left: -30, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.3} />}
               <XAxis dataKey="timestamp" fontSize={12} />
               <YAxis domain={[0, 100]} fontSize={12} />
               <Tooltip content={<CustomTooltip />} />
+              {showThresholds && (
+                <>
+                  <ReferenceLine
+                    y={plant.thresholds.soilMoist.min}
+                    stroke="#64748b"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.7}
+                    label={{ value: "Min", position: "insideTopRight", fontSize: 10, fill: "#64748b" }}
+                  />
+                  <ReferenceLine
+                    y={plant.thresholds.soilMoist.max}
+                    stroke="#64748b"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.7}
+                    label={{ value: "Max", position: "insideBottomRight", fontSize: 10, fill: "#64748b" }}
+                  />
+                </>
+              )}
               <Line
                 type="monotone"
                 dataKey="soilMoist"
@@ -69,10 +95,28 @@ export function Charts({ plant }: { plant: Plant }) {
         <CardContent>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={chartData} margin={{ left: -30, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.3} />}
               <XAxis dataKey="timestamp" fontSize={12} />
               <YAxis domain={[0, 100]} fontSize={12} />
               <Tooltip content={<CustomTooltip />} />
+              {showThresholds && (
+                <>
+                  <ReferenceLine
+                    y={plant.thresholds.humidity.min}
+                    stroke="#64748b"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.7}
+                    label={{ value: "Min", position: "insideTopRight", fontSize: 10, fill: "#64748b" }}
+                  />
+                  <ReferenceLine
+                    y={plant.thresholds.humidity.max}
+                    stroke="#64748b"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.7}
+                    label={{ value: "Max", position: "insideBottomRight", fontSize: 10, fill: "#64748b" }}
+                  />
+                </>
+              )}
               <Line type="monotone" dataKey="humidity" stroke={getChartColor("humidity")} strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -90,10 +134,28 @@ export function Charts({ plant }: { plant: Plant }) {
         <CardContent>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={chartData} margin={{ left: -30, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.3} />}
               <XAxis dataKey="timestamp" fontSize={12} />
               <YAxis domain={[0, 50]} fontSize={12} />
               <Tooltip content={<CustomTooltip />} />
+              {showThresholds && (
+                <>
+                  <ReferenceLine
+                    y={plant.thresholds.temp.min}
+                    stroke="#64748b"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.7}
+                    label={{ value: "Min", position: "insideTopRight", fontSize: 10, fill: "#64748b" }}
+                  />
+                  <ReferenceLine
+                    y={plant.thresholds.temp.max}
+                    stroke="#64748b"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.7}
+                    label={{ value: "Max", position: "insideBottomRight", fontSize: 10, fill: "#64748b" }}
+                  />
+                </>
+              )}
               <Line type="monotone" dataKey="temp" stroke={getChartColor("temperature")} strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -111,10 +173,28 @@ export function Charts({ plant }: { plant: Plant }) {
         <CardContent>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={chartData} margin={{ left: -10, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.3} />}
               <XAxis dataKey="timestamp" fontSize={12} />
               <YAxis domain={[0, 20000]} fontSize={12} />
               <Tooltip content={<CustomTooltip />} />
+              {showThresholds && (
+                <>
+                  <ReferenceLine
+                    y={plant.thresholds.light.min}
+                    stroke="#64748b"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.7}
+                    label={{ value: "Min", position: "insideTopRight", fontSize: 10, fill: "#64748b" }}
+                  />
+                  <ReferenceLine
+                    y={plant.thresholds.light.max}
+                    stroke="#64748b"
+                    strokeDasharray="3 3"
+                    strokeOpacity={0.7}
+                    label={{ value: "Max", position: "insideBottomRight", fontSize: 10, fill: "#64748b" }}
+                  />
+                </>
+              )}
               <Line type="monotone" dataKey="light" stroke={getChartColor("light")} strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>

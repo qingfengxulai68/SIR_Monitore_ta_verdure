@@ -1,7 +1,9 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import type { Route } from "./+types/page"
 import { redirect } from "react-router"
+import { Settings } from "lucide-react"
 import { Badge } from "~/components/ui/badge"
+import { Button } from "~/components/ui/button"
 import { Spinner } from "~/components/ui/spinner"
 import { usePlant } from "~/lib/hooks/use-plants"
 import { useHeader } from "~/layout/header/header-provider"
@@ -11,6 +13,14 @@ import { Charts } from "./components/charts"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import { ErrorWithRetry } from "~/components/other/error-with-retry"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from "~/components/ui/dropdown-menu"
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const id = params.id
@@ -28,6 +38,8 @@ export default function PlantMonitoring({ params }: Route.ComponentProps) {
   const { id } = params
   const { setHeaderContent } = useHeader()
   const { data: plant, isLoading, error, refetch } = usePlant(parseInt(id))
+  const [showGrid, setShowGrid] = useState(true)
+  const [showThresholds, setShowThresholds] = useState(false)
 
   useEffect(() => {
     if (plant) {
@@ -40,28 +52,49 @@ export default function PlantMonitoring({ params }: Route.ComponentProps) {
           { label: "Monitoring" }
         ],
         actions: (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="outline" className="gap-2 px-3 py-1.5">
-                  <span className={`h-2 w-2 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-                  {isOnline ? "Live" : "Offline"}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  Last update:{" "}
-                  {plant.lastMetricsUpdate?.timestamp
-                    ? new Date(plant.lastMetricsUpdate.timestamp).toLocaleString()
-                    : "Never"}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="gap-2 px-3 py-1.5">
+                    <span
+                      className={`h-2 w-2 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-red-500"}`}
+                    />
+                    {isOnline ? "Live" : "Offline"}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    Last update:{" "}
+                    {plant.lastMetricsUpdate?.timestamp
+                      ? new Date(plant.lastMetricsUpdate.timestamp).toLocaleString()
+                      : "Never"}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="rounded-full h-7.5 w-7.5">
+                  <Settings className="size-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Chart Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem checked={showGrid} onCheckedChange={setShowGrid}>
+                  Show Grid
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={showThresholds} onCheckedChange={setShowThresholds}>
+                  Show Thresholds
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )
       })
     }
-  }, [plant, setHeaderContent])
+  }, [plant, setHeaderContent, showGrid, showThresholds])
 
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] p-6">
@@ -75,7 +108,7 @@ export default function PlantMonitoring({ params }: Route.ComponentProps) {
         ) : (
           <>
             <CurrentMetrics plant={plant!} />
-            <Charts plant={plant!} />
+            <Charts plant={plant!} showGrid={showGrid} showThresholds={showThresholds} />
           </>
         )}
       </main>
