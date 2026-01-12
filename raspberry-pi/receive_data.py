@@ -1,38 +1,55 @@
 import serial
 import time
 import sys
+import csv
+import os
+
+# Configuration
+SERIAL_PORT = "/dev/ttyS0"
+BAUD_RATE = 115200
+CSV_FILE = "historique_plantes.csv"
+
+# Création du fichier CSV avec en-tête s'il n'existe pas
+if not os.path.exists(CSV_FILE):
+    with open(CSV_FILE, mode='w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["Horodatage", "Plante_ID", "Temperature", "Humidite", "Batterie"])
 
 try:
-    port = serial.Serial("/dev/ttyACM0", baudrate=115200, timeout=1)
-except:
-    print("Erreur : Port introuvable essayer /dev/ttyUSB0")
+    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+    ser.flush()
+    print(f"--- Enregistrement lancé dans {CSV_FILE} ---")
+except Exception as e:
+    print(f"Erreur : {e}")
     sys.exit()
 
 while True:
     try:
-        if port.in_waiting > 0:
-            # Lire une ligne et la décoder
-            line = port.readline().decode('utf-8').strip()
+        if ser.in_waiting > 0:
+            line = ser.readline().decode('utf-8', errors='ignore').strip()
             
-            # Si la ligne contient nos données
             if line.startswith("DATA|"):
-                # Découper la ligne
-                elements = line.split("|")
-                # elements[0] est "DATA", on prend la suite :
-                p_id = elements[1]
-                temp = elements[2]
-                hum  = elements[3]
-                
-                print(f"Plante {p_id} : {temp}°C, Humidité {hum}%")   
+                parts = line.split("|")
+                if len(parts) >= 5:
+                    # Extraction
+                    p_id = parts[1]
+                    temp = parts[2]
+                    hum = parts[3]
+                    batt = "Faible" if parts[4] == "1" else "OK"
+                    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
 
-        time.sleep(0.1)
+                    # Affichage console
+                    print(f"Reçu : Plante {p_id} ({temp}°C)")
+
+                    # Sauvegarde dans le CSV
+                    with open(CSV_FILE, mode='a', newline='') as f:
+                        writer = csv.writer(f)
+                        writer.writerow([timestamp, p_id, temp, hum, batt])
 
     except KeyboardInterrupt:
-        print("\nArrêt par l'utilisateur")
-        port.close()
-        sys.exit()
-        
+        print("\nArrêt et fermeture du fichier.")
+        ser.close()
+        break
     except Exception as e:
-        print(f"Erreur de lecture: {e}")
-
-    port.close()
+        print(f"Erreur : {e}")
+        time.sleep(1)
