@@ -6,20 +6,24 @@ from sqlalchemy import delete, select, func
 from sqlalchemy.orm import Session
 
 from app.auth.jwt import verify_jwt_user
+from app.common.utils import are_latest_metrics_within_thresholds, is_module_online
 from app.database import get_session
 from app.models.module import Module
 from app.models.plant import Plant
-from app.models.sensor_values import SensorValues
+from app.models.metrics import Metrics
 from app.models.user import User
 from app.schemas.plant import (
+    LastMetricsUpdateResponse,
+    ModuleInfoResponse,
     PlantCreateRequest,
     PlantResponse,
     PlantUpdateRequest,
     ThresholdRangeResponse,
     ThresholdsResponse,
 )
-from app.schemas.sensor_values import SensorValuesResponse
-from app.common.utils import calculate_plant_status
+from app.schemas.metrics import MetricsResponse
+from app.schemas.module import ModuleConnectivity
+from app.common.utils import are_latest_metrics_within_thresholds
 from app.websocket import ws_manager
 
 router = APIRouter(prefix="/plants", tags=["Plants"])
@@ -33,20 +37,21 @@ async def get_plants(
     """Get all plants."""
     # Subquery to get max timestamp per plant
     latest_timestamps_subq = (
-        select(SensorValues.plant_id, func.max(SensorValues.timestamp).label("max_timestamp"))
-        .group_by(SensorValues.plant_id)
+        select(Metrics.plant_id, func.max(Metrics.timestamp).label("max_timestamp"))
+        .group_by(Metrics.plant_id)
         .subquery()
     )
 
-    # Get all plants with their latest values in a single query
+    # Get all plants with their latest metrics in a single query
     query = (
-        select(Plant, SensorValues)
+        select(Plant, Metrics, Module)
         .outerjoin(latest_timestamps_subq, Plant.id == latest_timestamps_subq.c.plant_id)
         .outerjoin(
-            SensorValues,
-            (SensorValues.plant_id == latest_timestamps_subq.c.plant_id)
-            & (SensorValues.timestamp == latest_timestamps_subq.c.max_timestamp),
+            Metrics,
+            (Metrics.plant_id == latest_timestamps_subq.c.plant_id)
+            & (Metrics.timestamp == latest_timestamps_subq.c.max_timestamp),
         )
+        .outerjoin(Module, Plant.module_id == Module.id)
     )
     results = session.execute(query).all()
 
@@ -54,23 +59,29 @@ async def get_plants(
         PlantResponse(
             id=plant.id,
             name=plant.name,
-            moduleId=plant.module_id,
-            status=calculate_plant_status(
-                session,
-                plant,
-                lv := (
-                    SensorValuesResponse(
+            module=ModuleInfoResponse(
+                id=plant.module_id,
+                connectivity=ModuleConnectivity(
+                    isOnline=is_module_online(module),
+                    lastSeen=module.last_seen,
+                ),
+            ),
+            lastMetricsUpdate=(
+                (lv := (
+                    MetricsResponse(
                         soilMoist=val.soil_moist,
                         humidity=val.humidity,
                         light=val.light,
                         temp=val.temp,
-                        timestamp=val.timestamp,
                     )
                     if val
                     else None
-                ),
+                )) and (health := are_latest_metrics_within_thresholds(session, plant, lv)) is not None and LastMetricsUpdateResponse(
+                    timestamp=val.timestamp,
+                    metrics=lv,
+                    isHealthy=health,
+                ) or None
             ),
-            latestValues=lv,
             thresholds=ThresholdsResponse(
                 soilMoist=ThresholdRangeResponse(
                     min=plant.min_soil_moist, max=plant.max_soil_moist
@@ -84,7 +95,7 @@ async def get_plants(
                 temp=ThresholdRangeResponse(min=plant.min_temp, max=plant.max_temp),
             ),
         )
-        for plant, val in results
+        for plant, val, module in results
     ]
 
 @router.get("/{plant_id}", response_model=PlantResponse)
@@ -94,12 +105,13 @@ async def get_plant(
     _current_user: Annotated[User, Depends(verify_jwt_user)],
 ) -> PlantResponse:
     """Get a specific plant by ID."""
-    # Get plant and latest values
+    # Get plant and latest metrics
     query = (
-        select(Plant, SensorValues)
-        .outerjoin(SensorValues, SensorValues.plant_id == Plant.id)
+        select(Plant, Metrics, Module)
+        .outerjoin(Metrics, Metrics.plant_id == Plant.id)
+        .outerjoin(Module, Plant.module_id == Module.id)
         .where(Plant.id == plant_id)
-        .order_by(SensorValues.timestamp.desc())
+        .order_by(Metrics.timestamp.desc())
         .limit(1)
     )
     result = session.execute(query).first()
@@ -107,25 +119,39 @@ async def get_plant(
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plant not found")
 
-    plant, latest_val_db = result
+    plant, latest_val_db, module = result
 
     # Map to schema
-    latest_values = None
+    latest_metrics = None
+    latest_timestamp = None
     if latest_val_db:
-        latest_values = SensorValuesResponse(
+        latest_metrics = MetricsResponse(
             soilMoist=latest_val_db.soil_moist,
             humidity=latest_val_db.humidity,
             light=latest_val_db.light,
             temp=latest_val_db.temp,
-            timestamp=latest_val_db.timestamp,
         )
+        latest_timestamp = latest_val_db.timestamp
 
     return PlantResponse(
         id=plant.id,
         name=plant.name,
-        moduleId=plant.module_id,
-        status=calculate_plant_status(session, plant, latest_values),
-        latestValues=latest_values,
+        module=ModuleInfoResponse(
+            id=plant.module_id,
+            connectivity=ModuleConnectivity(
+                isOnline=is_module_online(module) if module else False,
+                lastSeen=module.last_seen if module else None,
+            ),
+        ),
+        lastMetricsUpdate=(
+            LastMetricsUpdateResponse(
+                timestamp=latest_timestamp,
+                metrics=latest_metrics,
+                isHealthy=are_latest_metrics_within_thresholds(session, plant, latest_metrics),
+            )
+            if latest_metrics
+            else None
+        ),
         thresholds=ThresholdsResponse(
             soilMoist=ThresholdRangeResponse(min=plant.min_soil_moist, max=plant.max_soil_moist),
             humidity=ThresholdRangeResponse(min=plant.min_humidity, max=plant.max_humidity),
@@ -255,8 +281,8 @@ async def delete_plant(
     # Save module ID before deletion
     coupled_module_id = plant.module_id
 
-    # Delete sensor values
-    session.execute(delete(SensorValues).where(SensorValues.plant_id == plant.id))
+    # Delete metrics
+    session.execute(delete(Metrics).where(Metrics.plant_id == plant.id))
     session.delete(plant)
     session.commit()
 

@@ -1,38 +1,33 @@
 """Utility functions."""
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 from sqlalchemy import select
 
-from app.common.constants import MODULE_HEARTBEAT_TIMEOUT_SECONDS
+from app.common.constants import MODULE_HB_TIMEOUT
 
 if TYPE_CHECKING:
     from app.models.module import Module
     from app.models.plant import Plant
-    from app.schemas.sensor_values import SensorValuesResponse
+    from app.schemas.metrics import MetricsResponse
 
 
 def is_module_online(module: Module) -> bool:
     """Check if module is online."""
     if not module.last_seen:
         return False
-    last_seen = module.last_seen.replace(tzinfo=UTC) if module.last_seen.tzinfo is None else module.last_seen
-    return (datetime.now(UTC) - last_seen).total_seconds() <= MODULE_HEARTBEAT_TIMEOUT_SECONDS
+    last_seen = module.last_seen
+    return (datetime.now() - last_seen).total_seconds() <= MODULE_HB_TIMEOUT
 
 
-def calculate_plant_status(session, plant: "Plant", latest_values: "SensorValuesResponse | None") -> Literal["ok", "alert", "offline"]:
-    """Calculate plant status."""  
-    from app.models.module import Module
-
-    module = session.execute(select(Module).where(Module.id == plant.module_id)).scalars().first()
-    if not is_module_online(module):
-        return "offline"
-    if not latest_values:
-        return "ok"
+def are_latest_metrics_within_thresholds(session, plant: "Plant", latest_metrics: "MetricsResponse | None") -> bool:
+    """Check if the latest metrics are within the plant's thresholds."""  
+    if not latest_metrics:
+        return False
     # Check thresholds
-    if (not (plant.min_soil_moist <= latest_values.soilMoist <= plant.max_soil_moist) or
-        not (plant.min_humidity <= latest_values.humidity <= plant.max_humidity) or
-        not (plant.min_light <= latest_values.light <= plant.max_light) or
-        not (plant.min_temp <= latest_values.temp <= plant.max_temp)):
-        return "alert"
-    return "ok"
+    if (not (plant.min_soil_moist <= latest_metrics.soilMoist <= plant.max_soil_moist) or
+        not (plant.min_humidity <= latest_metrics.humidity <= plant.max_humidity) or
+        not (plant.min_light <= latest_metrics.light <= plant.max_light) or
+        not (plant.min_temp <= latest_metrics.temp <= plant.max_temp)):
+        return False
+    return True

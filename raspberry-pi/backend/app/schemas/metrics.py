@@ -1,4 +1,4 @@
-"""Sensor values and sensor data schemas."""
+"""Metrics data schemas."""
 
 import datetime
 from pydantic import BaseModel, Field
@@ -6,20 +6,19 @@ from pydantic import BaseModel, Field
 from app.common.constants import SENSOR_THRESHOLDS
 
 
-# Values Responses
-class SensorValuesResponse(BaseModel):
-    """Latest sensor values for a plant."""
+# Metrics Responses
+class MetricsResponse(BaseModel):
+    """Latest metrics for a plant."""
 
     soilMoist: float
     humidity: float
     light: float
     temp: float
-    timestamp: datetime.datetime
 
 
-# Values Requests
-class SensorValuesAddRequest(BaseModel):
-    """Sensor data ingestion request schema."""
+# Metrics Requests
+class MetricsAddRequest(BaseModel):
+    """Metrics ingestion request schema."""
 
     moduleId: str = Field(..., min_length=1, max_length=50)
     soilMoist: float = Field(..., ge=SENSOR_THRESHOLDS["SOIL_MOIST"]["MIN"], le=SENSOR_THRESHOLDS["SOIL_MOIST"]["MAX"])

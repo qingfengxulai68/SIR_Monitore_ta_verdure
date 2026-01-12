@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "~/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,11 @@ export function ModulesGrid({ modules, plants }: ModulesGridProps) {
   const getPlantName = (plantId: number) => {
     const plant = plants.find((p) => p.id === plantId)
     return plant?.name || `Plant ${plantId}`
+  }
+
+  const formatLastSeen = (lastSeen: string | null) => {
+    if (!lastSeen) return "Never seen"
+    return new Date(lastSeen).toLocaleString()
   }
 
   const handleUncouple = () => {
@@ -81,12 +87,21 @@ export function ModulesGrid({ modules, plants }: ModulesGridProps) {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Badge
-                  variant={module.isOnline ? undefined : "destructive"}
-                  className={module.isOnline ? "bg-green-600" : ""}
-                >
-                  {module.isOnline ? "Online" : "Offline"}
-                </Badge>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant={module.connectivity.isOnline ? undefined : "destructive"}
+                        className={module.connectivity.isOnline ? "bg-green-600" : ""}
+                      >
+                        {module.connectivity.isOnline ? "Online" : "Offline"}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Last seen: {formatLastSeen(module.connectivity.lastSeen)}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 {module.coupledPlantId && (
                   <Link to={`/app/plants/${module.coupledPlantId}`}>
                     <Badge variant="outline" className="text-xs cursor-pointer hover:bg-accent">

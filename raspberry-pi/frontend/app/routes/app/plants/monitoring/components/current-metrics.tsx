@@ -1,8 +1,9 @@
 import { Droplets, Thermometer, Cloud, Sun } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
 import type { Plant } from "~/lib/types"
+import { getPlantStatus } from "~/lib/utils"
 
-interface CurrentValuesProps {
+interface CurrentMetricsProps {
   plant: Plant
 }
 
@@ -11,9 +12,9 @@ const getStatusColor = (value: number, min: number, max: number) => {
   return ""
 }
 
-export function CurrentValues({ plant }: CurrentValuesProps) {
-  const currentData = plant.latestValues
-  const isOffline = plant.status === "offline"
+export function CurrentMetrics({ plant }: CurrentMetricsProps) {
+  const currentData = plant.lastMetricsUpdate?.metrics
+  const isOffline = getPlantStatus(plant) === "offline"
 
   return (
     <div className="grid gap-4 md:grid-cols-4">

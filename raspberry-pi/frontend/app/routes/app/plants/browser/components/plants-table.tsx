@@ -21,8 +21,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "~/components/ui/alert-dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
 import { useDeletePlant } from "~/lib/hooks/use-plants"
 import type { Plant } from "~/lib/types"
+import { getPlantStatus } from "~/lib/utils"
 
 interface PlantsTableProps {
   plants: Plant[]
@@ -33,6 +35,11 @@ export function PlantsTable({ plants }: PlantsTableProps) {
   const deletePlantMutation = useDeletePlant()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null)
+
+  const formatLastSeen = (lastSeen: string | null) => {
+    if (!lastSeen) return "Never"
+    return new Date(lastSeen).toLocaleString()
+  }
 
   const handleDelete = () => {
     if (!plantToDelete) return
@@ -66,8 +73,8 @@ export function PlantsTable({ plants }: PlantsTableProps) {
           </TableHeader>
           <TableBody>
             {plants.map((plant) => {
-              const data = plant.latestValues
-              const status = plant.status
+              const data = plant.lastMetricsUpdate?.metrics
+              const status = getPlantStatus(plant)
               const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
 
               return (
@@ -78,15 +85,24 @@ export function PlantsTable({ plants }: PlantsTableProps) {
                 >
                   <TableCell className="py-4 pl-4">{plant.name}</TableCell>
                   <TableCell className="py-4">
-                    <Badge
-                      variant={status === "alert" ? "destructive" : status === "ok" ? "default" : "secondary"}
-                      className={status === "ok" ? "bg-green-600" : ""}
-                    >
-                      {status === "alert" ? "Alert" : status === "ok" ? "Normal" : "Offline"}
-                    </Badge>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant={status === "alert" ? "destructive" : status === "ok" ? "default" : "secondary"}
+                            className={status === "ok" ? "bg-green-600" : ""}
+                          >
+                            {status === "alert" ? "Alert" : status === "ok" ? "Normal" : "Offline"}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Last update: {formatLastSeen(plant.lastMetricsUpdate?.timestamp || null)}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableCell>
                   <TableCell className="py-4">
-                    {data ? (
+                    {data && status !== "offline" ? (
                       <span
                         className={`${
                           isOutOfRange(data.soilMoist, plant.thresholds.soilMoist.min, plant.thresholds.soilMoist.max)
@@ -101,7 +117,7 @@ export function PlantsTable({ plants }: PlantsTableProps) {
                     )}
                   </TableCell>
                   <TableCell className="py-4">
-                    {data ? (
+                    {data && status !== "offline" ? (
                       <span
                         className={`${
                           isOutOfRange(data.temp, plant.thresholds.temp.min, plant.thresholds.temp.max)
@@ -116,7 +132,7 @@ export function PlantsTable({ plants }: PlantsTableProps) {
                     )}
                   </TableCell>
                   <TableCell className="py-4">
-                    {data ? (
+                    {data && status !== "offline" ? (
                       <span
                         className={`${
                           isOutOfRange(data.humidity, plant.thresholds.humidity.min, plant.thresholds.humidity.max)
@@ -131,7 +147,7 @@ export function PlantsTable({ plants }: PlantsTableProps) {
                     )}
                   </TableCell>
                   <TableCell className="py-4">
-                    {data ? (
+                    {data && status !== "offline" ? (
                       <span
                         className={`${
                           isOutOfRange(data.light, plant.thresholds.light.min, plant.thresholds.light.max)

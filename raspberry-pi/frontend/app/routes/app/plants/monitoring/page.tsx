@@ -5,10 +5,12 @@ import { Badge } from "~/components/ui/badge"
 import { Spinner } from "~/components/ui/spinner"
 import { usePlant } from "~/lib/hooks/use-plants"
 import { useHeader } from "~/layout/header/header-provider"
-import { CurrentValues } from "./components/current-values"
+import { getPlantStatus } from "~/lib/utils"
+import { CurrentMetrics } from "./components/current-metrics"
 import { Charts } from "./components/charts"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import { ErrorWithRetry } from "~/components/other/error-with-retry"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const id = params.id
@@ -29,7 +31,7 @@ export default function PlantMonitoring({ params }: Route.ComponentProps) {
 
   useEffect(() => {
     if (plant) {
-      const isOnline = plant.status !== "offline"
+      const isOnline = getPlantStatus(plant) !== "offline"
 
       setHeaderContent({
         breadcrumbs: [
@@ -38,10 +40,24 @@ export default function PlantMonitoring({ params }: Route.ComponentProps) {
           { label: "Monitoring" }
         ],
         actions: (
-          <Badge variant="outline" className="gap-2 px-3 py-1.5">
-            <span className={`h-2 w-2 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-            {isOnline ? "Live" : "Offline"}
-          </Badge>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="outline" className="gap-2 px-3 py-1.5">
+                  <span className={`h-2 w-2 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                  {isOnline ? "Live" : "Offline"}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  Last update:{" "}
+                  {plant.lastMetricsUpdate?.timestamp
+                    ? new Date(plant.lastMetricsUpdate.timestamp).toLocaleString()
+                    : "Never"}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )
       })
     }
@@ -58,7 +74,7 @@ export default function PlantMonitoring({ params }: Route.ComponentProps) {
           <ErrorWithRetry error={error.message} onRetry={refetch} />
         ) : (
           <>
-            <CurrentValues plant={plant!} />
+            <CurrentMetrics plant={plant!} />
             <Charts plant={plant!} />
           </>
         )}

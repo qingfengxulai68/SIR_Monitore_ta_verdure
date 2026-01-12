@@ -22,12 +22,12 @@ export function GeneralInformation({ plant, modules }: GeneralInformationProps) 
     resolver: zodResolver(plantUpdateInfoRequestSchema),
     defaultValues: {
       name: plant.name,
-      moduleId: plant.moduleId
+      moduleId: plant.module.id
     }
   })
 
   // Filter modules to include uncoupled modules plus the current module
-  const filteredModules = modules.filter((module) => !module.coupled || module.id === plant.moduleId)
+  const filteredModules = modules.filter((module) => !module.coupled || module.id === plant.module.id)
 
   const handleSubmit = (formData: PlantUpdateInfoRequest) => {
     updateMutation.mutate(

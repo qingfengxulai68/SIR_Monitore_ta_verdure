@@ -8,8 +8,7 @@ export const QueryKeys = {
   plant: (id: number) => ["plants", id] as const,
 
   // Modules
-  modules: (coupled?: boolean) =>
-    coupled === undefined ? (["modules"] as const) : (["modules", { coupled }] as const),
+  modules: () => ["modules"] as const,
 
   // Settings
   alertsSettings: ["settings", "alerts"] as const

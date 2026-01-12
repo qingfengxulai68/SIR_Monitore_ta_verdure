@@ -1,10 +1,11 @@
 """Plant schemas."""
 
-from typing import Literal
+import datetime
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.common.constants import SENSOR_THRESHOLDS
-from app.schemas.sensor_values import SensorValuesResponse
+from app.schemas.metrics import MetricsResponse
+from app.schemas.module import ModuleConnectivity
 
 
 # Thresholds Ranges
@@ -102,12 +103,26 @@ class PlantUpdateRequest(BaseModel):
 
 
 # Plant Responses
+class LastMetricsUpdateResponse(BaseModel):
+    """Last metrics update information."""
+
+    timestamp: datetime.datetime
+    metrics: MetricsResponse
+    isHealthy: bool
+
+
+class ModuleInfoResponse(BaseModel):
+    """Module information."""
+
+    id: str
+    connectivity: ModuleConnectivity
+
+
 class PlantResponse(BaseModel):
     """Plant response schema."""
 
     id: int
     name: str
-    moduleId: str
-    status: Literal["ok", "alert", "offline"]
-    latestValues: SensorValuesResponse | None = None
+    module: ModuleInfoResponse
+    lastMetricsUpdate: LastMetricsUpdateResponse | None = None
     thresholds: ThresholdsResponse

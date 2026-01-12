@@ -3,7 +3,7 @@ import { Cloud, Sun, Droplets, Thermometer } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 
-import type { SensorValues, Plant } from "~/lib/types"
+import type { Metrics, Plant } from "~/lib/types"
 
 const MAX_DATA_POINTS = 20
 
@@ -13,16 +13,21 @@ const getChartColor = (key: string) => {
 }
 
 export function Charts({ plant }: { plant: Plant }) {
-  const [chartData, setChartData] = useState<SensorValues[]>([])
+  const [chartData, setChartData] = useState<Metrics[]>([])
 
   useEffect(() => {
-    const metrics = plant.latestValues
-    if (metrics) {
+    if (plant.lastMetricsUpdate) {
       setChartData((prev) =>
-        [...prev, { ...metrics, timestamp: new Date(metrics.timestamp).toLocaleTimeString() }].slice(-MAX_DATA_POINTS)
+        [
+          ...prev,
+          {
+            ...plant.lastMetricsUpdate!.metrics,
+            timestamp: new Date(plant.lastMetricsUpdate!.timestamp).toLocaleTimeString()
+          }
+        ].slice(-MAX_DATA_POINTS)
       )
     }
-  }, [plant.latestValues])
+  }, [plant.lastMetricsUpdate?.metrics])
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">

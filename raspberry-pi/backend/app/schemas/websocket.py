@@ -4,16 +4,16 @@ from datetime import datetime
 from typing import Literal
 from pydantic import BaseModel
 
-from app.schemas.sensor_values import SensorValuesResponse
-
+from app.schemas.metrics import MetricsResponse
 
 # PlantMetrics WebSocket event schemas
 class PlantMetricsPayload(BaseModel):
     """PLANT_METRICS WebSocket event payload."""
 
     plantId: int
-    values: SensorValuesResponse
-    status: Literal["ok", "alert", "offline"]
+    timestamp: datetime
+    metrics: MetricsResponse
+    isHealthy: bool
 
 
 class PlantMetricsMessage(BaseModel):
@@ -23,20 +23,26 @@ class PlantMetricsMessage(BaseModel):
     payload: PlantMetricsPayload
 
 
-# ModuleConnection WebSocket event schemas
-class ModuleConnectionPayload(BaseModel):
-    """MODULE_CONNECTION WebSocket event payload."""
+# ModuleConnectivity WebSocket event schemas
+class ModuleConnectivityUpdate(BaseModel):
+    """Module connectivity update information."""
+
+    isOnline: bool
+    lastSeen: datetime
+
+    
+class ModuleConnectivityPayload(BaseModel):
+    """MODULE_CONNECTIVITY WebSocket event payload."""
 
     moduleId: str
-    isOnline: bool
-    coupledPlantId: int | None
+    connectivity: ModuleConnectivityUpdate
 
 
-class ModuleConnectionMessage(BaseModel):
-    """MODULE_CONNECTION WebSocket message."""
+class ModuleConnectivityMessage(BaseModel):
+    """MODULE_CONNECTIVITY WebSocket message."""
 
-    type: Literal["MODULE_CONNECTION"] = "MODULE_CONNECTION"
-    payload: ModuleConnectionPayload
+    type: Literal["MODULE_CONNECTIVITY"] = "MODULE_CONNECTIVITY"
+    payload: ModuleConnectivityPayload
 
 
 # EntityChange WebSocket event schemas

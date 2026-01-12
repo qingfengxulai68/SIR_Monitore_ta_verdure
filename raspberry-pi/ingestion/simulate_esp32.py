@@ -10,8 +10,8 @@ from urllib.error import HTTPError, URLError
 # Configuration
 API_URL = "http://localhost:8000/ingestion/"
 API_KEY = "H8XIds5mGjfMaLYA-BWmKV9r5DX2aCdyu2nBVPElEkM"
-MODULE_IDS = ["ESP32-001" ]  # List of modules to simulate "ESP32-003"
-INTERVAL_SECONDS = 5  # Send data every 5 seconds
+MODULE_IDS = ["ESP32-001", "ESP32-002"]  # List of modules to simulate
+INTERVAL_SECONDS = 30  # Send data every 30 seconds
 
 
 def generate_sensor_data(module_id: str) -> dict:

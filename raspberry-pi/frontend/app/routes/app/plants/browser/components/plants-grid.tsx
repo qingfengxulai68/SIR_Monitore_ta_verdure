@@ -1,17 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router"
-import {
-  MoreHorizontal,
-  Activity,
-  Settings,
-  Trash2,
-  Droplets,
-  Thermometer,
-  Cloud,
-  Sun,
-  WifiOff,
-  Clock
-} from "lucide-react"
+import { MoreHorizontal, Activity, Settings, Trash2, Droplets, Thermometer, Cloud, Sun, WifiOff } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
@@ -32,8 +21,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "~/components/ui/alert-dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
 import { useDeletePlant } from "~/lib/hooks/use-plants"
 import type { Plant } from "~/lib/types"
+import { getPlantStatus } from "~/lib/utils"
 
 interface PlantsGridProps {
   plants: Plant[]
@@ -44,6 +35,13 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
   const deletePlantMutation = useDeletePlant()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null)
+
+  console.log(plants)
+
+  const formatLastSeen = (lastSeen: string | null) => {
+    if (!lastSeen) return "Never"
+    return new Date(lastSeen).toLocaleString()
+  }
 
   const handleDelete = () => {
     if (!plantToDelete) return
@@ -64,8 +62,8 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {plants.map((plant) => {
-          const data = plant.latestValues
-          const status = plant.status
+          const data = plant.lastMetricsUpdate?.metrics
+          const status = getPlantStatus(plant)
           const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
 
           return (
@@ -74,12 +72,21 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-base font-semibold truncate">{plant.name}</CardTitle>
-                    <Badge
-                      variant={status === "alert" ? "destructive" : status === "ok" ? "default" : "secondary"}
-                      className={status === "ok" ? "mt-1.5 text-xs bg-green-600" : "mt-1.5 text-xs"}
-                    >
-                      {status === "alert" ? "Alert" : status === "ok" ? "Normal" : "Offline"}
-                    </Badge>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant={status === "alert" ? "destructive" : status === "ok" ? "default" : "secondary"}
+                            className={status === "ok" ? "mt-1.5 text-xs bg-green-600" : "mt-1.5 text-xs"}
+                          >
+                            {status === "alert" ? "Alert" : status === "ok" ? "Normal" : "Offline"}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Last update: {formatLastSeen(plant.lastMetricsUpdate?.timestamp || null)}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -115,7 +122,7 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                {status !== "offline" && data ? (
+                {status === "ok" || status === "alert" ? (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -124,12 +131,12 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
                       </div>
                       <p
                         className={`text-lg tabular-nums ${
-                          isOutOfRange(data.soilMoist, plant.thresholds.soilMoist.min, plant.thresholds.soilMoist.max)
+                          isOutOfRange(data!.soilMoist, plant.thresholds.soilMoist.min, plant.thresholds.soilMoist.max)
                             ? "text-destructive"
                             : "text-foreground"
                         }`}
                       >
-                        {data.soilMoist}%
+                        {data!.soilMoist}%
                       </p>
                     </div>
 
@@ -140,12 +147,12 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
                       </div>
                       <p
                         className={`text-lg tabular-nums ${
-                          isOutOfRange(data.temp, plant.thresholds.temp.min, plant.thresholds.temp.max)
+                          isOutOfRange(data!.temp, plant.thresholds.temp.min, plant.thresholds.temp.max)
                             ? "text-destructive"
                             : "text-foreground"
                         }`}
                       >
-                        {data.temp}°C
+                        {data!.temp}°C
                       </p>
                     </div>
 
@@ -156,12 +163,12 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
                       </div>
                       <p
                         className={`text-lg tabular-nums ${
-                          isOutOfRange(data.humidity, plant.thresholds.humidity.min, plant.thresholds.humidity.max)
+                          isOutOfRange(data!.humidity, plant.thresholds.humidity.min, plant.thresholds.humidity.max)
                             ? "text-destructive"
                             : "text-foreground"
                         }`}
                       >
-                        {data.humidity}%
+                        {data!.humidity}%
                       </p>
                     </div>
 
@@ -172,24 +179,19 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
                       </div>
                       <p
                         className={`text-lg tabular-nums ${
-                          isOutOfRange(data.light, plant.thresholds.light.min, plant.thresholds.light.max)
+                          isOutOfRange(data!.light, plant.thresholds.light.min, plant.thresholds.light.max)
                             ? "text-destructive"
                             : "text-foreground"
                         }`}
                       >
-                        {data.light.toLocaleString()}
+                        {data!.light.toLocaleString()}
                       </p>
                     </div>
                   </div>
-                ) : status === "offline" ? (
+                ) : (
                   <div className="text-center py-5">
                     <WifiOff className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">No recent data available</p>
-                  </div>
-                ) : (
-                  <div className="text-center py-5">
-                    <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Awaiting first data...</p>
                   </div>
                 )}
               </CardContent>

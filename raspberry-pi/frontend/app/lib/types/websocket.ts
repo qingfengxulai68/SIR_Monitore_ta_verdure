@@ -1,10 +1,11 @@
-import type { SensorValues } from "./sensor-values"
+import type { Metrics } from "./metrics"
 
 // PLANT_METRICS - Sensor data update (Optimistic Update)
 export type PlantMetricsPayload = {
   plantId: number
-  values: SensorValues
-  status: "ok" | "alert" | "offline"
+  timestamp: string
+  metrics: Metrics
+  isHealthy: boolean
 }
 
 export type PlantMetricsMessage = {
@@ -12,16 +13,18 @@ export type PlantMetricsMessage = {
   payload: PlantMetricsPayload
 }
 
-// MODULE_CONNECTION - Module connection status change (Optimistic Update)
-export type ModuleConnectionPayload = {
+// MODULE_CONNECTIVITY - Live module connectivity status (Optimistic Update)
+export type ModuleConnectivityPayload = {
   moduleId: string
-  isOnline: boolean
-  coupledPlantId: number | null
+  connectivity: {
+    isOnline: boolean
+    lastSeen: string
+  }
 }
 
-export type ModuleConnectionMessage = {
-  type: "MODULE_CONNECTION"
-  payload: ModuleConnectionPayload
+export type ModuleConnectivityMessage = {
+  type: "MODULE_CONNECTIVITY"
+  payload: ModuleConnectivityPayload
 }
 
 // ENTITY_CHANGE - Cache invalidation signal (Refetch)
@@ -39,6 +42,6 @@ export type EntityChangeMessage = {
 // Union of all possible messages
 export type IncomingWebSocketMessage =
   | PlantMetricsMessage
-  | ModuleConnectionMessage
+  | ModuleConnectivityMessage
   | EntityChangeMessage
   | { type: "PONG" }

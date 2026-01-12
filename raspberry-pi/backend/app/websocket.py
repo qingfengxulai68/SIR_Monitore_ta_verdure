@@ -49,26 +49,26 @@ class WebSocketManager:
         for connection_id in disconnected:
             await self.disconnect(connection_id)
 
-    async def emit_plant_metrics(self, plant_id: int, values, status: Literal["ok", "alert", "offline"]) -> None:
+    async def emit_plant_metrics(self, plant_id: int, timestamp, metrics, isHealthy: bool) -> None:
         """Broadcast plant metrics to all clients."""
         from app.schemas.websocket import PlantMetricsMessage, PlantMetricsPayload
         message = PlantMetricsMessage(
             payload=PlantMetricsPayload(
                 plantId=plant_id,
-                values=values,
-                status=status,
+                timestamp=timestamp,
+                metrics=metrics,
+                isHealthy=isHealthy,
             )
         )
         await self.broadcast(message)
 
-    async def emit_module_connection(self, module_id: str, is_online: bool, coupled_plant_id: int | None) -> None:
-        """Broadcast module connection status to all clients."""
-        from app.schemas.websocket import ModuleConnectionMessage, ModuleConnectionPayload
-        message = ModuleConnectionMessage(
-            payload=ModuleConnectionPayload(
+    async def emit_module_connectivity(self, module_id: str, is_online: bool, last_seen) -> None:
+        """Broadcast module connectivity status to all clients."""
+        from app.schemas.websocket import ModuleConnectivityMessage, ModuleConnectivityPayload, ModuleConnectivityUpdate
+        message = ModuleConnectivityMessage(
+            payload=ModuleConnectivityPayload(
                 moduleId=module_id,
-                isOnline=is_online,
-                coupledPlantId=coupled_plant_id,
+                connectivity=ModuleConnectivityUpdate(isOnline=is_online, lastSeen=last_seen),
             )
         )
         await self.broadcast(message)
@@ -99,8 +99,8 @@ async def websocket_endpoint(
     Connect with: ws://host/ws?token=<jwt_token>
 
     Messages from server:
-    - PLANT_METRICS: Sensor data updates
-    - MODULE_CONNECTION: Module connectivity status
+    - PLANT_METRICS: Metrics data updates
+    - MODULE_CONNECTIVITY: Module connectivity status
     - ENTITY_CHANGE: Structural changes (CRUD operations)
 
     Messages from client:

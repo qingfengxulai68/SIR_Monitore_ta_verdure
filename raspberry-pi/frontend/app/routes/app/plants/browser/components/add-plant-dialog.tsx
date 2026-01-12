@@ -38,7 +38,8 @@ interface CreatePlantDialogProps {
 }
 
 export function CreatePlantDialog({ open, onOpenChange }: CreatePlantDialogProps) {
-  const { data: availableModules = [], isLoading: modulesLoading, error: modulesError } = useModules(false)
+  const { data: allModules = [], isLoading: modulesLoading, error: modulesError } = useModules()
+  const availableModules = allModules.filter((module) => !module.coupled)
   const createMutation = useCreatePlant()
 
   const form = useForm<PlantCreateRequest>({

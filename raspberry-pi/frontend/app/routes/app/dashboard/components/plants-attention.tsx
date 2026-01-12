@@ -1,6 +1,7 @@
 import { CheckCircle2 } from "lucide-react"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "~/components/ui/empty"
 import type { Plant } from "~/lib/types"
+import { getPlantStatus } from "~/lib/utils"
 import { PlantsEmpty } from "../../plants/browser/components/plants-empty"
 import { PlantsGrid } from "../../plants/browser/components/plants-grid"
 
@@ -9,8 +10,8 @@ interface PlantsAttentionProps {
 }
 
 export function PlantsAttention({ plants }: PlantsAttentionProps) {
-  const plantsWithAlerts = plants.filter((plant) => plant.status === "alert")
-  const offlinePlants = plants.filter((plant) => plant.status === "offline")
+  const plantsWithAlerts = plants.filter((plant) => getPlantStatus(plant) === "alert")
+  const offlinePlants = plants.filter((plant) => getPlantStatus(plant) === "offline")
   const plantsNeedingAttention = [...plantsWithAlerts, ...offlinePlants]
 
   if (plants.length === 0) {

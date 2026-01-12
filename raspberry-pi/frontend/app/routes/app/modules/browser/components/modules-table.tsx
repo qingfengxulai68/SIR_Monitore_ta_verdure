@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "~/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,11 @@ export function ModulesTable({ modules, plants }: ModulesTableProps) {
   const getPlantName = (plantId: number) => {
     const plant = plants.find((p) => p.id === plantId)
     return plant?.name || `Plant ${plantId}`
+  }
+
+  const formatLastSeen = (lastSeen: string | null) => {
+    if (!lastSeen) return "Never seen"
+    return new Date(lastSeen).toLocaleString()
   }
 
   const handleUncouple = () => {
@@ -65,12 +71,21 @@ export function ModulesTable({ modules, plants }: ModulesTableProps) {
               <TableRow key={module.id} className="group h-12.25">
                 <TableCell className="font-mono text-sm font-medium pl-4">{module.id}</TableCell>
                 <TableCell>
-                  <Badge
-                    variant={module.isOnline ? undefined : "destructive"}
-                    className={module.isOnline ? "bg-green-600" : ""}
-                  >
-                    {module.isOnline ? "Online" : "Offline"}
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant={module.connectivity.isOnline ? undefined : "destructive"}
+                          className={module.connectivity.isOnline ? "bg-green-600" : ""}
+                        >
+                          {module.connectivity.isOnline ? "Online" : "Offline"}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Last seen: {formatLastSeen(module.connectivity.lastSeen)}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </TableCell>
                 <TableCell className="text-sm">
                   {module.coupledPlantId ? (
