@@ -1,6 +1,6 @@
 """Ingestion router for sensor data from ESP32/Python scripts."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -32,7 +32,7 @@ async def ingest_sensor_data(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found.")
 
     # Update last_seen
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     module.last_seen = now
     session.add(module)
 

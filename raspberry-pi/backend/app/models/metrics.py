@@ -1,7 +1,7 @@
 """Metrics model for storing plant measurements (time series)."""
 
 from datetime import datetime, timezone
-from sqlalchemy import CheckConstraint, Column, DateTime, Float, ForeignKey, Integer
+from sqlalchemy import CheckConstraint, Column, DateTime, Float, ForeignKey, Index, Integer
 
 from app.common.constants import SENSOR_THRESHOLDS
 from app.models.user import Base
@@ -17,6 +17,7 @@ class Metrics(Base):
         CheckConstraint(f'humidity >= {SENSOR_THRESHOLDS["HUMIDITY"]["MIN"]} AND humidity <= {SENSOR_THRESHOLDS["HUMIDITY"]["MAX"]}', name='check_humidity_bounds'),
         CheckConstraint(f'light >= {SENSOR_THRESHOLDS["LIGHT"]["MIN"]} AND light <= {SENSOR_THRESHOLDS["LIGHT"]["MAX"]}', name='check_light_bounds'),
         CheckConstraint(f'temp >= {SENSOR_THRESHOLDS["TEMP"]["MIN"]} AND temp <= {SENSOR_THRESHOLDS["TEMP"]["MAX"]}', name='check_temp_bounds'),
+        Index('ix_metrics_plant_timestamp', 'plant_id', 'timestamp')
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -27,4 +28,7 @@ class Metrics(Base):
     light = Column(Float, nullable=False)
     temp = Column(Float, nullable=False)
 
-    timestamp = Column(DateTime, index=True, nullable=False)
+    timestamp = Column(
+        DateTime(timezone=True),
+        nullable=False,
+    )

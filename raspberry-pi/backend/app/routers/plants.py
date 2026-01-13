@@ -1,8 +1,9 @@
 """Plants router."""
 
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status, Response
-from sqlalchemy import delete, select, func
+from typing import Annotated, Literal
+from datetime import datetime, timedelta, timezone
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Query
+from sqlalchemy import delete, select, func, Integer
 from sqlalchemy.orm import Session
 
 from app.auth.jwt import verify_jwt_user
@@ -21,7 +22,7 @@ from app.schemas.plant import (
     ThresholdRangeResponse,
     ThresholdsResponse,
 )
-from app.schemas.metrics import MetricsResponse
+from app.schemas.metrics import MetricsResponse, HistoryResponse, HistoryMeta, HistoryDataPoint
 from app.schemas.module import ModuleConnectivity
 from app.common.utils import are_latest_metrics_within_thresholds
 from app.websocket import ws_manager
@@ -298,3 +299,167 @@ async def delete_plant(
 
     # Broadcast ENTITY_CHANGE for module update (now available)
     await ws_manager.emit_entity_change("module", "update", coupled_module_id)
+
+@router.get("/{plant_id}/history", response_model=HistoryResponse)
+async def get_plant_history(
+    plant_id: int,
+    session: Annotated[Session, Depends(get_session)],
+    range: Literal["hour", "day", "week", "month"] = Query(default="hour"),
+) -> HistoryResponse:
+    
+    now = datetime.now(timezone.utc)
+    
+    config = {
+        "hour":  (timedelta(hours=1),  30),      # Slots de 30s, timestamps réels
+        "day":   (timedelta(days=1),   600),     # Agrégation 10 min
+        "week":  (timedelta(days=7),   3600),    # Agrégation 1 heure
+        "month": (timedelta(days=30),  14400),   # Agrégation 4 heures
+    }
+    
+    time_delta, interval_seconds = config[range]
+    start_time = now - time_delta
+
+    # ===== CAS 1 : HOUR - Garde les vrais timestamps =====
+    if range == "hour":
+        # Récupère les données brutes avec leur bucket
+        query = (
+            select(
+                Metrics.timestamp,
+                Metrics.soil_moist,
+                Metrics.temp,
+                Metrics.light,
+                Metrics.humidity,
+                # Calcul du bucket pour grouper, mais on garde le vrai timestamp
+                (
+                    (func.unixepoch(Metrics.timestamp) / interval_seconds).cast(Integer) 
+                    * interval_seconds
+                ).label('ts_bucket'),
+            )
+            .where(Metrics.plant_id == plant_id)
+            .where(Metrics.timestamp >= start_time.strftime('%Y-%m-%d %H:%M:%S'))
+            .order_by(Metrics.timestamp)
+        )
+        
+        db_rows = session.execute(query).all()
+        
+        # Groupe par bucket mais garde le dernier timestamp réel
+        bucket_map = {}
+        for row in db_rows:
+            bucket_key = int(row.ts_bucket)
+            # Garde la mesure la plus récente du bucket (ou tu peux faire une moyenne)
+            bucket_map[bucket_key] = row
+        
+        # Génère la grille complète
+        start_ts = int(start_time.timestamp())
+        aligned_start_ts = (start_ts // interval_seconds) * interval_seconds
+        now_ts = int(now.timestamp())
+        
+        final_data = []
+        current_ts = aligned_start_ts
+        
+        while current_ts <= now_ts:
+            if current_ts in bucket_map:
+                row = bucket_map[current_ts]
+                # ✅ Utilise le VRAI timestamp de la mesure
+                real_timestamp = row.timestamp
+                if isinstance(real_timestamp, str):
+                    real_timestamp = datetime.fromisoformat(
+                        real_timestamp.replace(' ', 'T')
+                    ).replace(tzinfo=timezone.utc)
+                
+                final_data.append(HistoryDataPoint(
+                    time=real_timestamp,  # ✅ Timestamp exact !
+                    soilMoist=round(row.soil_moist, 2) if row.soil_moist is not None else None,
+                    temp=round(row.temp, 2) if row.temp is not None else None,
+                    light=round(row.light, 0) if row.light is not None else None,
+                    humidity=round(row.humidity, 2) if row.humidity is not None else None
+                ))
+            else:
+                # 🔴 Pas de données dans ce slot de 30s
+                slot_dt = datetime.fromtimestamp(current_ts, tz=timezone.utc)
+                final_data.append(HistoryDataPoint(
+                    time=slot_dt,  # Timestamp du slot attendu
+                    soilMoist=None,
+                    temp=None,
+                    light=None,
+                    humidity=None
+                ))
+            
+            current_ts += interval_seconds
+        
+        return HistoryResponse(
+            meta=HistoryMeta(
+                range=range,
+                aggregation="30s_raw",  # Indique slots de 30s avec vrais timestamps
+                from_time=start_time,
+                to_time=now
+            ),
+            data=final_data
+        )
+    
+    # ===== CAS 2 : DAY/WEEK/MONTH - Agrégation classique =====
+    query = (
+        select(
+            (
+                (func.unixepoch(Metrics.timestamp) / interval_seconds).cast(Integer) 
+                * interval_seconds
+            ).label('ts_bucket'),
+            func.avg(Metrics.soil_moist).label('avg_soil'),
+            func.avg(Metrics.temp).label('avg_temp'),
+            func.avg(Metrics.light).label('avg_light'),
+            func.avg(Metrics.humidity).label('avg_humidity'),
+            func.count().label('count')
+        )
+        .where(Metrics.plant_id == plant_id)
+        .where(Metrics.timestamp >= start_time.strftime('%Y-%m-%d %H:%M:%S'))
+        .group_by('ts_bucket')
+        .order_by('ts_bucket')
+    )
+    
+    db_rows = session.execute(query).all()
+    
+    data_map = {}
+    for row in db_rows:
+        if row.ts_bucket is not None:
+            bucket_key = int(row.ts_bucket)
+            data_map[bucket_key] = row
+
+    start_ts = int(start_time.timestamp())
+    aligned_start_ts = (start_ts // interval_seconds) * interval_seconds
+    now_ts = int(now.timestamp())
+    
+    final_data = []
+    current_ts = aligned_start_ts
+    
+    while current_ts <= now_ts:
+        current_dt = datetime.fromtimestamp(current_ts, tz=timezone.utc)
+        
+        if current_ts in data_map:
+            row = data_map[current_ts]
+            final_data.append(HistoryDataPoint(
+                time=current_dt,
+                soilMoist=round(row.avg_soil, 2) if row.avg_soil is not None else None,
+                temp=round(row.avg_temp, 2) if row.avg_temp is not None else None,
+                light=round(row.avg_light, 0) if row.avg_light is not None else None,
+                humidity=round(row.avg_humidity, 2) if row.avg_humidity is not None else None
+            ))
+        else:
+            final_data.append(HistoryDataPoint(
+                time=current_dt,
+                soilMoist=None,
+                temp=None,
+                light=None,
+                humidity=None
+            ))
+        
+        current_ts += interval_seconds
+
+    return HistoryResponse(
+        meta=HistoryMeta(
+            range=range,
+            aggregation=f"{interval_seconds}s",
+            from_time=start_time,
+            to_time=now
+        ),
+        data=final_data
+    )
