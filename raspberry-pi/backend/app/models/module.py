@@ -11,4 +11,4 @@ class Module(Base):
 
     id = Column(String(50), primary_key=True)  # e.g., "ESP32-A4B8"
     coupled = Column(Boolean, nullable=False, index=True)
-    last_seen = Column(DateTime, index=True, nullable=True, default=None)
+    last_seen = Column(DateTime(timezone=True), index=True, nullable=True, default=None)

@@ -11,7 +11,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import create_db_and_tables, init_admin_user, init_modules, init_plants, init_settings
+from app.database import create_db_and_tables, init_admin_user, init_modules, init_settings
 from app.routers import (
     auth_router,
     ingestion_router,
@@ -48,9 +48,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Initialize sample modules
     init_modules()
-
-    # Initialize sample plants
-    init_plants()
 
     # Start heartbeat checker
     await module_heartbeat_checker.start()

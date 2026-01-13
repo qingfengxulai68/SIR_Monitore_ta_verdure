@@ -336,7 +336,7 @@ async def get_plant_history(
                 ).label('ts_bucket'),
             )
             .where(Metrics.plant_id == plant_id)
-            .where(Metrics.timestamp >= start_time.strftime('%Y-%m-%d %H:%M:%S'))
+            .where(Metrics.timestamp >= start_time)
             .order_by(Metrics.timestamp)
         )
         
@@ -411,7 +411,7 @@ async def get_plant_history(
             func.count().label('count')
         )
         .where(Metrics.plant_id == plant_id)
-        .where(Metrics.timestamp >= start_time.strftime('%Y-%m-%d %H:%M:%S'))
+        .where(Metrics.timestamp >= start_time)
         .group_by('ts_bucket')
         .order_by('ts_bucket')
     )

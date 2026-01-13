@@ -1,6 +1,6 @@
 """Utility functions."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Literal
 from sqlalchemy import select
 
@@ -16,8 +16,8 @@ def is_module_online(module: Module) -> bool:
     """Check if module is online."""
     if not module.last_seen:
         return False
-    last_seen = module.last_seen
-    return (datetime.now() - last_seen).total_seconds() <= MODULE_HB_TIMEOUT
+        
+    return (datetime.now(timezone.utc) - module.last_seen).total_seconds() <= MODULE_HB_TIMEOUT
 
 
 def are_latest_metrics_within_thresholds(session, plant: "Plant", latest_metrics: "MetricsResponse | None") -> bool:

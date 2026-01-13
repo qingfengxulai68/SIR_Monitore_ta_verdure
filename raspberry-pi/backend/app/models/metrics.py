@@ -1,6 +1,5 @@
 """Metrics model for storing plant measurements (time series)."""
 
-from datetime import datetime, timezone
 from sqlalchemy import CheckConstraint, Column, DateTime, Float, ForeignKey, Index, Integer
 
 from app.common.constants import SENSOR_THRESHOLDS
