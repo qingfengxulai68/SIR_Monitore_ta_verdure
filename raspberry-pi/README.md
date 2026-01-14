@@ -53,7 +53,7 @@ WS_BASE_URL=ws://localhost:8000
 ```
 
 ### 3. Lancer l'application
-
+#### 3.1 Sur oridnateur
 Ouvrez un terminal dans ce dossier (`raspberry-pi`) et lancez la commande suivante :
 
 ```bash
@@ -79,6 +79,23 @@ Pour arrêter le système :
 ```bash
 docker compose down
 ```
+#### 3.2 Sur Raspberry pi
+1. Installer Docker depuis le terminal du raspberry pi :
+```bash
+curl -sSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+```
+2. Redémarrer le Raspberry pi
+3. Copier le dossier depuis le terminal de l'ordinateur vers le pi :
+```bash
+scp -r ./raspberry-pi projetsir@172.20.10.2:~/Documents/
+```
+4. Puis sur le terminal du pi dans le dossier raspberry-pi lancer Docker :
+```bash
+docker compose up --build -d
+```
+5. Sur le navigateur web de l'ordi, accéder au site avec l'url : http://172.20.10.2:80 
+
 
 ## 🧪 Bonus : Simuler un ESP32
 
