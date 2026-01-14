@@ -4,13 +4,13 @@ RESTful API and WebSocket manager for the terrarium monitoring system. Developed
 
 ## Technologies
 
-- **Framework**: FastAPI
-- **Server**: Uvicorn
-- **Database**: SQLAlchemy (Compatible with SQLite, PostgreSQL, etc.)
-- **Validation**: Pydantic
-- **Authentication**: JWT (for frontend) & API Key (for ESP32)
-- **Dependency Management**: uv
-- **Formatting**: Ruff is configured to ensure consistent code style
+-   **Framework**: FastAPI
+-   **Server**: Uvicorn
+-   **Database**: SQLAlchemy (Compatible with SQLite, PostgreSQL, etc.)
+-   **Validation**: Pydantic
+-   **Authentication**: JWT (for frontend) & API Key (for ESP32)
+-   **Dependency Management**: uv
+-   **Formatting**: Ruff is configured to ensure consistent code style
 
 ## Structure
 
@@ -33,7 +33,7 @@ backend/
 ## Local Quickstart
 
 1.  **Install dependencies**
-    
+
     This project uses **uv** for dependency management.
 
     ```bash
@@ -43,13 +43,13 @@ backend/
 2.  **Environment Configuration**
     Create a `.env` file at the root of the `backend` folder with the following values:
 
-    | Variable | Description | Example (Local) |
-    | :--- | :--- | :--- |
-    | `DATABASE_URL` | DB connection URL | `sqlite:///./terrarium.db` |
-    | `JWT_SECRET_KEY` | Secret key for JWT tokens | `a-very-secret-string` |
-    | `API_KEY` | API Key for sensors (ESP32) | `your-secret-api-key` |
-    | `ADMIN_USERNAME` | Initial admin username | `admin` |
-    | `ADMIN_PASSWORD` | Initial admin password | `demo1234` |
+    | Variable         | Description                 | Example (Local)            |
+    | :--------------- | :-------------------------- | :------------------------- |
+    | `DATABASE_URL`   | DB connection URL           | `sqlite:///./terrarium.db` |
+    | `JWT_SECRET_KEY` | Secret key for JWT tokens   | `a-very-secret-string`     |
+    | `API_KEY`        | API Key for sensors (ESP32) | `your-secret-api-key`      |
+    | `ADMIN_USERNAME` | Initial admin username      | `admin`                    |
+    | `ADMIN_PASSWORD` | Initial admin password      | `demo1234`                 |
 
 3.  **Start Development Server**
     ```bash
@@ -63,18 +63,35 @@ backend/
 The backend contains an optimized `Dockerfile` using `uv` for fast builds.
 
 1.  **Build Image**
+
     ```bash
     docker build -t terrarium-backend .
     ```
 
 2.  **Run Container**
     ```bash
-    docker run -d -p 8000:80 \
-      -e DATABASE_URL="sqlite:///./terrarium.db" \
-      -e JWT_SECRET_KEY="your-secret" \
-      -e API_KEY="your-key" \
-      -e ADMIN_USERNAME="admin" \
-      -e ADMIN_PASSWORD="secure-password" \
-      -v $(pwd)/data:/app/data \
+    docker run -d -p 8000:80 -e DATABASE_URL="sqlite:///./terrarium.db" -e JWT_SECRET_KEY="your-secret" -e API_KEY="your-key" -e ADMIN_USERNAME="admin" -e ADMIN_PASSWORD="secure-password" -v $(pwd)/data:/app/data
       terrarium-backend
     ```
+
+## Docker Compose Deployment (Internal + Public)
+
+To run both the internal dashboard (port 8000) and the public webhook (port 8001) simultaneously with a shared database:
+
+1.  **Start Services**
+
+    ```bash
+    docker compose up -d --build
+    ```
+
+2.  **Expose Public Webhook via Ngrok**
+
+    ```bash
+    ngrok config add-authtoken $YOUR_AUTHTOKEN
+    ```
+
+    ```bash
+    ngrok http 8001 --url https://default.internal
+    ```
+
+    _Update your `DISCORD_REDIRECT_URI` in `.env` with the generated ngrok URL._

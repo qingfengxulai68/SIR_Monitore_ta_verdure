@@ -1,0 +1,44 @@
+services:
+  # Service 1: Internal Dashboard (Port 8000)
+  backend-internal:
+    build: .
+    container_name: terrarium-internal
+    # Command to run the main dashboard app
+    command: /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Database path inside the container
+      - DATABASE_URL=sqlite:///data/terrarium.db
+      # Variables from README.md
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - API_KEY=${API_KEY}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    volumes:
+      # Mount the database file so it persists and is shared between containers
+      - ./data:/app/data
+    restart: always
+
+  # Service 2: Public Webhook (Port 8001)
+  backend-public:
+    build: .
+    container_name: terrarium-public
+    # Command to run the public webhook app
+    command: /app/.venv/bin/uvicorn public_main:app --host 0.0.0.0 --port 8001
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:///data/terrarium.db
+      # Discord variables for alerts
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
+    volumes:
+      # Share the exact same database file
+      - ./data:/app/data
+    restart: always
