@@ -94,7 +94,7 @@ scp -r ./raspberry-pi projetsir@172.20.10.2:~/Documents/
 ```bash
 docker compose up --build -d
 ```
-5. Sur le navigateur web de l'ordi, accéder au site avec l'url : http://172.20.10.2:80 
+5. Sur le navigateur web de l'ordi, accéder au site avec l'url : http://172.20.10.2:3000 
 
 
 ## 🧪 Bonus : Simuler un ESP32
