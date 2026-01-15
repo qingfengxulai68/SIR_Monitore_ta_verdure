@@ -16,7 +16,8 @@ export default [
     ...prefix("plants", [
       index("routes/app/plants/browser/page.tsx"),
       route(":id", "routes/app/plants/settings/page.tsx"),
-      route(":id/monitoring", "routes/app/plants/monitoring/page.tsx")
+      route(":id/monitoring", "routes/app/plants/monitoring/page.tsx"),
+      route(":id/history", "routes/app/plants/history/page.tsx")
     ])
   ])
 ] satisfies RouteConfig

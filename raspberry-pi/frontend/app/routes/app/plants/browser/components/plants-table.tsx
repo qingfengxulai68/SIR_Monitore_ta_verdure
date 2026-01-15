@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router"
-import { MoreHorizontal, Activity, Settings, Trash2 } from "lucide-react"
+import { MoreHorizontal, Activity, Settings, Trash2, Clock } from "lucide-react"
+import { IconCircleCheckFilled, IconAlertCircleFilled, IconLoader } from "@tabler/icons-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
@@ -21,7 +22,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "~/components/ui/alert-dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
 import { useDeletePlant } from "~/lib/hooks/use-plants"
+import { getPlantHealthStatus, formatLastSeen } from "~/lib/utils"
 import type { Plant } from "~/lib/types"
 
 interface PlantsTableProps {
@@ -54,9 +57,10 @@ export function PlantsTable({ plants }: PlantsTableProps) {
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
+            <TableRow className="bg-muted/60 hover:bg-muted/60">
               <TableHead className="pl-4">Name</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Module</TableHead>
+              <TableHead>Health</TableHead>
               <TableHead>Moisture</TableHead>
               <TableHead>Temperature</TableHead>
               <TableHead>Humidity</TableHead>
@@ -66,8 +70,8 @@ export function PlantsTable({ plants }: PlantsTableProps) {
           </TableHeader>
           <TableBody>
             {plants.map((plant) => {
-              const data = plant.latestValues
-              const status = plant.status
+              const data = plant.lastMetricsUpdate
+              const healthStatus = getPlantHealthStatus(plant)
               const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
 
               return (
@@ -78,15 +82,48 @@ export function PlantsTable({ plants }: PlantsTableProps) {
                 >
                   <TableCell className="py-4 pl-4">{plant.name}</TableCell>
                   <TableCell className="py-4">
-                    <Badge
-                      variant={status === "alert" ? "destructive" : status === "ok" ? "default" : "secondary"}
-                      className={status === "ok" ? "bg-green-600" : ""}
-                    >
-                      {status === "alert" ? "Alert" : status === "ok" ? "Normal" : "Offline"}
-                    </Badge>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="outline" className="text-muted-foreground px-1.5">
+                            {plant.module.connectivity.isOnline ? (
+                              <div className="h-2 w-2 rounded-full bg-green-500" />
+                            ) : (
+                              <div className="h-2 w-2 rounded-full bg-red-500" />
+                            )}
+                            {plant.module.connectivity.isOnline ? "Online" : "Offline"}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Module: {plant.module.id}</p>
+                          <p>Last seen: {formatLastSeen(plant.module.connectivity.lastSeen)}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableCell>
                   <TableCell className="py-4">
-                    {data ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="outline" className="text-muted-foreground px-1.5">
+                            {healthStatus === "healthy" ? (
+                              <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
+                            ) : healthStatus === "sick" ? (
+                              <IconAlertCircleFilled className="fill-destructive" />
+                            ) : (
+                              <IconLoader />
+                            )}
+                            {healthStatus === "sick" ? "Sick" : healthStatus === "healthy" ? "Healthy" : "Unknown"}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Last update: {formatLastSeen(plant.lastMetricsUpdate?.timestamp || null)}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    {data && healthStatus !== "unknown" ? (
                       <span
                         className={`${
                           isOutOfRange(data.soilMoist, plant.thresholds.soilMoist.min, plant.thresholds.soilMoist.max)
@@ -101,7 +138,7 @@ export function PlantsTable({ plants }: PlantsTableProps) {
                     )}
                   </TableCell>
                   <TableCell className="py-4">
-                    {data ? (
+                    {data && healthStatus !== "unknown" ? (
                       <span
                         className={`${
                           isOutOfRange(data.temp, plant.thresholds.temp.min, plant.thresholds.temp.max)
@@ -116,7 +153,7 @@ export function PlantsTable({ plants }: PlantsTableProps) {
                     )}
                   </TableCell>
                   <TableCell className="py-4">
-                    {data ? (
+                    {data && healthStatus !== "unknown" ? (
                       <span
                         className={`${
                           isOutOfRange(data.humidity, plant.thresholds.humidity.min, plant.thresholds.humidity.max)
@@ -131,7 +168,7 @@ export function PlantsTable({ plants }: PlantsTableProps) {
                     )}
                   </TableCell>
                   <TableCell className="py-4">
-                    {data ? (
+                    {data && healthStatus !== "unknown" ? (
                       <span
                         className={`${
                           isOutOfRange(data.light, plant.thresholds.light.min, plant.thresholds.light.max)
@@ -166,6 +203,16 @@ export function PlantsTable({ plants }: PlantsTableProps) {
                         >
                           <Activity className="h-4 w-4" />
                           Monitoring
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate(`/app/plants/${plant.id}/history`)
+                          }}
+                          className="gap-2"
+                        >
+                          <Clock className="h-4 w-4" />
+                          History
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={(e) => {

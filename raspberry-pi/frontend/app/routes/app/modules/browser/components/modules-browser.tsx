@@ -16,6 +16,7 @@ export function ModulesBrowser({ modules, plants }: ModulesBrowserProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
 
+  console.log(modules)
   const filteredModules = modules.filter((module) => module.id.toLowerCase().includes(searchQuery.toLowerCase()))
 
   return (
@@ -52,7 +53,7 @@ export function ModulesBrowser({ modules, plants }: ModulesBrowserProps) {
 
       {/* Empty state for filtered results */}
       {filteredModules.length === 0 && (
-        <Empty className="border">
+        <Empty className="border border-dashed">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Search className="size-6" />

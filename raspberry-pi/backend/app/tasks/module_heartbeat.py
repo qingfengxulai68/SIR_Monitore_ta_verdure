@@ -4,10 +4,9 @@ import asyncio
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
-from app.common.constants import MODULE_HEARTBEAT_CHECK_INTERVAL_SECONDS
+from app.common.constants import MODULE_HB_CHECK_INTERVAL
 from app.database import engine
 from app.models.module import Module
-from app.models.plant import Plant
 from app.common.utils import is_module_online
 from app.websocket import ws_manager
 
@@ -39,7 +38,7 @@ class ModuleHeartbeatChecker:
 
     async def _run(self) -> None:
         """Main loop for heartbeat checking."""
-        interval = MODULE_HEARTBEAT_CHECK_INTERVAL_SECONDS
+        interval = MODULE_HB_CHECK_INTERVAL
         while self._running:
             try:
                 await self._check_heartbeats()
@@ -60,12 +59,8 @@ class ModuleHeartbeatChecker:
 
                 if not is_online and not was_offline:
                     self._offline_modules.add(module.id)
-                    plant = session.execute(
-                        select(Plant).where(Plant.module_id == module.id)
-                    ).scalars().first()
-                    
-                    if plant:
-                        await ws_manager.emit_module_connection(module.id, False, plant.id)
+                    await ws_manager.emit_module_connectivity(module.id, False, module.last_seen)
+                    print(f"Alert for module {module.id}. The module went offline.")
                 elif is_online and was_offline:
                     self._offline_modules.discard(module.id)
 

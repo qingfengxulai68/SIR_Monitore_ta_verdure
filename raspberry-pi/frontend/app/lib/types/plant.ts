@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { SENSOR_THRESHOLDS } from "../constants"
-import type { SensorValues } from "./sensor-values"
+import type { Metrics } from "./metrics"
+import type { ModuleConnectivity } from "./module"
 
 // Read threshold ranges from constants
 const SOIL_MOIST_MIN = SENSOR_THRESHOLDS.SOIL_MOIST.MIN
@@ -25,16 +26,15 @@ export type PlantThresholds = {
   temp: ThresholdRange
 }
 
-// Plant status type definition
-export type PlantStatus = "ok" | "alert" | "offline"
-
 // Plant type definition
 export type Plant = {
   id: number
   name: string
-  moduleId: string
-  status: PlantStatus
-  latestValues: SensorValues | null
+  module: {
+    id: string
+    connectivity: ModuleConnectivity
+  }
+  lastMetricsUpdate: Metrics | null
   thresholds: PlantThresholds
 }
 

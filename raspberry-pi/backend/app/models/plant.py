@@ -3,7 +3,7 @@
 from sqlalchemy import CheckConstraint, Column, Float, ForeignKey, Integer, String
 
 from app.common.constants import SENSOR_THRESHOLDS
-from app.models.user import Base
+from app.database import Base
 
 
 class Plant(Base):

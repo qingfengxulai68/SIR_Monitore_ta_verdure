@@ -5,14 +5,14 @@ import { getToken } from "./use-auth"
 import type {
   IncomingWebSocketMessage,
   PlantMetricsMessage,
-  ModuleConnectionMessage,
+  ModuleConnectivityMessage,
   EntityChangeMessage,
   Plant,
   Module
 } from "../types"
 import { QueryKeys } from "../types"
 
-const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL as string
+const WS_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL as string).replace(/^http/, 'ws')
 const PING_INTERVAL = 30000
 
 export function useSystemWebSocket() {
@@ -30,10 +30,10 @@ export function useSystemWebSocket() {
 
       switch (message.type) {
         case "PLANT_METRICS":
-          handleSensorValues(message as PlantMetricsMessage)
+          handleMetrics(message as PlantMetricsMessage)
           break
-        case "MODULE_CONNECTION":
-          handleModuleConnection(message as ModuleConnectionMessage)
+        case "MODULE_CONNECTIVITY":
+          handleModuleConnectivity(message as ModuleConnectivityMessage)
           break
         case "ENTITY_CHANGE":
           handleEntityChange(message as EntityChangeMessage)
@@ -52,41 +52,50 @@ export function useSystemWebSocket() {
     }
   })
 
-  function handleSensorValues(message: PlantMetricsMessage) {
-    const { plantId, values, status } = message.payload
+  function handleMetrics(message: PlantMetricsMessage) {
+    const { plantId, metrics } = message.payload
 
     queryClient.setQueryData<Plant[]>(QueryKeys.plants, (plants) =>
-      plants?.map((plant) => (plant.id === plantId ? { ...plant, status, latestValues: values } : plant))
+      plants?.map((plant) => (plant.id === plantId ? { ...plant, lastMetricsUpdate: metrics } : plant))
     )
 
     queryClient.setQueryData<Plant>(QueryKeys.plant(plantId), (plant) =>
-      plant ? { ...plant, status, latestValues: values } : plant
+      plant ? { ...plant, lastMetricsUpdate: metrics } : plant
     )
   }
 
-  function handleModuleConnection(message: ModuleConnectionMessage) {
-    const { moduleId, isOnline, coupledPlantId } = message.payload
+  function handleModuleConnectivity(message: ModuleConnectivityMessage) {
+    const { moduleId, connectivity } = message.payload
+    const { isOnline, lastSeen } = connectivity
 
-    // Update the specific module status
-    ;[undefined, true, false].forEach((coupled) => {
-      queryClient.setQueryData<Module[]>(QueryKeys.modules(coupled), (modules) =>
-        modules?.map((module) => (module.id === moduleId ? { ...module, isOnline } : module))
-      )
+    let plantIdToUpdate: number | null = null
+
+    // Update all existing module queries (fuzzy match on root key)
+    queryClient.setQueriesData<Module[]>({ queryKey: QueryKeys.modules() }, (modules) => {
+      if (!modules) return modules
+
+      return modules.map((m) => {
+        if (m.id !== moduleId) return m
+
+        // Side-effect: Capture plant ID if found
+        if (m.coupled) {
+          plantIdToUpdate = m.coupledPlantId
+        }
+
+        return { ...m, connectivity }
+      })
     })
 
-    // Update coupled plant status
-    if (coupledPlantId) {
-      const updatePlantStatus = (plant: Plant) => ({
-        ...plant,
-        status: isOnline ? plant.status : ("offline" as const)
-      })
-
-      queryClient.setQueryData<Plant[]>(QueryKeys.plants, (plants) =>
-        plants?.map((plant) => (plant.id === coupledPlantId ? updatePlantStatus(plant) : plant))
+    // If the module was coupled, update the related plant connectivity
+    if (plantIdToUpdate) {
+      const updatedConnectivity = { isOnline, lastSeen }
+      queryClient.setQueryData<Plant[]>(QueryKeys.plants, (list) =>
+        list?.map((p) =>
+          p.id === plantIdToUpdate ? { ...p, module: { ...p.module, connectivity: updatedConnectivity } } : p
+        )
       )
-
-      queryClient.setQueryData<Plant>(QueryKeys.plant(coupledPlantId), (plant) =>
-        plant ? updatePlantStatus(plant) : plant
+      queryClient.setQueryData<Plant>(QueryKeys.plant(plantIdToUpdate), (p) =>
+        p ? { ...p, module: { ...p.module, connectivity: updatedConnectivity } } : p
       )
     }
   }
@@ -95,15 +104,45 @@ export function useSystemWebSocket() {
     const { entity, action, id } = message.payload
 
     if (entity === "plant") {
-      queryClient.invalidateQueries({ queryKey: QueryKeys.plants, refetchType: "all" })
-      if (action === "update" || action === "delete") {
-        queryClient.invalidateQueries({ queryKey: QueryKeys.plant(id as number), refetchType: "all" })
+      const plantId = id as number
+
+      if (action === "create") {
+        // Refetch the main list to include the new plant (`exact: true` to avoid invalidating unrelated child keys).
+        queryClient.invalidateQueries({
+          queryKey: QueryKeys.plants,
+          exact: true,
+          refetchType: "all"
+        })
+      } else if (action === "delete") {
+        // Manually remove from the list cache to avoid a refetch.
+        queryClient.setQueryData<Plant[]>(QueryKeys.plants, (plants) => plants?.filter((plant) => plant.id !== plantId))
+
+        // Garbage collect the specific plant cache since it no longer exists.
+        queryClient.removeQueries({ queryKey: QueryKeys.plant(plantId) })
+      } else if (action === "update") {
+        // Refetch the specific plant details.
+        queryClient.invalidateQueries({
+          queryKey: QueryKeys.plant(plantId),
+          refetchType: "all"
+        })
+
+        // Refetch the main list (`exact: true` to prevent invalidating ALL other plant details).
+        queryClient.invalidateQueries({
+          queryKey: QueryKeys.plants,
+          exact: true,
+          refetchType: "all"
+        })
       }
     } else if (entity === "module") {
-      queryClient.invalidateQueries({
-        queryKey: ["modules"],
-        refetchType: "all"
-      })
+      if (action === "create" || action === "update") {
+        // Refetch all module lists.
+        queryClient.invalidateQueries({ queryKey: QueryKeys.modules(), refetchType: "all" })
+      } else if (action === "delete") {
+        // Manually remove from the modules list
+        queryClient.setQueryData<Module[]>(QueryKeys.modules(), (modules) =>
+          modules?.filter((module) => module.id !== id)
+        )
+      }
     }
   }
 

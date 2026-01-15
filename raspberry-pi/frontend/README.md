@@ -39,8 +39,7 @@ frontend/
 
     | Variable | Description | Example (Local) |
     | :--- | :--- | :--- |
-    | `VITE_API_BASE_URL` | Backend API URL | `http://localhost:8000` |
-    | `VITE_WS_BASE_URL` | Backend WebSocket URL | `ws://localhost:8000/ws` |
+    | `VITE_BACKEND_BASE_URL` | Backend base URL (HTTP for API, auto-converted to WS for WebSocket) | `http://localhost:8000` |
 
 3.  **Start Development Server**
     ```bash
