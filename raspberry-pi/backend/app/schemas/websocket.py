@@ -11,9 +11,7 @@ class PlantMetricsPayload(BaseModel):
     """PLANT_METRICS WebSocket event payload."""
 
     plantId: int
-    timestamp: datetime
     metrics: MetricsResponse
-    isHealthy: bool
 
 
 class PlantMetricsMessage(BaseModel):

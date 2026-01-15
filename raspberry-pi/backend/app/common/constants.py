@@ -12,4 +12,3 @@ SENSOR_THRESHOLDS = {
     "LIGHT": {"MIN": 0.0, "MAX": 65000.0},
     "TEMP": {"MIN": -20.0, "MAX": 50.0},
 }
-

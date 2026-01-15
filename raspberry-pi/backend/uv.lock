@@ -1122,7 +1122,7 @@ wheels = [
 
 [[package]]
 name = "terrarium-backend"
-version = "0.1.0"
+version = "0.1.1b1"
 source = { virtual = "." }
 dependencies = [
     { name = "bcrypt" },

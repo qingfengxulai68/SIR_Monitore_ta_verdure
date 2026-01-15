@@ -3,18 +3,17 @@
 from typing import Annotated, Literal
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Query
-from sqlalchemy import and_, delete, or_, select, func, Integer
+from sqlalchemy import and_, delete, or_, select, func
 from sqlalchemy.orm import Session
 
 from app.auth.jwt import verify_jwt_user
-from app.common.utils import are_latest_metrics_within_thresholds, is_module_online
+from app.common.utils import is_module_online
 from app.database import get_session
 from app.models.module import Module
 from app.models.plant import Plant
 from app.models.metrics import Metrics
 from app.models.user import User
 from app.schemas.plant import (
-    LastMetricsUpdateResponse,
     ModuleInfoResponse,
     PlantCreateRequest,
     PlantResponse,
@@ -22,9 +21,8 @@ from app.schemas.plant import (
     ThresholdRangeResponse,
     ThresholdsResponse,
 )
-from app.schemas.metrics import MetricsResponse, HistoryResponse, HistoryMeta, HistoryDataPoint
-from app.schemas.module import ModuleConnectivity
-from app.common.utils import are_latest_metrics_within_thresholds
+from app.schemas.metrics import MetricsResponse, HistoryResponse, HistoryMetaResponse, HistoryMetricsResponse
+from app.schemas.module import ModuleConnectivityResponse
 from app.websocket import ws_manager
 
 router = APIRouter(prefix="/plants", tags=["Plants"])
@@ -62,26 +60,21 @@ async def get_plants(
             name=plant.name,
             module=ModuleInfoResponse(
                 id=plant.module_id,
-                connectivity=ModuleConnectivity(
+                connectivity=ModuleConnectivityResponse(
                     isOnline=is_module_online(module),
                     lastSeen=module.last_seen,
                 ),
             ),
             lastMetricsUpdate=(
-                (lv := (
-                    MetricsResponse(
-                        soilMoist=val.soil_moist,
-                        humidity=val.humidity,
-                        light=val.light,
-                        temp=val.temp,
-                    )
-                    if val
-                    else None
-                )) and (health := are_latest_metrics_within_thresholds(session, plant, lv)) is not None and LastMetricsUpdateResponse(
-                    timestamp=val.timestamp,
-                    metrics=lv,
-                    isHealthy=health,
-                ) or None
+                MetricsResponse(
+                    timestamp=val.timestamp.isoformat(),
+                    soilMoist=val.soil_moist,
+                    humidity=val.humidity,
+                    light=val.light,
+                    temp=val.temp,
+                )
+                if val
+                else None
             ),
             thresholds=ThresholdsResponse(
                 soilMoist=ThresholdRangeResponse(
@@ -124,35 +117,26 @@ async def get_plant(
 
     # Map to schema
     latest_metrics = None
-    latest_timestamp = None
     if latest_val_db:
         latest_metrics = MetricsResponse(
+            timestamp=latest_val_db.timestamp.isoformat(),
             soilMoist=latest_val_db.soil_moist,
             humidity=latest_val_db.humidity,
             light=latest_val_db.light,
             temp=latest_val_db.temp,
         )
-        latest_timestamp = latest_val_db.timestamp
 
     return PlantResponse(
         id=plant.id,
         name=plant.name,
         module=ModuleInfoResponse(
             id=plant.module_id,
-            connectivity=ModuleConnectivity(
+            connectivity=ModuleConnectivityResponse(
                 isOnline=is_module_online(module) if module else False,
                 lastSeen=module.last_seen if module else None,
             ),
         ),
-        lastMetricsUpdate=(
-            LastMetricsUpdateResponse(
-                timestamp=latest_timestamp,
-                metrics=latest_metrics,
-                isHealthy=are_latest_metrics_within_thresholds(session, plant, latest_metrics),
-            )
-            if latest_metrics
-            else None
-        ),
+        lastMetricsUpdate=latest_metrics,
         thresholds=ThresholdsResponse(
             soilMoist=ThresholdRangeResponse(min=plant.min_soil_moist, max=plant.max_soil_moist),
             humidity=ThresholdRangeResponse(min=plant.min_humidity, max=plant.max_humidity),
@@ -334,7 +318,7 @@ async def get_plant_history(
         
         if not latest:
             return HistoryResponse(
-                meta=HistoryMeta(range=range, aggregation="30s_adaptive", from_time=start_time, to_time=now),
+                meta=HistoryMetaResponse(range=range, aggregation="30s_adaptive", from_time=start_time, to_time=now),
                 data=[]
             )
         
@@ -364,10 +348,10 @@ async def get_plant_history(
         ).all()
         
         return HistoryResponse(
-            meta=HistoryMeta(range=range, aggregation="30s_adaptive", from_time=start_time, to_time=now),
+            meta=HistoryMetaResponse(range=range, aggregation="30s_adaptive", from_time=start_time, to_time=now),
             data=[
-                HistoryDataPoint(
-                    time=row.real_ts if row.real_ts else datetime.fromtimestamp(row.slot_ts, tz=timezone.utc),
+                HistoryMetricsResponse(
+                    timestamp=row.real_ts if row.real_ts else datetime.fromtimestamp(row.slot_ts, tz=timezone.utc),
                     soilMoist=round(row.soil_moist, 2) if row.soil_moist is not None else None,
                     temp=round(row.temp, 2) if row.temp is not None else None,
                     light=round(row.light, 0) if row.light is not None else None,
@@ -402,10 +386,10 @@ async def get_plant_history(
     ).all()
     
     return HistoryResponse(
-        meta=HistoryMeta(range=range, aggregation=f"{interval}s", from_time=start_time, to_time=now),
+        meta=HistoryMetaResponse(range=range, aggregation=f"{interval}s", from_time=start_time, to_time=now),
         data=[
-            HistoryDataPoint(
-                time=datetime.fromtimestamp(row.bucket_ts, tz=timezone.utc),
+            HistoryMetricsResponse(
+                timestamp=datetime.fromtimestamp(row.bucket_ts, tz=timezone.utc),
                 soilMoist=round(row.avg_soil, 2) if row.avg_soil is not None else None,
                 temp=round(row.avg_temp, 2) if row.avg_temp is not None else None,
                 light=round(row.avg_light, 0) if row.avg_light is not None else None,

@@ -9,8 +9,9 @@ from app.common.constants import SENSOR_THRESHOLDS
 
 # Metrics Response
 class MetricsResponse(BaseModel):
-    """Latest metrics for a plant."""
+    """Metrics response schema."""
 
+    timestamp: datetime.datetime
     soilMoist: float
     humidity: float
     light: float
@@ -28,21 +29,21 @@ class MetricsAddRequest(BaseModel):
     temp: float = Field(..., ge=SENSOR_THRESHOLDS["TEMP"]["MIN"], le=SENSOR_THRESHOLDS["TEMP"]["MAX"])
 
 # History Response
-class HistoryDataPoint(BaseModel):
-    """Single data point in history."""
+class HistoryMetricsResponse(BaseModel):
+    """Single data point in history response schema."""
 
-    time: datetime.datetime
+    timestamp: datetime.datetime
     soilMoist: float | None = None
     temp: float | None = None
     light: float | None = None
     humidity: float | None = None
 
 
-class HistoryMeta(BaseModel):
-    """Metadata about the history query."""
+class HistoryMetaResponse(BaseModel):
+    """Metadata about the history response schema."""
 
     range: Literal["hour", "day", "week", "month"]
-    aggregation: str  # e.g., "raw", "10m", "1h", "4h"
+    aggregation: str
     from_time: datetime.datetime = Field(alias="from")
     to_time: datetime.datetime = Field(alias="to")
 
@@ -53,5 +54,5 @@ class HistoryMeta(BaseModel):
 class HistoryResponse(BaseModel):
     """Historical data response."""
 
-    meta: HistoryMeta
-    data: list[HistoryDataPoint]
+    meta: HistoryMetaResponse
+    data: list[HistoryMetricsResponse]

@@ -60,6 +60,7 @@ class ModuleHeartbeatChecker:
                 if not is_online and not was_offline:
                     self._offline_modules.add(module.id)
                     await ws_manager.emit_module_connectivity(module.id, False, module.last_seen)
+                    print(f"Alert for module {module.id}. The module went offline.")
                 elif is_online and was_offline:
                     self._offline_modules.discard(module.id)
 

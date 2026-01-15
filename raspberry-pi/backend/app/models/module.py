@@ -1,7 +1,8 @@
 """Module (hardware) model."""
 
 from sqlalchemy import Boolean, Column, DateTime, String
-from app.models.user import Base
+
+from app.database import Base
 
 
 class Module(Base):

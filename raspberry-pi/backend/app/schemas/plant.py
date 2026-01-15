@@ -5,12 +5,12 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.common.constants import SENSOR_THRESHOLDS
 from app.schemas.metrics import MetricsResponse
-from app.schemas.module import ModuleConnectivity
+from app.schemas.module import ModuleConnectivityResponse
 
 
 # Thresholds Ranges
 class ThresholdRangeRequest(BaseModel):
-    """Threshold range for a sensor."""
+    """Threshold range request schema."""
 
     min: float
     max: float
@@ -24,7 +24,7 @@ class ThresholdRangeRequest(BaseModel):
 
 
 class ThresholdRangeResponse(BaseModel):
-    """Threshold range for a sensor."""
+    """Threshold range response schema."""
 
     min: float
     max: float
@@ -32,7 +32,7 @@ class ThresholdRangeResponse(BaseModel):
 
 # Thresholds
 class ThresholdsRequest(BaseModel):
-    """Thresholds for plant creation/update."""
+    """Thresholds request schema."""
 
     soilMoist: ThresholdRangeRequest
     humidity: ThresholdRangeRequest
@@ -77,7 +77,7 @@ class ThresholdsRequest(BaseModel):
 
 
 class ThresholdsResponse(BaseModel):
-    """Thresholds response."""
+    """Thresholds response schema."""
 
     soilMoist: ThresholdRangeResponse
     humidity: ThresholdRangeResponse
@@ -103,19 +103,11 @@ class PlantUpdateRequest(BaseModel):
 
 
 # Plant Responses
-class LastMetricsUpdateResponse(BaseModel):
-    """Last metrics update information."""
-
-    timestamp: datetime.datetime
-    metrics: MetricsResponse
-    isHealthy: bool
-
-
 class ModuleInfoResponse(BaseModel):
-    """Module information."""
+    """Module information response schema."""
 
     id: str
-    connectivity: ModuleConnectivity
+    connectivity: ModuleConnectivityResponse
 
 
 class PlantResponse(BaseModel):
@@ -124,5 +116,5 @@ class PlantResponse(BaseModel):
     id: int
     name: str
     module: ModuleInfoResponse
-    lastMetricsUpdate: LastMetricsUpdateResponse | None = None
+    lastMetricsUpdate: MetricsResponse | None = None
     thresholds: ThresholdsResponse

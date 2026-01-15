@@ -1,7 +1,6 @@
 """API Key verification for ingestion endpoints."""
 
 import os
-
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
 

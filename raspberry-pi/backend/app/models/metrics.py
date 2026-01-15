@@ -3,7 +3,7 @@
 from sqlalchemy import CheckConstraint, Column, DateTime, Float, ForeignKey, Index, Integer
 
 from app.common.constants import SENSOR_THRESHOLDS
-from app.models.user import Base
+from app.database import Base
 
 
 class Metrics(Base):
@@ -27,7 +27,4 @@ class Metrics(Base):
     light = Column(Float, nullable=False)
     temp = Column(Float, nullable=False)
 
-    timestamp = Column(
-        DateTime(timezone=True),
-        nullable=False,
-    )
+    timestamp = Column(DateTime(timezone=True), nullable=False)

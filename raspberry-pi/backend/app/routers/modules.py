@@ -1,7 +1,7 @@
 """Modules router."""
 
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -12,7 +12,7 @@ from app.models.module import Module
 from app.models.plant import Plant
 from app.models.user import User
 from app.models.metrics import Metrics
-from app.schemas.module import ModuleConnectivity, ModuleResponse
+from app.schemas.module import ModuleConnectivityResponse, ModuleResponse
 from app.websocket import ws_manager
 
 router = APIRouter(prefix="/modules", tags=["Modules"])
@@ -37,7 +37,7 @@ async def get_modules(
             id=module.id,
             coupled=module.coupled,
             coupledPlantId=plant.id if plant else None,
-            connectivity=ModuleConnectivity(
+            connectivity=ModuleConnectivityResponse(
                 isOnline=is_module_online(module),
                 lastSeen=module.last_seen,
             ),

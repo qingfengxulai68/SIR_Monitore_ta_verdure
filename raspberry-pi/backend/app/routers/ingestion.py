@@ -7,7 +7,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.api_key import verify_api_key
-from app.common.utils import are_latest_metrics_within_thresholds
 from app.database import get_session
 from app.models.module import Module
 from app.models.plant import Plant
@@ -51,17 +50,29 @@ async def ingest_sensor_data(
         )
         session.add(metric)
 
-        # Calculate plant status
-        current_new_metrics = MetricsResponse(
+        # Broadcast PLANT_METRICS
+        await ws_manager.emit_plant_metrics(plant.id, MetricsResponse(
+            timestamp=now,
             soilMoist=request.soilMoist,
             humidity=request.humidity,
             light=request.light,
             temp=request.temp,
-        )
-        is_healthy = are_latest_metrics_within_thresholds(session, plant, current_new_metrics)
+        ))
 
-        # Broadcast PLANT_METRICS
-        await ws_manager.emit_plant_metrics(plant.id, now, current_new_metrics, is_healthy)
+        # Check thresholds and broadcast alert if necessary
+        alerts = []
+
+        if request.soilMoist < plant.min_soil_moist or request.soilMoist > plant.max_soil_moist:
+            alerts.append("SOIL_MOIST")
+        if request.humidity < plant.min_humidity or request.humidity > plant.max_humidity:
+            alerts.append("HUMIDITY")
+        if request.light < plant.min_light or request.light > plant.max_light:
+            alerts.append("LIGHT")
+        if request.temp < plant.min_temp or request.temp > plant.max_temp:
+            alerts.append("TEMP")
+        
+        if alerts:
+            print(f"Alert for plant {plant.id}: {alerts}. The plant is out of thresholds.")
 
     session.commit()
 

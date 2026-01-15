@@ -49,15 +49,13 @@ class WebSocketManager:
         for connection_id in disconnected:
             await self.disconnect(connection_id)
 
-    async def emit_plant_metrics(self, plant_id: int, timestamp, metrics, isHealthy: bool) -> None:
+    async def emit_plant_metrics(self, plant_id: int, metrics) -> None:
         """Broadcast plant metrics to all clients."""
         from app.schemas.websocket import PlantMetricsMessage, PlantMetricsPayload
         message = PlantMetricsMessage(
             payload=PlantMetricsPayload(
                 plantId=plant_id,
-                timestamp=timestamp,
                 metrics=metrics,
-                isHealthy=isHealthy,
             )
         )
         await self.broadcast(message)

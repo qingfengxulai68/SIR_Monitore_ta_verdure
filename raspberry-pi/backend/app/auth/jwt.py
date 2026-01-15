@@ -1,9 +1,8 @@
 """JWT utilities for authentication."""
 
 import os
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
-
 import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
