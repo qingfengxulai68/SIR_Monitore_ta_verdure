@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 # --- Configuration ---
 API_URL = "http://localhost:8000/ingestion/"
 API_KEY = "H8XIds5mGjfMaLYA-BWmKV9r5DX2aCdyu2nBVPElEkM"
-MODULES = ["ESP32-001", "ESP32-002", "ESP32-003"]
+MODULES = ["ESP32-001", "ESP32-003"]
 INTERVAL = 30
 
 def send_data(module_id):
