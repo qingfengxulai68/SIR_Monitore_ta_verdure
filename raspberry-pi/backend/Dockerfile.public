@@ -1,0 +1,35 @@
+FROM python:3.14-slim AS builder
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-cache
+
+FROM python:3.14-slim
+
+# Install curl and gnupg for ngrok installation
+RUN apt-get update && apt-get install -y curl gnupg && rm -rf /var/lib/apt/lists/*
+
+# Install ngrok via apt (handles architecture automatically)
+RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
+    | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
+    && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
+    | tee /etc/apt/sources.list.d/ngrok.list \
+    && apt-get update \
+    && apt-get install -y ngrok \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /app/.venv /app/.venv
+COPY . .
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+RUN chmod +x start_public.sh
+
+EXPOSE 8001
+
+CMD ["./start_public.sh"]

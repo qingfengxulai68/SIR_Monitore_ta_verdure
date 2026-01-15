@@ -50,6 +50,7 @@ backend/
     | `API_KEY`        | API Key for sensors (ESP32) | `your-secret-api-key`      |
     | `ADMIN_USERNAME` | Initial admin username      | `admin`                    |
     | `ADMIN_PASSWORD` | Initial admin password      | `demo1234`                 |
+    | `NGROK_AUTHTOKEN`| Token for public tunnel     | `your-ngrok-token`         |
 
 3.  **Start Development Server**
     ```bash
@@ -80,18 +81,13 @@ To run both the internal dashboard (port 8000) and the public webhook (port 8001
 
 1.  **Start Services**
 
+    Ensure `NGROK_AUTHTOKEN` is set in your `.env` file.
+
     ```bash
     docker compose up -d --build
     ```
 
-2.  **Expose Public Webhook via Ngrok**
-
+    The public webhook will automatically start an ngrok tunnel. Check the container logs to find the URL:
     ```bash
-    ngrok config add-authtoken $YOUR_AUTHTOKEN
+    docker logs terrarium-public
     ```
-
-    ```bash
-    ngrok http 8001 --url https://default.internal
-    ```
-
-    _Update your `DISCORD_REDIRECT_URI` in `.env` with the generated ngrok URL._
