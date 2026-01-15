@@ -9,7 +9,7 @@ from app.auth.jwt import verify_jwt_user
 from app.database import get_session
 from app.models.settings import Settings
 from app.models.user import User
-from app.schemas.settings import AlertsEnableRequest, AlertsResponse
+from app.schemas.settings import AlertsUpdateRequest, AlertsResponse
 
 router = APIRouter(prefix="/settings", tags=["Settings"])
 
@@ -22,33 +22,24 @@ async def get_alerts(
     """Get global alert settings."""
     settings = session.execute(select(Settings)).scalars().first()
     return AlertsResponse(
-        enabled=settings.alerts_enabled,
-        discordWebhookUrl=settings.discord_webhook_url,
+        discord_enabled=settings.alerts_discord_enabled,
+        discord_webhook_url=settings.discord_webhook_url,
+        email_enabled=settings.alerts_email_enabled,
+        receiver_email=settings.receiver_email,
     )
 
 
-@router.post("/alerts/enable", status_code=204)
-async def enable_alerts(
-    request: AlertsEnableRequest,
+@router.put("/alerts", status_code=204)
+async def update_alerts(
+    request: AlertsUpdateRequest,
     session: Annotated[Session, Depends(get_session)],
     _current_user: Annotated[User, Depends(verify_jwt_user)],
 ) -> None:
-    """Enable alerts with Discord webhook URL."""
+    """Update alert settings for Discord and Email."""
     settings = session.execute(select(Settings)).scalars().first()
-    settings.discord_webhook_url = str(request.discordWebhookUrl)
-    settings.alerts_enabled = True
-    session.add(settings)
-    session.commit()
-
-
-@router.post("/alerts/disable", status_code=204)
-async def disable_alerts(
-    session: Annotated[Session, Depends(get_session)],
-    _current_user: Annotated[User, Depends(verify_jwt_user)],
-) -> None:
-    """Disable all alerts (Master Switch)."""
-    settings = session.execute(select(Settings)).scalars().first()
-    settings.alerts_enabled = False
-    settings.discord_webhook_url = None
+    settings.alerts_discord_enabled = request.discord_enabled
+    settings.discord_webhook_url = str(request.discord_webhook_url) if request.discord_webhook_url else None
+    settings.alerts_email_enabled = request.email_enabled
+    settings.receiver_email = request.receiver_email
     session.add(settings)
     session.commit()

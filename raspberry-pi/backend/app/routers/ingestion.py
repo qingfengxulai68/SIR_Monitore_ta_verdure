@@ -12,6 +12,7 @@ from app.models.module import Module
 from app.models.plant import Plant
 from app.models.metrics import Metrics
 from app.schemas.metrics import MetricsAddRequest, MetricsResponse
+from app.models.settings import Settings
 from app.websocket import ws_manager
 
 router = APIRouter(prefix="/ingestion", tags=["Ingestion"])
@@ -72,7 +73,10 @@ async def ingest_sensor_data(
             alerts.append("TEMP")
         
         if alerts:
-            print(f"Alert for plant {plant.id}: {alerts}. The plant is out of thresholds.")
+            settings = session.execute(select(Settings)).scalars().first()
+            if settings and settings.enable_alerts:
+                discord_webhook_url = settings.discord_webhook_url
+                print(f"Alert for plant {plant.id}: {alerts}. The plant is out of thresholds.")
 
     session.commit()
 
