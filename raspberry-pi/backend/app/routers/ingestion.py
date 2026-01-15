@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.common.discord_utils import send_discord_message
+from app.common.email_utils import send_email
 from app.auth.api_key import verify_api_key
 from app.database import get_session
 from app.models.module import Module
@@ -72,11 +74,36 @@ async def ingest_sensor_data(
         if request.temp < plant.min_temp or request.temp > plant.max_temp:
             alerts.append("TEMP")
         
-        if alerts:
+        if len(alerts) > 0:
             settings = session.execute(select(Settings)).scalars().first()
-            if settings and settings.enable_alerts:
-                discord_webhook_url = settings.discord_webhook_url
-                print(f"Alert for plant {plant.id}: {alerts}. The plant is out of thresholds.")
+            for alert in alerts:
+                if settings and settings.alerts_discord_enabled and settings.discord_webhook_url:
+                    if alert == "SOIL_MOIST":
+                        message = f"⚠️ Alert: Soil Moisture out of thresholds for plant {plant.id}. Current: {request.soilMoist}%, Min: {plant.min_soil_moist}%, Max: {plant.max_soil_moist}%."
+                    elif alert == "HUMIDITY":
+                        message = f"⚠️ Alert: Humidity out of thresholds for plant {plant.id}. Current: {request.humidity}%, Min: {plant.min_humidity}%, Max: {plant.max_humidity}%."
+                    elif alert == "LIGHT":
+                        message = f"⚠️ Alert: Light out of thresholds for plant {plant.id}. Current: {request.light} lx, Min: {plant.min_light} lx, Max: {plant.max_light} lx."
+                    elif alert == "TEMP":
+                        message = f"⚠️ Alert: Temperature out of thresholds for plant {plant.id}. Current: {request.temp} °C, Min: {plant.min_temp} °C, Max: {plant.max_temp} °C."
+                    await send_discord_message(settings.discord_webhook_url, message)
+                if settings and settings.alerts_email_enabled and settings.alert_email_address:
+                    if alert == "SOIL_MOIST":
+                        message = f"Alert: Soil Moisture out of thresholds for plant {plant.id}. Current: {request.soilMoist}%, Min: {plant.min_soil_moist}%, Max: {plant.max_soil_moist}%."
+                    elif alert == "HUMIDITY":
+                        message = f"Alert: Humidity out of thresholds for plant {plant.id}. Current: {request.humidity}%, Min: {plant.min_humidity}%, Max: {plant.max_humidity}%."
+                    elif alert == "LIGHT":  
+                        message = f"Alert: Light out of thresholds for plant {plant.id}. Current: {request.light} lx, Min: {plant.min_light} lx, Max: {plant.max_light} lx."
+                    elif alert == "TEMP":
+                        message = f"Alert: Temperature out of thresholds for plant {plant.id}. Current: {request.temp} °C, Min: {plant.min_temp} °C, Max: {plant.max_temp} °C."
+                    await send_email(
+                        to_address=settings.alert_email_address,
+                        subject=f"Plant {plant.id} Alert: {alert} out of thresholds",
+                        body=message
+                    )       
+                    # Here you would normally send the alert to the Discord webhook.
+                    # For this example, we'll just print it.
+            print(f"Alert for plant {plant.id}: {alerts}. The plant is out of thresholds.")
 
     session.commit()
 

@@ -6,8 +6,6 @@ import os
 
 load_dotenv()
 
-
-
 def send_email(sender_email, sender_password, receiver_email, subject, body):
     """
     Sends a simple text email using Python.

@@ -106,6 +106,7 @@ async def websocket_endpoint(
     """
     # Validate authentication token
     if not token or not decode_token(token):
+        await websocket.accept()
         await websocket.close(code=4001, reason="Authentication required")
         return
 
