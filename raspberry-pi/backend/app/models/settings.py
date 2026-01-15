@@ -11,6 +11,8 @@ class Settings(Base):
     __table_args__ = (CheckConstraint("id = 1", name="check_singleton_id"),)
 
     id = Column(Integer, primary_key=True, nullable=False, default=1)
+    alerts_discord_enabled = Column(Boolean, nullable=False, default=False)
     discord_webhook_url = Column(String, nullable=True, default=None)
-    alerts_enabled = Column(Boolean, nullable=False, default=False)
+    alerts_email_enabled = Column(Boolean, nullable=False, default=False)
+    receiver_email = Column(String, nullable=True, default=None)
 
