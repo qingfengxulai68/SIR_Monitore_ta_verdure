@@ -12,7 +12,7 @@ import type {
 } from "../types"
 import { QueryKeys } from "../types"
 
-const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL as string
+const WS_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL as string).replace(/^http/, 'ws')
 const PING_INTERVAL = 30000
 
 export function useSystemWebSocket() {
@@ -53,16 +53,14 @@ export function useSystemWebSocket() {
   })
 
   function handleMetrics(message: PlantMetricsMessage) {
-    const { plantId, timestamp, metrics, isHealthy } = message.payload
+    const { plantId, metrics } = message.payload
 
     queryClient.setQueryData<Plant[]>(QueryKeys.plants, (plants) =>
-      plants?.map((plant) =>
-        plant.id === plantId ? { ...plant, lastMetricsUpdate: { timestamp, metrics, isHealthy } } : plant
-      )
+      plants?.map((plant) => (plant.id === plantId ? { ...plant, lastMetricsUpdate: metrics } : plant))
     )
 
     queryClient.setQueryData<Plant>(QueryKeys.plant(plantId), (plant) =>
-      plant ? { ...plant, lastMetricsUpdate: { timestamp, metrics, isHealthy } } : plant
+      plant ? { ...plant, lastMetricsUpdate: metrics } : plant
     )
   }
 

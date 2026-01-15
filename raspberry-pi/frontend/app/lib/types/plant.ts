@@ -26,13 +26,6 @@ export type PlantThresholds = {
   temp: ThresholdRange
 }
 
-// Last metrics update type definition
-export type LastMetricsUpdate = {
-  timestamp: string
-  metrics: Metrics
-  isHealthy: boolean
-}
-
 // Plant type definition
 export type Plant = {
   id: number
@@ -41,7 +34,7 @@ export type Plant = {
     id: string
     connectivity: ModuleConnectivity
   }
-  lastMetricsUpdate: LastMetricsUpdate | null
+  lastMetricsUpdate: Metrics | null
   thresholds: PlantThresholds
 }
 

@@ -7,7 +7,6 @@ import { Button } from "~/components/ui/button"
 import { Spinner } from "~/components/ui/spinner"
 import { usePlant } from "~/lib/hooks/use-plants"
 import { useHeader } from "~/layout/header/header-provider"
-import { getPlantStatus } from "~/lib/utils"
 import { CurrentMetrics } from "./components/current-metrics"
 import { Charts } from "./components/charts"
 import { ScrollArea } from "~/components/ui/scroll-area"
@@ -16,11 +15,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/comp
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
   DropdownMenuLabel,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem
 } from "~/components/ui/dropdown-menu"
+import { formatLastSeen, getPlantHealthStatus } from "~/lib/utils"
+import { IconCircleCheckFilled, IconAlertCircleFilled, IconLoader } from "@tabler/icons-react"
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const id = params.id
@@ -38,12 +40,15 @@ export default function PlantMonitoring({ params }: Route.ComponentProps) {
   const { id } = params
   const { setHeaderContent } = useHeader()
   const { data: plant, isLoading, error, refetch } = usePlant(parseInt(id))
-  const [showGrid, setShowGrid] = useState(true)
-  const [showThresholds, setShowThresholds] = useState(false)
+  const [chartOption, setChartOption] = useState<"cartesian" | "thresholds" | "none">("cartesian")
+
+  const showGrid = chartOption === "cartesian"
+  const showThresholds = chartOption === "thresholds"
 
   useEffect(() => {
     if (plant) {
-      const isOnline = getPlantStatus(plant) !== "offline"
+      const isOnline = plant.module.connectivity.isOnline
+      const healthStatus = getPlantHealthStatus(plant)
 
       setHeaderContent({
         breadcrumbs: [
@@ -60,16 +65,31 @@ export default function PlantMonitoring({ params }: Route.ComponentProps) {
                     <span
                       className={`h-2 w-2 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-red-500"}`}
                     />
-                    {isOnline ? "Live" : "Offline"}
+                    {isOnline ? "Online" : "Offline"}
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>
-                    Last update:{" "}
-                    {plant.lastMetricsUpdate?.timestamp
-                      ? new Date(plant.lastMetricsUpdate.timestamp).toLocaleString()
-                      : "Never"}
-                  </p>
+                  <p>Module: {plant.module.id}</p>
+                  <p>Last seen: {formatLastSeen(plant.module.connectivity.lastSeen)}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="gap-2 px-3 py-1.5">
+                    {healthStatus === "healthy" ? (
+                      <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
+                    ) : healthStatus === "sick" ? (
+                      <IconAlertCircleFilled className="fill-destructive" />
+                    ) : (
+                      <IconLoader />
+                    )}
+                    {healthStatus === "healthy" ? "Healthy" : healthStatus === "sick" ? "Sick" : "Unknown"}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Last update: {formatLastSeen(plant.lastMetricsUpdate?.timestamp || null)}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -80,21 +100,23 @@ export default function PlantMonitoring({ params }: Route.ComponentProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Chart Options</DropdownMenuLabel>
+                <DropdownMenuLabel>Chart Grid</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem checked={showGrid} onCheckedChange={setShowGrid}>
-                  Show Grid
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem checked={showThresholds} onCheckedChange={setShowThresholds}>
-                  Show Thresholds
-                </DropdownMenuCheckboxItem>
+                <DropdownMenuRadioGroup
+                  value={chartOption}
+                  onValueChange={(value) => setChartOption(value as "cartesian" | "thresholds" | "none")}
+                >
+                  <DropdownMenuRadioItem value="none">None</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="cartesian">Cartesian</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="thresholds">Thresholds</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         )
       })
     }
-  }, [plant, setHeaderContent, showGrid, showThresholds])
+  }, [plant, setHeaderContent, chartOption])
 
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] p-6">

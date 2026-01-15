@@ -8,7 +8,7 @@ export function PlantsEmpty() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
   return (
-    <Empty className="border">
+    <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <Flower2 />

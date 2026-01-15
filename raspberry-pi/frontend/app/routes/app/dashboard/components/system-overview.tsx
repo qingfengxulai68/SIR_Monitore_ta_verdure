@@ -1,7 +1,7 @@
 import { Flower2, Cpu, AlertCircle, WifiOff } from "lucide-react"
 import { Card, CardHeader, CardTitle } from "~/components/ui/card"
 import type { Plant, Module } from "~/lib/types"
-import { getPlantStatus } from "~/lib/utils"
+import { getPlantHealthStatus } from "~/lib/utils"
 
 interface SystemOverviewProps {
   plants: Plant[]
@@ -9,8 +9,8 @@ interface SystemOverviewProps {
 }
 
 export function SystemOverview({ plants, modules }: SystemOverviewProps) {
-  const plantsWithAlerts = plants.filter((plant) => getPlantStatus(plant) === "alert")
-  const offlinePlants = plants.filter((plant) => getPlantStatus(plant) === "offline")
+  const plantsWithAlerts = plants.filter((plant) => getPlantHealthStatus(plant) === "sick")
+  const offlinePlants = plants.filter((plant) => plant.module.connectivity.isOnline === false)
   return (
     <>
       <div>

@@ -3,9 +3,7 @@ import type { Metrics } from "./metrics"
 // PLANT_METRICS - Sensor data update (Optimistic Update)
 export type PlantMetricsPayload = {
   plantId: number
-  timestamp: string
   metrics: Metrics
-  isHealthy: boolean
 }
 
 export type PlantMetricsMessage = {

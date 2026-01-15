@@ -31,7 +31,7 @@ export function PlantsBrowser({ plants }: PlantsBrowserProps) {
             />
           </div>
         </div>
-        <Empty className="border">
+        <Empty className="border border-dashed">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <SearchIcon className="size-6" />

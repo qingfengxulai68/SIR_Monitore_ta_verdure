@@ -59,7 +59,7 @@ export function ModulesTable({ modules, plants }: ModulesTableProps) {
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/60 hover:bg-muted/60">
               <TableHead className="pl-4">Module ID</TableHead>
               <TableHead>Connection</TableHead>
               <TableHead>Plant</TableHead>
@@ -74,10 +74,12 @@ export function ModulesTable({ modules, plants }: ModulesTableProps) {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge
-                          variant={module.connectivity.isOnline ? undefined : "destructive"}
-                          className={module.connectivity.isOnline ? "bg-green-600" : ""}
-                        >
+                        <Badge variant="outline" className="text-muted-foreground px-1.5">
+                          {module.connectivity.isOnline ? (
+                            <div className="h-2 w-2 rounded-full bg-green-500" />
+                          ) : (
+                            <div className="h-2 w-2 rounded-full bg-red-500" />
+                          )}
                           {module.connectivity.isOnline ? "Online" : "Offline"}
                         </Badge>
                       </TooltipTrigger>

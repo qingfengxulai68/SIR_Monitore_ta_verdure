@@ -90,10 +90,12 @@ export function ModulesGrid({ modules, plants }: ModulesGridProps) {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Badge
-                        variant={module.connectivity.isOnline ? undefined : "destructive"}
-                        className={module.connectivity.isOnline ? "bg-green-600" : ""}
-                      >
+                      <Badge variant="outline" className="text-muted-foreground px-1.5">
+                        {module.connectivity.isOnline ? (
+                          <div className="h-2 w-2 rounded-full bg-green-500" />
+                        ) : (
+                          <div className="h-2 w-2 rounded-full bg-red-500" />
+                        )}
                         {module.connectivity.isOnline ? "Online" : "Offline"}
                       </Badge>
                     </TooltipTrigger>
@@ -104,7 +106,10 @@ export function ModulesGrid({ modules, plants }: ModulesGridProps) {
                 </TooltipProvider>
                 {module.coupledPlantId && (
                   <Link to={`/app/plants/${module.coupledPlantId}`}>
-                    <Badge variant="outline" className="text-xs cursor-pointer hover:bg-accent">
+                    <Badge
+                      variant="outline"
+                      className="text-xs cursor-pointer hover:bg-accent text-muted-foreground px-1.5"
+                    >
                       {getPlantName(module.coupledPlantId)}
                     </Badge>
                   </Link>

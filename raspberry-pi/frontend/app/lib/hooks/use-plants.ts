@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { apiClient } from "~/lib/api-client"
 import type { Plant, PlantCreateRequest, PlantUpdateRequest } from "~/lib/types"
+import type { HistoryResponse } from "~/lib/types/metrics"
 import { QueryKeys } from "~/lib/types"
 
 // Hook to fetch the list of plants
@@ -69,5 +70,13 @@ export function useDeletePlant() {
     onError: (error) => {
       toast.error(error.message)
     }
+  })
+}
+
+// Hook to fetch plant history
+export function usePlantHistory(plantId: number, range: "hour" | "day" | "week" | "month" = "hour") {
+  return useQuery({
+    queryKey: QueryKeys.plantHistory(plantId, range),
+    queryFn: () => apiClient.get<HistoryResponse>(`/plants/${plantId}/history?range=${range}`)
   })
 }

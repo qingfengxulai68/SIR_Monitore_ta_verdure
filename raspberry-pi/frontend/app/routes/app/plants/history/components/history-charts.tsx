@@ -1,41 +1,33 @@
-import { useEffect, useState } from "react"
 import { Cloud, Sun, Droplets, Thermometer } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 
-import type { Metrics, Plant } from "~/lib/types"
-
-const MAX_DATA_POINTS = 20
+import type { HistoryMetrics, Plant } from "~/lib/types"
 
 const getChartColor = (key: string) => {
   const style = getComputedStyle(document.documentElement)
   return style.getPropertyValue(`--${key}`).trim()
 }
 
-export function Charts({
+export function HistoryCharts({
   plant,
+  data,
   showGrid,
   showThresholds
 }: {
   plant: Plant
+  data: HistoryMetrics[]
   showGrid: boolean
   showThresholds: boolean
 }) {
-  const [chartData, setChartData] = useState<Metrics[]>([])
-
-  useEffect(() => {
-    if (plant.lastMetricsUpdate) {
-      setChartData((prev) =>
-        [
-          ...prev,
-          {
-            ...plant.lastMetricsUpdate!,
-            timestamp: new Date(plant.lastMetricsUpdate!.timestamp).toLocaleTimeString()
-          }
-        ].slice(-MAX_DATA_POINTS)
-      )
-    }
-  }, [plant.lastMetricsUpdate])
+  // Format data for charts
+  const chartData = data.map((item) => ({
+    ...item,
+    timestamp: new Date(item.timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  }))
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -118,7 +110,7 @@ export function Charts({
                 dataKey="humidity"
                 stroke={getChartColor("humidity")}
                 strokeWidth={2}
-                dot={{ fill: getChartColor("moisture"), strokeWidth: 2, r: 1 }}
+                dot={{ fill: getChartColor("humidity"), strokeWidth: 2, r: 1 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -161,7 +153,7 @@ export function Charts({
                 dataKey="temp"
                 stroke={getChartColor("temperature")}
                 strokeWidth={2}
-                dot={{ fill: getChartColor("moisture"), strokeWidth: 2, r: 1 }}
+                dot={{ fill: getChartColor("temperature"), strokeWidth: 2, r: 1 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -204,7 +196,7 @@ export function Charts({
                 dataKey="light"
                 stroke={getChartColor("light")}
                 strokeWidth={2}
-                dot={{ fill: getChartColor("moisture"), strokeWidth: 2, r: 1 }}
+                dot={{ fill: getChartColor("light"), strokeWidth: 2, r: 1 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -216,6 +208,13 @@ export function Charts({
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    const value = payload[0].value
+
+    // Skip rendering if value is null
+    if (value === null || value === undefined) {
+      return null
+    }
+
     return (
       <div className="border-border/50 bg-background grid items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
         <p className="font-medium">{label}</p>
@@ -234,10 +233,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
               {payload[0].dataKey === "temp" && "Temperature"}
             </span>
             <span className="text-foreground font-mono font-medium tabular-nums">
-              {payload[0].dataKey === "humidity" && `${payload[0].value}%`}
-              {payload[0].dataKey === "light" && `${payload[0].value} lux`}
-              {payload[0].dataKey === "soilMoist" && `${payload[0].value}%`}
-              {payload[0].dataKey === "temp" && `${payload[0].value}°C`}
+              {payload[0].dataKey === "humidity" && `${value}%`}
+              {payload[0].dataKey === "light" && `${value} lux`}
+              {payload[0].dataKey === "soilMoist" && `${value}%`}
+              {payload[0].dataKey === "temp" && `${value}°C`}
             </span>
           </div>
         </div>

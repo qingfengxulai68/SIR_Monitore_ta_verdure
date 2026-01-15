@@ -102,6 +102,7 @@ export function CreatePlantDialog({ open, onOpenChange }: CreatePlantDialogProps
                           type="text"
                           placeholder="e.g., Monstera Deliciosa"
                           aria-invalid={fieldState.invalid}
+                          autoComplete="off"
                         />
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>

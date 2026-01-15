@@ -1,6 +1,6 @@
 import { getToken } from "~/lib/hooks/use-auth"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
+const API_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL as string
 
 // Custom error class for API errors
 export class ApiError extends Error {
