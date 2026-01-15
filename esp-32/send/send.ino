@@ -1,42 +1,46 @@
 #include <esp_now.h>
 #include <WiFi.h>
+#include <esp_wifi.h> // Ajouté pour le contrôle du canal
 
-// ADRESSE MAC DU RÉCEPTEUR (À remplacer par l'adresse du Pi ou 2ème ESP32)
+// 1. MODIFIEZ CET ID POUR CHAQUE CARTE (Plante 1, Plante 2, etc.)
+#define SENSOR_ID 2 
+
 uint8_t broadcastAddress[] = {0x80, 0xF3, 0xDA, 0x60, 0x40, 0xB8};
 
-// Structure des données à envoyer (doit être identique côté récepteur)
 typedef struct struct_message {
-  int id;          // ID de la plante
-  float temp;      // Température
-  float hum;         // Humidité
-  bool lowBattery; // Alerte batterie
+  int id;          
+  float temp;      
+  int hum;      
+  int moist;
+  int light;   
+  bool lowBattery; 
 } struct_message;
 
 struct_message myData;
 esp_now_peer_info_t peerInfo;
 
-// Fonction de rappel (callback) appelée lors de l'envoi
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-  Serial.print("\r\nStatut du dernier paquet : ");
+  Serial.print("\r\nStatut envoi : ");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Succès (ACK reçu)" : "Échec");
 }
 
 void setup() {
   Serial.begin(115200);
 
-  // Mettre le Wi-Fi en mode Station
   WiFi.mode(WIFI_STA);
 
-  // Initialiser ESP-NOW
+  // 2. FORCE LE CANAL WI-FI (doit être le même que le récepteur, souvent canal 1)
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
+  esp_wifi_set_promiscuous(false);
+
   if (esp_now_init() != ESP_OK) {
     Serial.println("Erreur d'initialisation ESP-NOW");
     return;
   }
 
-  // Enregistrer le callback d'envoi
   esp_now_register_send_cb(OnDataSent);
   
-  // Enregistrer le pair (peer)
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;  
   peerInfo.encrypt = false;
@@ -48,20 +52,24 @@ void setup() {
 }
 
 void loop() {
-  // Simulation de lecture de capteurs
-  myData.id = 1;
+  // 3. UTILISE L'ID UNIQUE DÉFINI EN HAUT
+  myData.id = SENSOR_ID; 
   myData.temp = 24.5;
-  myData.hum = 30.0;
+  myData.hum = analogRead(34);
+  myData.moist = 24.5;
+  myData.light = 24.5;
   myData.lowBattery = false;
 
-  // Envoi du message
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
    
   if (result == ESP_OK) {
-    Serial.println("Trame envoyée avec succès");
-  } else {
-    Serial.println("Erreur d'envoi");
+    Serial.print("Trame de la plante ");
+    Serial.print(SENSOR_ID);
+    Serial.println(" envoyée.");
   }
 
-  delay(5000); // Attendre 5 secondes
+  // 4. DÉLAI ALÉATOIRE (Anti-collision)
+  // On attend 5 secondes + un petit temps aléatoire (0 à 500ms)
+  // pour éviter que deux plantes n'émettent au même millième de seconde.
+  delay(5000 + random(0, 500)); 
 }

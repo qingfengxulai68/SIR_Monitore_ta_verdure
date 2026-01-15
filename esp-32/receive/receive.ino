@@ -3,10 +3,12 @@
 
 // La structure doit être EXACTEMENT la même que celle de l'émetteur
 typedef struct struct_message {
-  int id;          // ID de la plante
-  float temp;      // Température
-  int hum;         // Humidité
-  bool lowBattery; // Alerte batterie
+  int id;          
+  float temp;      
+  int hum;      
+  int moist;
+  int light;   
+  bool lowBattery; 
 } struct_message;
 
 // Créer une instance de la structure pour stocker les données reçues
@@ -17,6 +19,7 @@ void OnDataRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int 
   // On copie les données dans notre structure
   memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
   
+  // 1. Affichage pour Moniteur Série Arduino
   // Pour afficher l'adresse MAC de l'émetteur si besoin
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
@@ -26,8 +29,21 @@ void OnDataRecv(const esp_now_recv_info *info, const uint8_t *incomingData, int 
   Serial.println("--- NOUVELLE RECEPTION ---");
   Serial.print("De l'émetteur MAC: "); Serial.println(macStr);
   Serial.print("Plante ID: "); Serial.println(incomingReadings.id);
-  Serial.print("Température: "); Serial.print(incomingReadings.temp); Serial.println(" °C");
-  Serial.print("Humidité: "); Serial.println(incomingReadings.hum);
+  Serial.print("Temperature: "); Serial.print(incomingReadings.temp); Serial.println(" °C");
+  Serial.print("Humidity: "); Serial.println(incomingReadings.hum);
+  Serial.print("Moisture: "); Serial.println(incomingReadings.moist);
+  Serial.print("Light: "); Serial.println(incomingReadings.light);
+  Serial.print("");
+  
+  // 2. Format spécial pour le Raspberry Pi
+  // Format : DATA|ID|TEMP|HUM|MOIST|LIGHT|BATT
+  Serial.print("DATA|");
+  Serial.print(incomingReadings.id); Serial.print("|");
+  Serial.print(incomingReadings.temp); Serial.print("|");
+  Serial.print(incomingReadings.hum); Serial.print("|");
+  Serial.print(incomingReadings.moist); Serial.print("|");
+  Serial.print(incomingReadings.light); Serial.print("|");
+  Serial.println(incomingReadings.lowBattery);
   Serial.println("--------------------------");
 }
 
@@ -48,10 +64,6 @@ void setup() {
   esp_now_register_recv_cb(OnDataRecv);
   
   Serial.println("Récepteur prêt. En attente de données...");
-  Serial.print("Mon adresse MAC est : ");
-  Serial.println(WiFi.macAddress());
 }
 
-void loop() {
-  // Rien à faire ici, tout se passe dans la fonction OnDataRecv
-}
+void loop() {}
