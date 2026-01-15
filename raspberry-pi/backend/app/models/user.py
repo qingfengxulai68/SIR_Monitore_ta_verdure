@@ -1,12 +1,8 @@
 """User model."""
 
 from sqlalchemy import CheckConstraint, Column, Integer, String
-from sqlalchemy.orm import DeclarativeBase
 
-
-class Base(DeclarativeBase):
-    pass
-
+from app.database import Base
 
 class User(Base):
     """User database model (single row, id=1)"""

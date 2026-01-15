@@ -18,15 +18,16 @@ Avant de lancer les "boîtes" isolées (conteneurs), il est **indispensable** de
 
 #### Signification des variables
 
-| Variable         | Description                                                                                          |
-| :--------------- | :--------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`   | L'adresse de la base de données (ici locale).                                                        |
-| `JWT_SECRET_KEY` | Clé secrète pour sécuriser générer les tokens des sessions utilisateurs.                             |
-| `API_KEY`        | Clé utilisée par les ESP32 pour s'authentifier lors de l'envoi de données.                           |
-| `ADMIN_USERNAME` | Nom d'utilisateur (par défaut) pour accéder au tableau de bord.                                      |
-| `ADMIN_PASSWORD` | Mot de passe administrateur (par défaut).                                                            |
-| `API_BASE_URL`   | Adresse du serveur (Backend) utilisée par l'interface.                                               |
-| `WS_BASE_URL`    | Adresse du serveur (Backend) utilisée par l'interface pour la communication temps réel (WebSockets). |
+| Variable            | Description                                                                |
+| :------------------ | :------------------------------------------------------------------------- |
+| `POSTGRES_USER`     | Nom d'utilisateur pour la base de données PostgreSQL.                      |
+| `POSTGRES_PASSWORD` | Mot de passe pour la base de données PostgreSQL.                           |
+| `POSTGRES_DB`       | Nom de la base de données PostgreSQL.                                      |
+| `JWT_SECRET_KEY`    | Clé secrète pour sécuriser générer les tokens des sessions utilisateurs.   |
+| `API_KEY`           | Clé utilisée par les ESP32 pour s'authentifier lors de l'envoi de données. |
+| `ADMIN_USERNAME`    | Nom d'utilisateur (par défaut) pour accéder au tableau de bord.            |
+| `ADMIN_PASSWORD`    | Mot de passe administrateur (par défaut).                                  |
+| `BACKEND_BASE_URL`  | Adresse du serveur (Backend) utilisée par l'interface.                     |
 
 #### Création du fichier
 
@@ -35,7 +36,9 @@ Avant de lancer les "boîtes" isolées (conteneurs), il est **indispensable** de
 
 ```env
 # Database configuration
-DATABASE_URL=sqlite:///./terrarium.db
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=password123
+POSTGRES_DB=app_db
 
 # JWT settings (Secret pour la sécurité)
 JWT_SECRET_KEY=dHgXvYRaWUiAY6j3q4Qora5b7Qfbg7dpgw1dwLOriq0
@@ -48,8 +51,7 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=demo1234
 
 # Frontend configuration (Configuration de l'interface)
-API_BASE_URL=http://localhost:8000
-WS_BASE_URL=ws://localhost:8000
+BACKEND_BASE_URL=http://localhost:8000
 ```
 
 ### 3. Lancer l'application

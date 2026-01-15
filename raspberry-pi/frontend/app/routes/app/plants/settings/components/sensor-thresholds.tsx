@@ -36,7 +36,7 @@ export function SensorThresholds({ plant }: SensorThresholdsProps) {
         plantId: plant.id,
         data: {
           name: plant.name,
-          moduleId: plant.moduleId,
+          moduleId: plant.module.id,
           thresholds: formData.thresholds
         }
       },

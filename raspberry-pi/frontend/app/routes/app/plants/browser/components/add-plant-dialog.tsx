@@ -38,7 +38,8 @@ interface CreatePlantDialogProps {
 }
 
 export function CreatePlantDialog({ open, onOpenChange }: CreatePlantDialogProps) {
-  const { data: availableModules = [], isLoading: modulesLoading, error: modulesError } = useModules(false)
+  const { data: allModules = [], isLoading: modulesLoading, error: modulesError } = useModules()
+  const availableModules = allModules.filter((module) => !module.coupled)
   const createMutation = useCreatePlant()
 
   const form = useForm<PlantCreateRequest>({
@@ -101,6 +102,7 @@ export function CreatePlantDialog({ open, onOpenChange }: CreatePlantDialogProps
                           type="text"
                           placeholder="e.g., Monstera Deliciosa"
                           aria-invalid={fieldState.invalid}
+                          autoComplete="off"
                         />
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                       </Field>

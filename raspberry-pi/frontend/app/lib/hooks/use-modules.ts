@@ -5,13 +5,10 @@ import type { Module } from "~/lib/types"
 import { QueryKeys } from "~/lib/types"
 
 // Hook to fetch the list of modules
-export function useModules(coupled?: boolean) {
+export function useModules() {
   return useQuery({
-    queryKey: QueryKeys.modules(coupled),
-    queryFn: () => {
-      const endpoint = coupled === undefined ? "/modules" : `/modules?coupled=${coupled}`
-      return apiClient.get<Module[]>(endpoint)
-    },
+    queryKey: QueryKeys.modules(),
+    queryFn: () => apiClient.get<Module[]>("/modules"),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
     refetchOnMount: false

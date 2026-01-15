@@ -16,9 +16,9 @@ from app.schemas.plant import (
     ThresholdsRequest,
     ThresholdsResponse,
 )
-from app.schemas.sensor_values import (
-    SensorValuesResponse,
-    SensorValuesAddRequest,
+from app.schemas.metrics import (
+    MetricsResponse,
+    MetricsAddRequest,
 
 )
 from app.schemas.settings import (
@@ -28,8 +28,9 @@ from app.schemas.settings import (
 from app.schemas.websocket import (
     EntityChangeMessage,
     EntityChangePayload,
-    ModuleConnectionMessage,
-    ModuleConnectionPayload,
+    ModuleConnectivityMessage,
+    ModuleConnectivityPayload,
+    ModuleConnectivityUpdate,
     PlantMetricsMessage,
     PlantMetricsPayload,
 )
@@ -50,18 +51,18 @@ __all__ = [
     "ThresholdRangeResponse",
     "ThresholdsRequest",
     "ThresholdsResponse",
-    # Values
-    "SensorValuesResponse",
-    # Sensor
-    "SensorValuesAddRequest",
+    # Metrics
+    "MetricsResponse",
+    # Metrics
+    "MetricsAddRequest",
     # Settings
     "AlertsResponse",
     "AlertsEnableRequest",
     # WebSocket
     "PlantMetricsMessage",
     "PlantMetricsPayload",
-    "ModuleConnectionMessage",
-    "ModuleConnectionPayload",
+    "ModuleConnectivityMessage",
+    "ModuleConnectivityPayload",
     "EntityChangeMessage",
     "EntityChangePayload",
 ]

@@ -2,8 +2,7 @@
 
 from sqlalchemy import Boolean, CheckConstraint, Column, Integer, String
 
-from app.models.user import Base
-
+from app.database import Base
 
 class Settings(Base):
     """Global settings database model (single row, id=1)."""

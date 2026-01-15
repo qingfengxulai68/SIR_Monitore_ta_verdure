@@ -12,6 +12,7 @@ import {
   WifiOff,
   Clock
 } from "lucide-react"
+import { IconCircleCheckFilled, IconAlertCircleFilled, IconLoader } from "@tabler/icons-react"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
@@ -32,7 +33,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "~/components/ui/alert-dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
 import { useDeletePlant } from "~/lib/hooks/use-plants"
+import { getPlantHealthStatus, formatLastSeen } from "~/lib/utils"
 import type { Plant } from "~/lib/types"
 
 interface PlantsGridProps {
@@ -64,8 +67,9 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {plants.map((plant) => {
-          const data = plant.latestValues
-          const status = plant.status
+          const data = plant.lastMetricsUpdate
+          const isOnline = plant.module.connectivity.isOnline
+          const healthStatus = getPlantHealthStatus(plant)
           const isOutOfRange = (value: number, min: number, max: number) => value < min || value > max
 
           return (
@@ -73,13 +77,48 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base font-semibold truncate">{plant.name}</CardTitle>
-                    <Badge
-                      variant={status === "alert" ? "destructive" : status === "ok" ? "default" : "secondary"}
-                      className={status === "ok" ? "mt-1.5 text-xs bg-green-600" : "mt-1.5 text-xs"}
-                    >
-                      {status === "alert" ? "Alert" : status === "ok" ? "Normal" : "Offline"}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-base font-semibold truncate">{plant.name}</CardTitle>
+                    </div>
+                    <div className="flex gap-2 mt-1.5">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="text-muted-foreground px-1.5 text-xs">
+                              {isOnline ? (
+                                <div className="h-2 w-2 rounded-full bg-green-500" />
+                              ) : (
+                                <div className="h-2 w-2 rounded-full bg-red-500" />
+                              )}
+                              {isOnline ? "Online" : "Offline"}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Module: {plant.module.id}</p>
+                            <p>Last seen: {formatLastSeen(plant.module.connectivity.lastSeen)}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="text-muted-foreground px-1.5 text-xs">
+                              {healthStatus === "healthy" ? (
+                                <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
+                              ) : healthStatus === "sick" ? (
+                                <IconAlertCircleFilled className="fill-destructive" />
+                              ) : (
+                                <IconLoader />
+                              )}
+                              {healthStatus === "sick" ? "Sick" : healthStatus === "healthy" ? "Healthy" : "Unknown"}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Last update: {formatLastSeen(plant.lastMetricsUpdate?.timestamp || null)}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -94,6 +133,10 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
                       >
                         <Activity className="h-4 w-4" />
                         Monitoring
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/app/plants/${plant.id}/history`)} className="gap-2">
+                        <Clock className="h-4 w-4" />
+                        History
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => navigate(`/app/plants/${plant.id}`)} className="gap-2">
                         <Settings className="h-4 w-4" />
@@ -115,7 +158,12 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                {status !== "offline" && data ? (
+                {!isOnline ? (
+                  <div className="text-center py-5">
+                    <WifiOff className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Module not connected</p>
+                  </div>
+                ) : healthStatus !== "unknown" && data ? (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -181,15 +229,10 @@ export function PlantsGrid({ plants }: PlantsGridProps) {
                       </p>
                     </div>
                   </div>
-                ) : status === "offline" ? (
-                  <div className="text-center py-5">
-                    <WifiOff className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">No recent data available</p>
-                  </div>
                 ) : (
-                  <div className="text-center py-5">
-                    <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Awaiting first data...</p>
+                  <div className="text-center py-5 animate-pulse">
+                    <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2 " />
+                    <p className="text-sm text-muted-foreground">Awaiting for newer data...</p>
                   </div>
                 )}
               </CardContent>

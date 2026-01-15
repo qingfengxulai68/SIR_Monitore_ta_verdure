@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "~/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +34,11 @@ export function ModulesTable({ modules, plants }: ModulesTableProps) {
     return plant?.name || `Plant ${plantId}`
   }
 
+  const formatLastSeen = (lastSeen: string | null) => {
+    if (!lastSeen) return "Never seen"
+    return new Date(lastSeen).toLocaleString()
+  }
+
   const handleUncouple = () => {
     if (!moduleToUncouple) return
 
@@ -53,7 +59,7 @@ export function ModulesTable({ modules, plants }: ModulesTableProps) {
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/60 hover:bg-muted/60">
               <TableHead className="pl-4">Module ID</TableHead>
               <TableHead>Connection</TableHead>
               <TableHead>Plant</TableHead>
@@ -65,12 +71,23 @@ export function ModulesTable({ modules, plants }: ModulesTableProps) {
               <TableRow key={module.id} className="group h-12.25">
                 <TableCell className="font-mono text-sm font-medium pl-4">{module.id}</TableCell>
                 <TableCell>
-                  <Badge
-                    variant={module.isOnline ? undefined : "destructive"}
-                    className={module.isOnline ? "bg-green-600" : ""}
-                  >
-                    {module.isOnline ? "Online" : "Offline"}
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="text-muted-foreground px-1.5">
+                          {module.connectivity.isOnline ? (
+                            <div className="h-2 w-2 rounded-full bg-green-500" />
+                          ) : (
+                            <div className="h-2 w-2 rounded-full bg-red-500" />
+                          )}
+                          {module.connectivity.isOnline ? "Online" : "Offline"}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Last seen: {formatLastSeen(module.connectivity.lastSeen)}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </TableCell>
                 <TableCell className="text-sm">
                   {module.coupledPlantId ? (

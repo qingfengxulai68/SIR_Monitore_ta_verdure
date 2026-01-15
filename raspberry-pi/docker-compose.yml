@@ -1,4 +1,15 @@
 services:
+  database:
+    image: postgres:18-alpine
+    container_name: monitor-database
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+
   backend:
     build: ./backend
     container_name: monitor-backend
@@ -6,18 +17,19 @@ services:
     ports:
       - "8000:80"
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - API_KEY=${API_KEY}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    depends_on:
+      - database
 
   frontend:
     build:
       context: ./frontend
       args:
-        - API_BASE_URL=${API_BASE_URL}
-        - WS_BASE_URL=${WS_BASE_URL}
+        - BACKEND_BASE_URL=${BACKEND_BASE_URL}
     container_name: monitor-frontend
     restart: unless-stopped
     ports:

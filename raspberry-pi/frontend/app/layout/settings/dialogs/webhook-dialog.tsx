@@ -59,6 +59,7 @@ export function WebhookDialog({ open, onOpenChange, currentWebhook, mode = "add"
                     placeholder="https://discord.com/api/webhooks/..."
                     aria-invalid={fieldState.invalid}
                     disabled={enableAlertsMutation.isPending}
+                    autoComplete="off"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
