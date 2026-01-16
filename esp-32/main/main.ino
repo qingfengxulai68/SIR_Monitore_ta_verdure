@@ -12,12 +12,9 @@ bool lmt87IsActivated = true;
 // Config
 const int PERIOD = 500; // in miliseconds
 ////soil moisture_sensor
-#define SOIL_MOISTURE_PIN 5
-const int THRESHOLD = 2167;
-//const int DRY_Value=3265;//humitity minimum:0%
-//const int WET_Value=1070;//humitity maximum:100%
+#define SOIL_MOISTURE_PIN 35
 // Air temperature
-#define LMT87_PIN 6
+#define LMT87_PIN 34
 // Air temperature + humidity
 #define DHT_PIN 15
 #define DHTTYPE DHT11 
@@ -25,8 +22,8 @@ const int THRESHOLD = 2167;
 // Variables
 int t0 = 0;
 float lux; // Luminosity
-int soilMoisture; // Soil moisture
-float temp, hum; // air temp + humidity
+float rawValue; // Soil moisture
+float hum; // air temp + humidity
 double lmt87_temp; // Air temperature with lmt87
 
 // Sensors
@@ -79,18 +76,17 @@ void loop() {
 
     // Soil moisture sensor
     if (soilMoistureIsActivated) {
-      soilMoisture = analogRead(SOIL_MOISTURE_PIN);
+      rawValue = analogRead(SOIL_MOISTURE_PIN);
+      int moisturePercent = map(rawValue, 4095, 1950, 0, 100);
+      moisturePercent = constrain(moisturePercent, 0, 100);
       Serial.print("Soil moisture: ");
-      Serial.println(soilMoisture);
+      Serial.println(moisturePercent);
     }
 
     // DHT 
     if (dhtIsActivated) {
-      temp = dht.readTemperature();
       hum = dht.readHumidity();
       Serial.println("DHT11:");
-      Serial.print(temp);
-      Serial.println(" °C");
       Serial.print(hum);
       Serial.println(" %");
     }
@@ -103,6 +99,7 @@ void loop() {
       Serial.print(lmt87_temp);
       Serial.println("°C");
     }
-    Serial.println("###########################################################################");
+    Serial.print
+ln("###########################################################################");
   }
 }
