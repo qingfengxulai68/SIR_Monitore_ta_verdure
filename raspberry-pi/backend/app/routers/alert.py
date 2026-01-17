@@ -51,6 +51,7 @@ async def callback(
             settings = session.execute(select(Settings)).scalars().first()
             if settings:
                 settings.discord_webhook_url = webhook_url
+                settings.alerts_discord_enabled = True
                 session.add(settings)
                 session.commit()
         print(f"Webhook URL: {webhook_url}")

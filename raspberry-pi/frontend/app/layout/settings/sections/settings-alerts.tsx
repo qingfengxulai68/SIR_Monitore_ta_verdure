@@ -2,14 +2,12 @@ import { useState } from "react"
 import { Button } from "~/components/ui/button"
 import { Switch } from "~/components/ui/switch"
 import { Edit2 } from "lucide-react"
-import { WebhookDialog } from "../dialogs/webhook-dialog"
 import { EmailDialog } from "../dialogs/email-dialog"
 import { Spinner } from "~/components/ui/spinner"
 import { ErrorWithRetry } from "~/components/other/error-with-retry"
 import { useAlertsSettings, useUpdateDiscordAlerts, useUpdateEmailAlerts } from "~/lib/hooks/use-settings"
 
 export function AlertsSection() {
-  const [discordDialogOpen, setDiscordDialogOpen] = useState(false)
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
 
   const { data: alertsSettings, isLoading, error, refetch } = useAlertsSettings()
@@ -17,13 +15,28 @@ export function AlertsSection() {
   const updateEmailAlertsMutation = useUpdateEmailAlerts()
 
   const discordEnabled = alertsSettings?.discord_enabled || false
-  const discordWebhook = alertsSettings?.discord_webhook_url || ""
   const emailEnabled = alertsSettings?.email_enabled || false
   const receiverEmail = alertsSettings?.receiver_email || ""
 
   const handleDiscordToggle = (checked: boolean) => {
     if (checked) {
-      setDiscordDialogOpen(true)
+      // Open Discord OAuth in a popup
+      const popup = window.open(
+        "http://localhost:8001/auth/discord/login",
+        "discord-oauth",
+        "width=500,height=600,scrollbars=yes,resizable=yes"
+      )
+
+      if (popup) {
+        // Refetch settings after popup is closed
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed)
+            console.log("Discord OAuth popup closed")
+            refetch()
+          }
+        }, 1000)
+      }
     } else {
       // Disable Discord alerts
       updateDiscordAlertsMutation.mutate({ discord_enabled: false, discord_webhook_url: null })
@@ -37,14 +50,6 @@ export function AlertsSection() {
       // Disable Email alerts
       updateEmailAlertsMutation.mutate({ email_enabled: false, receiver_email: null })
     }
-  }
-
-  const handleEditDiscord = () => {
-    setDiscordDialogOpen(true)
-  }
-
-  const handleEditEmail = () => {
-    setEmailDialogOpen(true)
   }
 
   if (isLoading) {
@@ -75,17 +80,6 @@ export function AlertsSection() {
           <Switch id="discord-alerts-toggle" checked={discordEnabled} onCheckedChange={handleDiscordToggle} />
         </div>
 
-        {discordEnabled && discordWebhook && (
-          <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs truncate font-mono text-muted-foreground">{discordWebhook}</p>
-            </div>
-            <Button variant="ghost" size="sm" className="ml-2 h-8 w-8 p-0" onClick={handleEditDiscord}>
-              <Edit2 className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-
         {/* Email Alerts */}
         <div className="flex items-center justify-between space-x-2">
           <div>
@@ -100,7 +94,7 @@ export function AlertsSection() {
             <div className="flex-1 min-w-0">
               <p className="text-xs truncate font-mono text-muted-foreground">{receiverEmail}</p>
             </div>
-            <Button variant="ghost" size="sm" className="ml-2 h-8 w-8 p-0" onClick={handleEditEmail}>
+            <Button variant="ghost" size="sm" className="ml-2 h-8 w-8 p-0" onClick={() => setEmailDialogOpen(true)}>
               <Edit2 className="h-4 w-4" />
             </Button>
           </div>
@@ -108,10 +102,6 @@ export function AlertsSection() {
       </div>
 
       {/* Dialogs */}
-      {discordDialogOpen && (
-        <WebhookDialog open={discordDialogOpen} onOpenChange={setDiscordDialogOpen} currentWebhook={discordWebhook} />
-      )}
-
       {emailDialogOpen && (
         <EmailDialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen} currentEmail={receiverEmail} />
       )}
