@@ -22,6 +22,8 @@ services:
             - API_KEY=${API_KEY}
             - ADMIN_USERNAME=${ADMIN_USERNAME}
             - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+            - EMAIL=${EMAIL}
+            - EMAIL_PASSWORD=${EMAIL_PASSWORD}
         depends_on:
             - database
 

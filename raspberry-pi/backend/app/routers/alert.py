@@ -2,6 +2,7 @@ import os
 import httpx
 from typing import Annotated
 from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi.responses import HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.database import get_session
@@ -56,6 +57,45 @@ async def callback(
                 session.commit()
         print(f"Webhook URL: {webhook_url}")
         print(f"User Identifier: {state}")
-        return {"message": "Success! Webhook saved.", "webhook_url": webhook_url, "user_identifier": state}
+        
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Discord Connected</title>
+                <style>
+                    body {
+                        font-family: system-ui, -apple-system, sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        margin: 0;
+                        background-color: #f9fafb;
+                    }
+                    .card {
+                        background: white;
+                        padding: 2rem;
+                        border-radius: 0.5rem;
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                        text-align: center;
+                    }
+                    h1 { color: #10B981; margin-bottom: 1rem; }
+                    p { color: #4B5563; margin-bottom: 0; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h1>✅ Discord Connected!</h1>
+                    <p>The webhook has been saved successfully.</p>
+                    <p>You can close this window now.</p>
+                </div>
+                <script>
+                    setTimeout(() => window.close(), 3000);
+                </script>
+            </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content, status_code=200)
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to create webhook.")

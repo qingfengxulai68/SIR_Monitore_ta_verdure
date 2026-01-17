@@ -5,6 +5,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 from app.common.discord_utils import send_discord_message
 from app.common.email_utils import send_email
@@ -86,7 +91,7 @@ async def ingest_sensor_data(
                         message = f"⚠️ Alert: Light out of thresholds for plant {plant.id}. Current: {request.light} lx, Min: {plant.min_light} lx, Max: {plant.max_light} lx."
                     elif alert == "TEMP":
                         message = f"⚠️ Alert: Temperature out of thresholds for plant {plant.id}. Current: {request.temp} °C, Min: {plant.min_temp} °C, Max: {plant.max_temp} °C."
-                    await send_discord_message(settings.discord_webhook_url, message)
+                    send_discord_message(settings.discord_webhook_url, message)
                 if settings and settings.alerts_email_enabled and settings.receiver_email:
                     if alert == "SOIL_MOIST":
                         message = f"Alert: Soil Moisture out of thresholds for plant {plant.id}. Current: {request.soilMoist}%, Min: {plant.min_soil_moist}%, Max: {plant.max_soil_moist}%."
@@ -96,8 +101,10 @@ async def ingest_sensor_data(
                         message = f"Alert: Light out of thresholds for plant {plant.id}. Current: {request.light} lx, Min: {plant.min_light} lx, Max: {plant.max_light} lx."
                     elif alert == "TEMP":
                         message = f"Alert: Temperature out of thresholds for plant {plant.id}. Current: {request.temp} °C, Min: {plant.min_temp} °C, Max: {plant.max_temp} °C."
-                    await send_email(
-                        to_address=settings.receiver_email,
+                    send_email(
+                        sender_email=os.getenv("EMAIL"),
+                        sender_password=os.getenv("EMAIL_PASSWORD"),
+                        receiver_email=settings.receiver_email,
                         subject=f"Plant {plant.id} Alert: {alert} out of thresholds",
                         body=message
                     )       
