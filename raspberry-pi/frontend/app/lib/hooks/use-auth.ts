@@ -1,10 +1,12 @@
 import { useMutation } from "@tanstack/react-query"
+import { useQueryClient, QueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router"
 import { toast } from "sonner"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { apiClient } from "~/lib/api-client"
-import type { LoginRequest, Login, ChangePasswordRequest, User } from "~/lib/types"
+import type { LoginRequest, Login, ChangePasswordRequest, User, Plant, Module } from "~/lib/types"
+import { QueryKeys } from "~/lib/types"
 
 // ============================================================================
 // Auth Store (Internal)
@@ -47,17 +49,13 @@ const useAuthStore = create<AuthState>()(
 // ============================================================================
 
 // Get current token from store
-export function getToken(): string {
-  const token = useAuthStore.getState().token
-  if (!token) throw new Error("Not authenticated")
-  return token
+export function getToken(): string | null {
+  return useAuthStore.getState().token
 }
 
 // Get current user from store
-export function getUser(): User {
-  const user = useAuthStore.getState().user
-  if (!user) throw new Error("Not authenticated")
-  return user
+export function getUser(): User | null {
+  return useAuthStore.getState().user
 }
 
 // Check if user is authenticated
@@ -76,7 +74,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (credentials: LoginRequest) => apiClient.post<Login, LoginRequest>("/auth/login", credentials, false),
 
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       useAuthStore.getState().login(data.user, data.token)
       toast.success("Login successful")
       navigate("/app/")
@@ -89,12 +87,13 @@ export function useLogin() {
 }
 
 // Hook to logout
-export function useLogout() {
+export function useLogout(queryClient: QueryClient, message: string = "Logged out.") {
   const navigate = useNavigate()
 
   return () => {
+    queryClient.clear()
     useAuthStore.getState().logout()
-    toast.info("Logged out")
+    toast.info(message)
     navigate("/")
   }
 }

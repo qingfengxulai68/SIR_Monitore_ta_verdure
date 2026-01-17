@@ -1,50 +1,20 @@
 import * as React from "react"
-import { LayoutDashboard, Flower2, Cpu, Sprout } from "lucide-react"
-
 import { SidebarMain } from "~/layout/sidebar/sidebar-main"
 import { SidebarUser } from "~/layout/sidebar/sidebar-user"
 import { SidebarTitle } from "~/layout/sidebar/sidebar-title"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "~/components/ui/sidebar"
-import { getUser } from "~/lib/hooks/use-auth"
-
-// Application data
-const appData = {
-  app: {
-    name: "Terrarium",
-    logo: Sprout
-  },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/app/",
-      icon: LayoutDashboard
-    },
-    {
-      title: "Plants",
-      url: "/app/plants",
-      icon: Flower2
-    },
-    {
-      title: "Modules",
-      url: "/app/modules",
-      icon: Cpu
-    }
-  ]
-}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const user = getUser()
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <SidebarTitle app={appData.app} />
+        <SidebarTitle />
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMain items={appData.navMain} />
+        <SidebarMain />
       </SidebarContent>
       <SidebarFooter>
-        <SidebarUser user={user} />
+        <SidebarUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

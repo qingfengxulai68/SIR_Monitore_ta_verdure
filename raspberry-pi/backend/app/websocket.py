@@ -1,7 +1,6 @@
 """WebSocket connection management and endpoint handler."""
 
 import asyncio
-import json
 import uuid
 from typing import Annotated
 from fastapi import Query, WebSocket, WebSocketDisconnect
@@ -116,15 +115,12 @@ async def websocket_endpoint(
     # Accept and register connection
     await ws_manager.connect(websocket, connection_id)
 
+    # Listen for incoming messages
     try:
         while True:
             data = await websocket.receive_text()
-            try:
-                message = json.loads(data)
-                if message.get("type") == "PING":
-                    await websocket.send_text(json.dumps({"type": "PONG"}))
-            except json.JSONDecodeError:
-                pass
+            if data == "PING":
+                await websocket.send_text("PONG")
     except WebSocketDisconnect:
         await ws_manager.disconnect(connection_id)
     except Exception:

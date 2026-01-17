@@ -1,4 +1,4 @@
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import { ChevronRight, Cpu, Flower2, LayoutDashboard, type LucideIcon } from "lucide-react"
 import { Link, useLocation } from "react-router"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible"
@@ -12,21 +12,31 @@ import {
   SidebarMenuSubItem
 } from "~/components/ui/sidebar"
 
-export function SidebarMain({
-  items
-}: {
-  items: {
+export function SidebarMain() {
+  const location = useLocation()
+  const items: {
     title: string
     url: string
     icon?: LucideIcon
     isActive?: boolean
-    items?: {
-      title: string
-      url: string
-    }[]
-  }[]
-}) {
-  const location = useLocation()
+    items?: { title: string; url: string }[]
+  }[] = [
+    {
+      title: "Dashboard",
+      url: "/app/",
+      icon: LayoutDashboard
+    },
+    {
+      title: "Plants",
+      url: "/app/plants",
+      icon: Flower2
+    },
+    {
+      title: "Modules",
+      url: "/app/modules",
+      icon: Cpu
+    }
+  ]
 
   const isItemActive = (item: (typeof items)[0]) => {
     if (item.isActive !== undefined) return item.isActive

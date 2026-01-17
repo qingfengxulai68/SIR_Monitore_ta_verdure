@@ -32,7 +32,6 @@ export function AlertsSection() {
         const checkClosed = setInterval(() => {
           if (popup.closed) {
             clearInterval(checkClosed)
-            console.log("Discord OAuth popup closed")
             refetch()
           }
         }, 1000)
