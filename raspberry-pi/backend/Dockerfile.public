@@ -28,8 +28,6 @@ COPY . .
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-RUN chmod +x start_public.sh
-
 EXPOSE 8001
 
-CMD ["./start_public.sh"]
+CMD ["sh", "-c", "if [ -z \"$NGROK_AUTHTOKEN\" ]; then echo 'Error: NGROK_AUTHTOKEN environment variable is required.'; exit 1; fi; fastapi run public_main.py --port 8001 --host 0.0.0.0 & ngrok config add-authtoken \"$NGROK_AUTHTOKEN\"; ngrok http 8001 --url https://default.internal --log stdout"]

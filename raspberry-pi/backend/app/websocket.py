@@ -3,7 +3,7 @@
 import asyncio
 import json
 import uuid
-from typing import Annotated, Literal
+from typing import Annotated
 from fastapi import Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
