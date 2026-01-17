@@ -2,15 +2,24 @@ import { z } from "zod"
 
 // Alerts settings type definition
 export type AlertsSettings = {
-  enabled: boolean
-  discordWebhookUrl?: string
+  discord_enabled: boolean
+  discord_webhook_url?: string
+  email_enabled: boolean
+  receiver_email?: string
 }
 
-// Schema and type for enabling alerts
-export const alertsEnableRequestSchema = z.object({
-  discordWebhookUrl: z
-    .url("Must be a valid URL")
-    .refine((val) => /^https:\/\/discord\.com\/api\/webhooks\//.test(val), "Must be a valid Discord webhook URL")
+// Schema and type for updating Discord alerts
+export const discordAlertsUpdateRequestSchema = z.object({
+  discord_enabled: z.boolean(),
+  discord_webhook_url: z.url().optional().nullable()
 })
 
-export type AlertsEnableRequest = z.infer<typeof alertsEnableRequestSchema>
+export type DiscordAlertsUpdateRequest = z.infer<typeof discordAlertsUpdateRequestSchema>
+
+// Schema and type for updating Email alerts
+export const emailAlertsUpdateRequestSchema = z.object({
+  email_enabled: z.boolean(),
+  receiver_email: z.email().optional().nullable()
+})
+
+export type EmailAlertsUpdateRequest = z.infer<typeof emailAlertsUpdateRequestSchema>

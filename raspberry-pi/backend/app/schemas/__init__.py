@@ -22,7 +22,8 @@ from app.schemas.metrics import (
 
 )
 from app.schemas.settings import (
-    AlertsUpdateRequest,
+    EmailAlertsUpdateRequest,
+    DiscordAlertsUpdateRequest,
     AlertsResponse,
 )
 from app.schemas.websocket import (

@@ -11,29 +11,29 @@ import {
   DialogHeader,
   DialogTitle
 } from "~/components/ui/dialog"
-import { useUpdateDiscordAlerts } from "~/lib/hooks/use-settings"
-import { discordAlertsUpdateRequestSchema, type DiscordAlertsUpdateRequest } from "~/lib/types"
+import { useUpdateEmailAlerts } from "~/lib/hooks/use-settings"
+import { emailAlertsUpdateRequestSchema, type EmailAlertsUpdateRequest } from "~/lib/types"
 import { Spinner } from "~/components/ui/spinner"
 
-interface WebhookDialogProps {
+interface EmailDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  currentWebhook: string
+  currentEmail: string
 }
 
-export function WebhookDialog({ open, onOpenChange, currentWebhook }: WebhookDialogProps) {
-  const updateDiscordAlertsMutation = useUpdateDiscordAlerts()
+export function EmailDialog({ open, onOpenChange, currentEmail }: EmailDialogProps) {
+  const updateEmailAlertsMutation = useUpdateEmailAlerts()
 
-  const form = useForm<DiscordAlertsUpdateRequest>({
-    resolver: zodResolver(discordAlertsUpdateRequestSchema),
+  const form = useForm<EmailAlertsUpdateRequest>({
+    resolver: zodResolver(emailAlertsUpdateRequestSchema),
     defaultValues: {
-      discord_enabled: true,
-      discord_webhook_url: currentWebhook
+      email_enabled: true,
+      receiver_email: currentEmail
     }
   })
 
-  const onSubmit = (data: DiscordAlertsUpdateRequest) => {
-    updateDiscordAlertsMutation.mutate(data, {
+  const onSubmit = (data: EmailAlertsUpdateRequest) => {
+    updateEmailAlertsMutation.mutate(data, {
       onSuccess: () => {
         onOpenChange(false)
       }
@@ -44,23 +44,23 @@ export function WebhookDialog({ open, onOpenChange, currentWebhook }: WebhookDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-106.25 gap-7">
         <DialogHeader>
-          <DialogTitle>Discord Webhook</DialogTitle>
-          <DialogDescription>Enter your Discord webhook URL to receive alerts.</DialogDescription>
+          <DialogTitle>Email Address</DialogTitle>
+          <DialogDescription>Enter the email address to receive alerts.</DialogDescription>
         </DialogHeader>
-        <form id="webhook-form" onSubmit={form.handleSubmit(onSubmit)}>
+        <form id="email-form" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
             <Controller
               control={form.control}
-              name="discord_webhook_url"
+              name="receiver_email"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <Input
                     {...field}
                     value={field.value || ""}
-                    placeholder="https://discord.com/api/webhooks/..."
+                    placeholder="your-email@example.com"
                     aria-invalid={fieldState.invalid}
-                    disabled={updateDiscordAlertsMutation.isPending}
-                    autoComplete="off"
+                    disabled={updateEmailAlertsMutation.isPending}
+                    autoComplete="email"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -73,12 +73,12 @@ export function WebhookDialog({ open, onOpenChange, currentWebhook }: WebhookDia
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={updateDiscordAlertsMutation.isPending}
+            disabled={updateEmailAlertsMutation.isPending}
           >
             Cancel
           </Button>
-          <Button type="submit" form="webhook-form" disabled={updateDiscordAlertsMutation.isPending}>
-            {updateDiscordAlertsMutation.isPending ? <Spinner /> : "Save"}
+          <Button type="submit" form="email-form" disabled={updateEmailAlertsMutation.isPending}>
+            {updateEmailAlertsMutation.isPending ? <Spinner /> : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

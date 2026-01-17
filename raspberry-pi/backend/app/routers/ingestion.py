@@ -87,7 +87,7 @@ async def ingest_sensor_data(
                     elif alert == "TEMP":
                         message = f"⚠️ Alert: Temperature out of thresholds for plant {plant.id}. Current: {request.temp} °C, Min: {plant.min_temp} °C, Max: {plant.max_temp} °C."
                     await send_discord_message(settings.discord_webhook_url, message)
-                if settings and settings.alerts_email_enabled and settings.alert_email_address:
+                if settings and settings.alerts_email_enabled and settings.receiver_email:
                     if alert == "SOIL_MOIST":
                         message = f"Alert: Soil Moisture out of thresholds for plant {plant.id}. Current: {request.soilMoist}%, Min: {plant.min_soil_moist}%, Max: {plant.max_soil_moist}%."
                     elif alert == "HUMIDITY":
@@ -97,7 +97,7 @@ async def ingest_sensor_data(
                     elif alert == "TEMP":
                         message = f"Alert: Temperature out of thresholds for plant {plant.id}. Current: {request.temp} °C, Min: {plant.min_temp} °C, Max: {plant.max_temp} °C."
                     await send_email(
-                        to_address=settings.alert_email_address,
+                        to_address=settings.receiver_email,
                         subject=f"Plant {plant.id} Alert: {alert} out of thresholds",
                         body=message
                     )       

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { apiClient } from "~/lib/api-client"
-import type { AlertsSettings } from "~/lib/types"
+import type { AlertsSettings, DiscordAlertsUpdateRequest, EmailAlertsUpdateRequest } from "~/lib/types"
 import { QueryKeys } from "~/lib/types"
 
 // Hook to fetch alerts settings
@@ -12,19 +12,19 @@ export function useAlertsSettings() {
   })
 }
 
-// Hook to enable alerts
-export function useEnableAlerts() {
+// Hook to update Discord alerts
+export function useUpdateDiscordAlerts() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { discordWebhookUrl: string }) =>
-      apiClient.post<void, { discordWebhookUrl: string }>("/settings/alerts/enable", data),
+    mutationFn: (data: DiscordAlertsUpdateRequest) =>
+      apiClient.put<void, DiscordAlertsUpdateRequest>("/settings/alerts/discord", data),
 
     onSuccess: () => {
       // Invalidate cache to reload settings
       queryClient.invalidateQueries({ queryKey: QueryKeys.alertsSettings, refetchType: "all" })
 
-      toast.success("Alerts enabled")
+      toast.success("Discord alerts updated")
     },
 
     onError: (error) => {
@@ -33,18 +33,19 @@ export function useEnableAlerts() {
   })
 }
 
-// Hook to disable alerts
-export function useDisableAlerts() {
+// Hook to update Email alerts
+export function useUpdateEmailAlerts() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: () => apiClient.post<void, {}>("/settings/alerts/disable", {}),
+    mutationFn: (data: EmailAlertsUpdateRequest) =>
+      apiClient.put<void, EmailAlertsUpdateRequest>("/settings/alerts/email", data),
 
     onSuccess: () => {
       // Invalidate cache to reload settings
       queryClient.invalidateQueries({ queryKey: QueryKeys.alertsSettings, refetchType: "all" })
 
-      toast.success("Alerts disabled")
+      toast.success("Email alerts updated")
     },
 
     onError: (error) => {

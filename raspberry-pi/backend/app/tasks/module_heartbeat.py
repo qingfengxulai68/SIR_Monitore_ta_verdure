@@ -7,8 +7,11 @@ from sqlalchemy.orm import sessionmaker
 from app.common.constants import MODULE_HB_CHECK_INTERVAL
 from app.database import engine
 from app.models.module import Module
+from app.models.settings import Settings
 from app.common.utils import is_module_online
 from app.websocket import ws_manager
+from app.common.discord_utils import send_discord_message
+from app.common.email_utils import send_email
 
 
 class ModuleHeartbeatChecker:
@@ -60,6 +63,20 @@ class ModuleHeartbeatChecker:
                 if not is_online and not was_offline:
                     self._offline_modules.add(module.id)
                     await ws_manager.emit_module_connectivity(module.id, False, module.last_seen)
+                    
+                    # Send alerts
+                    settings = session.execute(select(Settings)).scalars().first()
+                    if settings and settings.alerts_discord_enabled and settings.discord_webhook_url:
+                        message = f"⚠️ Alert: Module {module.id} went offline."
+                        await send_discord_message(settings.discord_webhook_url, message)
+                    if settings and settings.alerts_email_enabled and settings.receiver_email:
+                        message = f"Alert: Module {module.id} went offline."
+                        await send_email(
+                            to_address=settings.receiver_email,
+                            subject=f"Module {module.id} Alert: Module offline",
+                            body=message
+                        )
+                    
                     print(f"Alert for module {module.id}. The module went offline.")
                 elif is_online and was_offline:
                     self._offline_modules.discard(module.id)
