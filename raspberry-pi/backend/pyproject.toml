@@ -1,6 +1,6 @@
 [project]
 name = "terrarium-backend"
-version = "0.1.1-beta.1"
+version = "0.1.2-beta.1"
 description = "FastAPI Backend: IoT System for Plant Monitoring"
 readme = "README.md"
 requires-python = ">=3.11"

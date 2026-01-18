@@ -28,7 +28,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(user_id: int, username: str) -> str:
     """Create a JWT access token."""
-    expire = datetime.now(timezone.utc) + timedelta(minutes=1)
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)
     payload = {
         "sub": str(user_id),
         "username": username,

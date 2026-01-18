@@ -21,6 +21,7 @@ from app.models.metrics import Metrics
 from app.schemas.metrics import MetricsAddRequest, MetricsResponse
 from app.models.settings import Settings
 from app.websocket import ws_manager
+from app.tasks.module_heartbeat import module_heartbeat_checker
 
 router = APIRouter(prefix="/ingestion", tags=["Ingestion"])
 
@@ -109,14 +110,10 @@ async def ingest_sensor_data(
                     "icon": "🌡️"
                 }
             }
-            
-            # Timestamp
-            timestamp = now.strftime("%m/%d/%Y %H:%M:%S")
-            
+                        
             # Build grouped message for Discord
             if settings and settings.alerts_discord_enabled and settings.discord_webhook_url:
                 discord_msg = f"**🔴 Alert for {plant.name}**\n"
-                discord_msg += f"{timestamp}\n\n"
                 for alert in alerts:
                     info = alert_info[alert]
                     discord_msg += f"**{info['label']}**: {info['value']} (acceptable: {info['range']})\n"
@@ -126,7 +123,6 @@ async def ingest_sensor_data(
             # Build grouped message for Email
             if settings and settings.alerts_email_enabled and settings.receiver_email:
                 email_body = f"Alert for {plant.name}\n"
-                email_body += f"Date: {timestamp}\n\n"
                 email_body += "Parameters out of range:\n\n"
                 for alert in alerts:
                     info = alert_info[alert]
@@ -142,6 +138,9 @@ async def ingest_sensor_data(
 
     session.commit()
 
+    # Notify heartbeat checker that module is online
+    module_heartbeat_checker.mark_module_online(module.id)
+    
     # Broadcast MODULE_CONNECTIVITY
     await ws_manager.emit_module_connectivity(module.id, True, module.last_seen)
     

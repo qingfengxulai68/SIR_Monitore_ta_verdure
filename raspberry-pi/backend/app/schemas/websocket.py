@@ -1,7 +1,7 @@
 """WebSocket event schemas."""
 
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Optional
 from pydantic import BaseModel
 
 from app.schemas.metrics import MetricsResponse
@@ -26,7 +26,7 @@ class ModuleConnectivityUpdate(BaseModel):
     """Module connectivity update information."""
 
     isOnline: bool
-    lastSeen: datetime
+    lastSeen: Optional[datetime] = None
 
     
 class ModuleConnectivityPayload(BaseModel):
