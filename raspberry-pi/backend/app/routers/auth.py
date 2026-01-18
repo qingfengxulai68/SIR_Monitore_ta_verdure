@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.user import User
 from app.auth.jwt import create_access_token, hash_password, verify_jwt_user, verify_password
 from app.database import get_session
-from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,

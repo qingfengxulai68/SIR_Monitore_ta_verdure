@@ -22,7 +22,8 @@ from app.schemas.metrics import (
 
 )
 from app.schemas.settings import (
-    AlertsEnableRequest,
+    EmailAlertsUpdateRequest,
+    DiscordAlertsUpdateRequest,
     AlertsResponse,
 )
 from app.schemas.websocket import (
@@ -57,7 +58,7 @@ __all__ = [
     "MetricsAddRequest",
     # Settings
     "AlertsResponse",
-    "AlertsEnableRequest",
+    "AlertsUpdateRequest",
     # WebSocket
     "PlantMetricsMessage",
     "PlantMetricsPayload",

@@ -12,7 +12,7 @@ MODULES = ["ESP32-001", "ESP32-003"]
 INTERVAL = 30
 
 def send_data(module_id):
-    """Génère et envoie les données pour un module spécifique."""
+    """Generates and sends data for a specific module."""
     payload = {
         "moduleId": module_id,
         "soilMoist": round(random.uniform(15, 70), 2),
@@ -27,7 +27,7 @@ def send_data(module_id):
     req.add_header("X-API-KEY", API_KEY)
 
     try:
-        # On utilise un timeout de 10s pour ne pas bloquer le thread
+        # We use a 10s timeout to not block the thread
         with urlopen(req, timeout=10) as response:
             if response.getcode() == 204:
                 print(f"✓ {module_id} : Envoyé (204)")
@@ -39,20 +39,20 @@ def send_data(module_id):
         print(f"✗ {module_id} : Erreur inattendue : {e}")
 
 def main():
-    print(f"--- Simulateur ESP32 (Urllib + Threads) ---")
-    print(f"Modules : {', '.join(MODULES)} | Intervalle : {INTERVAL}s\n")
+    print(f"--- ESP32 Simulator (Urllib + Threads) ---")
+    print(f"Modules : {', '.join(MODULES)} | Interval : {INTERVAL}s\n")
 
-    # On prépare le pool de threads
+    # We prepare the thread pool
     with ThreadPoolExecutor(max_workers=len(MODULES)) as executor:
         while True:
             start_time = time.time()
             
-            # Lance l'envoi pour tous les modules simultanément
-            # executor.submit permet de lancer la fonction en arrière-plan
+            # Launches sending for all modules simultaneously
+            # executor.submit allows launching the function in the background
             for mod_id in MODULES:
                 executor.submit(send_data, mod_id)
 
-            # Calcul du temps de sommeil pour rester calé sur 30s
+            # Calculation of sleep time to stay aligned on 30s
             elapsed = time.time() - start_time
             sleep_time = max(0, INTERVAL - elapsed)
             
@@ -62,4 +62,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nArrêt du simulateur.")
+        print("\nStopping the simulator.")

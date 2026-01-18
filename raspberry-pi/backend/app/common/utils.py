@@ -14,3 +14,4 @@ def is_module_online(module: Module) -> bool:
         return False
         
     return (datetime.now(timezone.utc) - module.last_seen).total_seconds() <= MODULE_HB_TIMEOUT
+

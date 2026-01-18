@@ -2,7 +2,7 @@ import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
-import { Field, FieldError, FieldGroup } from "~/components/ui/field"
+import { Field, FieldError, FieldGroup, FieldLabel } from "~/components/ui/field"
 import {
   Dialog,
   DialogContent,
@@ -11,29 +11,29 @@ import {
   DialogHeader,
   DialogTitle
 } from "~/components/ui/dialog"
-import { useEnableAlerts } from "~/lib/hooks/use-settings"
-import { alertsEnableRequestSchema, type AlertsEnableRequest } from "~/lib/types"
+import { useUpdateEmailAlerts } from "~/lib/hooks/use-settings"
+import { emailAlertsUpdateRequestSchema, type EmailAlertsUpdateRequest } from "~/lib/types"
 import { Spinner } from "~/components/ui/spinner"
 
-interface WebhookDialogProps {
+interface EmailDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  currentWebhook: string
-  mode?: "add" | "edit"
+  currentEmail: string
 }
 
-export function WebhookDialog({ open, onOpenChange, currentWebhook, mode = "add" }: WebhookDialogProps) {
-  const enableAlertsMutation = useEnableAlerts()
+export function EmailDialog({ open, onOpenChange, currentEmail }: EmailDialogProps) {
+  const updateEmailAlertsMutation = useUpdateEmailAlerts()
 
-  const form = useForm<AlertsEnableRequest>({
-    resolver: zodResolver(alertsEnableRequestSchema),
+  const form = useForm<EmailAlertsUpdateRequest>({
+    resolver: zodResolver(emailAlertsUpdateRequestSchema),
     defaultValues: {
-      discordWebhookUrl: currentWebhook
+      email_enabled: true,
+      receiver_email: currentEmail
     }
   })
 
-  const onSubmit = (data: AlertsEnableRequest) => {
-    enableAlertsMutation.mutate(data, {
+  const onSubmit = (data: EmailAlertsUpdateRequest) => {
+    updateEmailAlertsMutation.mutate(data, {
       onSuccess: () => {
         onOpenChange(false)
       }
@@ -44,22 +44,23 @@ export function WebhookDialog({ open, onOpenChange, currentWebhook, mode = "add"
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-106.25 gap-7">
         <DialogHeader>
-          <DialogTitle>{mode === "add" ? "Add Discord Webhook" : "Update Discord Webhook"}</DialogTitle>
-          <DialogDescription>Enter your Discord webhook URL to receive alerts.</DialogDescription>
+          <DialogTitle>Email Address</DialogTitle>
+          <DialogDescription>Enter the email address to receive alerts.</DialogDescription>
         </DialogHeader>
-        <form id="webhook-form" onSubmit={form.handleSubmit(onSubmit)}>
+        <form id="email-form" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
             <Controller
               control={form.control}
-              name="discordWebhookUrl"
+              name="receiver_email"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <Input
                     {...field}
-                    placeholder="https://discord.com/api/webhooks/..."
+                    value={field.value || ""}
+                    placeholder="your-email@example.com"
                     aria-invalid={fieldState.invalid}
-                    disabled={enableAlertsMutation.isPending}
-                    autoComplete="off"
+                    disabled={updateEmailAlertsMutation.isPending}
+                    autoComplete="email"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -72,12 +73,12 @@ export function WebhookDialog({ open, onOpenChange, currentWebhook, mode = "add"
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={enableAlertsMutation.isPending}
+            disabled={updateEmailAlertsMutation.isPending}
           >
             Cancel
           </Button>
-          <Button type="submit" form="webhook-form" disabled={enableAlertsMutation.isPending}>
-            {enableAlertsMutation.isPending ? <Spinner /> : "Save"}
+          <Button type="submit" form="email-form" disabled={updateEmailAlertsMutation.isPending}>
+            {updateEmailAlertsMutation.isPending ? <Spinner /> : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

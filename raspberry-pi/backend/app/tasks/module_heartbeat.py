@@ -7,8 +7,11 @@ from sqlalchemy.orm import sessionmaker
 from app.common.constants import MODULE_HB_CHECK_INTERVAL
 from app.database import engine
 from app.models.module import Module
+from app.models.settings import Settings
 from app.common.utils import is_module_online
 from app.websocket import ws_manager
+from app.common.discord_utils import send_discord_message
+from app.common.email_utils import send_email
 
 
 class ModuleHeartbeatChecker:
@@ -60,7 +63,34 @@ class ModuleHeartbeatChecker:
                 if not is_online and not was_offline:
                     self._offline_modules.add(module.id)
                     await ws_manager.emit_module_connectivity(module.id, False, module.last_seen)
-                    print(f"Alert for module {module.id}. The module went offline.")
+                    
+                    # Timestamp
+                    from datetime import datetime
+                    timestamp = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+                    
+                    # Send alerts
+                    settings = session.execute(select(Settings)).scalars().first()
+                    
+                    # Discord alert
+                    if settings and settings.alerts_discord_enabled and settings.discord_webhook_url:
+                        discord_msg = f"🔴 **Module #{module.id} - Offline**\n"
+                        discord_msg += f"Date: {timestamp}\n"
+                        discord_msg += f"Last seen: {module.last_seen.strftime('%m/%d/%Y %H:%M:%S') if module.last_seen else 'Unknown'}\n"
+                        discord_msg += f"\nThe module is no longer responding."
+                        await send_discord_message(settings.discord_webhook_url, discord_msg)
+                    
+                    # Email alert
+                    if settings and settings.alerts_email_enabled and settings.receiver_email:
+                        email_body = f"Module #{module.id} Offline Alert\n"
+                        email_body += f"Date: {timestamp}\n"
+                        email_body += f"Last seen: {module.last_seen.strftime('%m/%d/%Y %H:%M:%S') if module.last_seen else 'Unknown'}\n\n"
+                        email_body += f"⚠️ The module is no longer responding and has gone offline."
+                        await send_email(
+                            to_address=settings.receiver_email,
+                            subject=f"🔴 Module #{module.id} - Offline",
+                            body=email_body
+                        )
+                    
                 elif is_online and was_offline:
                     self._offline_modules.discard(module.id)
 

@@ -5,7 +5,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+
+
+from app.common.discord_utils import send_discord_message
+from app.common.email_utils import send_email
 from app.auth.api_key import verify_api_key
 from app.database import get_session
 from app.models.module import Module
@@ -72,11 +79,66 @@ async def ingest_sensor_data(
         if request.temp < plant.min_temp or request.temp > plant.max_temp:
             alerts.append("TEMP")
         
-        if alerts:
+        if len(alerts) > 0:
             settings = session.execute(select(Settings)).scalars().first()
-            if settings and settings.enable_alerts:
-                discord_webhook_url = settings.discord_webhook_url
-                print(f"Alert for plant {plant.id}: {alerts}. The plant is out of thresholds.")
+            
+            # Mapping alerts to readable info
+            alert_info = {
+                "SOIL_MOIST": {
+                    "label": "Soil Moisture",
+                    "value": f"{request.soilMoist}%",
+                    "range": f"{plant.min_soil_moist}% - {plant.max_soil_moist}%",
+                    "icon": "🌱"
+                },
+                "HUMIDITY": {
+                    "label": "Air Humidity",
+                    "value": f"{request.humidity}%",
+                    "range": f"{plant.min_humidity}% - {plant.max_humidity}%",
+                    "icon": "💧"
+                },
+                "LIGHT": {
+                    "label": "Light",
+                    "value": f"{request.light} lx",
+                    "range": f"{plant.min_light} - {plant.max_light} lx",
+                    "icon": "☀️"
+                },
+                "TEMP": {
+                    "label": "Temperature",
+                    "value": f"{request.temp}°C",
+                    "range": f"{plant.min_temp}°C - {plant.max_temp}°C",
+                    "icon": "🌡️"
+                }
+            }
+            
+            # Timestamp
+            timestamp = now.strftime("%m/%d/%Y %H:%M:%S")
+            
+            # Build grouped message for Discord
+            if settings and settings.alerts_discord_enabled and settings.discord_webhook_url:
+                discord_msg = f"**🔴 Alert for {plant.name}**\n"
+                discord_msg += f"{timestamp}\n\n"
+                for alert in alerts:
+                    info = alert_info[alert]
+                    discord_msg += f"**{info['label']}**: {info['value']} (acceptable: {info['range']})\n"
+                
+                send_discord_message(settings.discord_webhook_url, discord_msg)
+            
+            # Build grouped message for Email
+            if settings and settings.alerts_email_enabled and settings.receiver_email:
+                email_body = f"Alert for {plant.name}\n"
+                email_body += f"Date: {timestamp}\n\n"
+                email_body += "Parameters out of range:\n\n"
+                for alert in alerts:
+                    info = alert_info[alert]
+                    email_body += f"- {info['icon']} {info['label']}: {info['value']} (acceptable: {info['range']})\n"
+                
+                send_email(
+                    sender_email=os.getenv("EMAIL"),
+                    sender_password=os.getenv("EMAIL_PASSWORD"),
+                    receiver_email=settings.receiver_email,
+                    subject=f"🔴 Alert for {plant.name}",
+                    body=email_body
+                )
 
     session.commit()
 
