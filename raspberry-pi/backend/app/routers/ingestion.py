@@ -81,36 +81,64 @@ async def ingest_sensor_data(
         
         if len(alerts) > 0:
             settings = session.execute(select(Settings)).scalars().first()
-            for alert in alerts:
-                if settings and settings.alerts_discord_enabled and settings.discord_webhook_url:
-                    if alert == "SOIL_MOIST":
-                        message = f"⚠️ Alert: Soil Moisture out of thresholds for plant {plant.id}. Current: {request.soilMoist}%, Min: {plant.min_soil_moist}%, Max: {plant.max_soil_moist}%."
-                    elif alert == "HUMIDITY":
-                        message = f"⚠️ Alert: Humidity out of thresholds for plant {plant.id}. Current: {request.humidity}%, Min: {plant.min_humidity}%, Max: {plant.max_humidity}%."
-                    elif alert == "LIGHT":
-                        message = f"⚠️ Alert: Light out of thresholds for plant {plant.id}. Current: {request.light} lx, Min: {plant.min_light} lx, Max: {plant.max_light} lx."
-                    elif alert == "TEMP":
-                        message = f"⚠️ Alert: Temperature out of thresholds for plant {plant.id}. Current: {request.temp} °C, Min: {plant.min_temp} °C, Max: {plant.max_temp} °C."
-                    send_discord_message(settings.discord_webhook_url, message)
-                if settings and settings.alerts_email_enabled and settings.receiver_email:
-                    if alert == "SOIL_MOIST":
-                        message = f"Alert: Soil Moisture out of thresholds for plant {plant.id}. Current: {request.soilMoist}%, Min: {plant.min_soil_moist}%, Max: {plant.max_soil_moist}%."
-                    elif alert == "HUMIDITY":
-                        message = f"Alert: Humidity out of thresholds for plant {plant.id}. Current: {request.humidity}%, Min: {plant.min_humidity}%, Max: {plant.max_humidity}%."
-                    elif alert == "LIGHT":  
-                        message = f"Alert: Light out of thresholds for plant {plant.id}. Current: {request.light} lx, Min: {plant.min_light} lx, Max: {plant.max_light} lx."
-                    elif alert == "TEMP":
-                        message = f"Alert: Temperature out of thresholds for plant {plant.id}. Current: {request.temp} °C, Min: {plant.min_temp} °C, Max: {plant.max_temp} °C."
-                    send_email(
-                        sender_email=os.getenv("EMAIL"),
-                        sender_password=os.getenv("EMAIL_PASSWORD"),
-                        receiver_email=settings.receiver_email,
-                        subject=f"Plant {plant.id} Alert: {alert} out of thresholds",
-                        body=message
-                    )       
-                    # Here you would normally send the alert to the Discord webhook.
-                    # For this example, we'll just print it.
-            print(f"Alert for plant {plant.id}: {alerts}. The plant is out of thresholds.")
+            
+            # Mapping alerts to readable info
+            alert_info = {
+                "SOIL_MOIST": {
+                    "label": "Soil Moisture",
+                    "value": f"{request.soilMoist}%",
+                    "range": f"{plant.min_soil_moist}% - {plant.max_soil_moist}%",
+                    "icon": "🌱"
+                },
+                "HUMIDITY": {
+                    "label": "Air Humidity",
+                    "value": f"{request.humidity}%",
+                    "range": f"{plant.min_humidity}% - {plant.max_humidity}%",
+                    "icon": "💧"
+                },
+                "LIGHT": {
+                    "label": "Light",
+                    "value": f"{request.light} lx",
+                    "range": f"{plant.min_light} - {plant.max_light} lx",
+                    "icon": "☀️"
+                },
+                "TEMP": {
+                    "label": "Temperature",
+                    "value": f"{request.temp}°C",
+                    "range": f"{plant.min_temp}°C - {plant.max_temp}°C",
+                    "icon": "🌡️"
+                }
+            }
+            
+            # Timestamp
+            timestamp = now.strftime("%m/%d/%Y %H:%M:%S")
+            
+            # Build grouped message for Discord
+            if settings and settings.alerts_discord_enabled and settings.discord_webhook_url:
+                discord_msg = f"**🔴 Alert for {plant.name}**\n"
+                discord_msg += f"{timestamp}\n\n"
+                for alert in alerts:
+                    info = alert_info[alert]
+                    discord_msg += f"**{info['label']}**: {info['value']} (acceptable: {info['range']})\n"
+                
+                send_discord_message(settings.discord_webhook_url, discord_msg)
+            
+            # Build grouped message for Email
+            if settings and settings.alerts_email_enabled and settings.receiver_email:
+                email_body = f"Alert for {plant.name}\n"
+                email_body += f"Date: {timestamp}\n\n"
+                email_body += "Parameters out of range:\n\n"
+                for alert in alerts:
+                    info = alert_info[alert]
+                    email_body += f"- {info['icon']} {info['label']}: {info['value']} (acceptable: {info['range']})\n"
+                
+                send_email(
+                    sender_email=os.getenv("EMAIL"),
+                    sender_password=os.getenv("EMAIL_PASSWORD"),
+                    receiver_email=settings.receiver_email,
+                    subject=f"🔴 Alert for {plant.name}",
+                    body=email_body
+                )
 
     session.commit()
 

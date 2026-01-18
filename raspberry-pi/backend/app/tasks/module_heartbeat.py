@@ -64,20 +64,33 @@ class ModuleHeartbeatChecker:
                     self._offline_modules.add(module.id)
                     await ws_manager.emit_module_connectivity(module.id, False, module.last_seen)
                     
+                    # Timestamp
+                    from datetime import datetime
+                    timestamp = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+                    
                     # Send alerts
                     settings = session.execute(select(Settings)).scalars().first()
+                    
+                    # Discord alert
                     if settings and settings.alerts_discord_enabled and settings.discord_webhook_url:
-                        message = f"⚠️ Alert: Module {module.id} went offline."
-                        await send_discord_message(settings.discord_webhook_url, message)
+                        discord_msg = f"🔴 **Module #{module.id} - Offline**\n"
+                        discord_msg += f"Date: {timestamp}\n"
+                        discord_msg += f"Last seen: {module.last_seen.strftime('%m/%d/%Y %H:%M:%S') if module.last_seen else 'Unknown'}\n"
+                        discord_msg += f"\nThe module is no longer responding."
+                        await send_discord_message(settings.discord_webhook_url, discord_msg)
+                    
+                    # Email alert
                     if settings and settings.alerts_email_enabled and settings.receiver_email:
-                        message = f"Alert: Module {module.id} went offline."
+                        email_body = f"Module #{module.id} Offline Alert\n"
+                        email_body += f"Date: {timestamp}\n"
+                        email_body += f"Last seen: {module.last_seen.strftime('%m/%d/%Y %H:%M:%S') if module.last_seen else 'Unknown'}\n\n"
+                        email_body += f"⚠️ The module is no longer responding and has gone offline."
                         await send_email(
                             to_address=settings.receiver_email,
-                            subject=f"Module {module.id} Alert: Module offline",
-                            body=message
+                            subject=f"🔴 Module #{module.id} - Offline",
+                            body=email_body
                         )
                     
-                    print(f"Alert for module {module.id}. The module went offline.")
                 elif is_online and was_offline:
                     self._offline_modules.discard(module.id)
 

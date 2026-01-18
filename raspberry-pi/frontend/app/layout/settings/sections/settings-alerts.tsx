@@ -24,7 +24,7 @@ export function AlertsSection() {
       const popup = window.open(
         "http://localhost:8001/auth/discord/login",
         "discord-oauth",
-        "width=500,height=600,scrollbars=yes,resizable=yes"
+        `width=${screen.width},height=${screen.height},left=0,top=0,scrollbars=yes,resizable=yes`
       )
 
       if (popup) {
