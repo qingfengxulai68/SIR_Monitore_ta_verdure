@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { ChevronsUpDown, LogOut, Settings } from "lucide-react"
-
+import { useQueryClient } from "@tanstack/react-query"
+import { getUser } from "~/lib/hooks/use-auth"
 import { Avatar, AvatarFallback } from "~/components/ui/avatar"
 import {
   DropdownMenu,
@@ -11,14 +12,17 @@ import {
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "~/components/ui/sidebar"
-import type { User } from "~/lib/types"
 import { AppSettings } from "~/layout/settings/settings"
 import { useLogout } from "~/lib/hooks/use-auth"
 
-export function SidebarUser({ user }: { user: User }) {
+export function SidebarUser() {
   const { isMobile } = useSidebar()
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const handleLogout = useLogout()
+  const queryClient = useQueryClient()
+  const handleLogout = useLogout(queryClient)
+  const user = getUser()
+
+  if (!user) return null
 
   // Get initials for avatar fallback
   const initials = user.username.slice(0, 2).toUpperCase()

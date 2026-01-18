@@ -1,7 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useRef, useState } from "react"
 import useWebSocket, { ReadyState } from "react-use-websocket"
+import { toast } from "sonner"
 import { getToken } from "./use-auth"
+import { WS_PING_INTERVAL, WS_BASE_URL, WS_RECONNECT_ATTEMPTS, WS_RECONNECT_INTERVAL } from "../constants"
 import type {
   IncomingWebSocketMessage,
   PlantMetricsMessage,
@@ -12,20 +14,54 @@ import type {
 } from "../types"
 import { QueryKeys } from "../types"
 
-const WS_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL as string).replace(/^http/, 'ws')
-const PING_INTERVAL = 30000
-
 export function useSystemWebSocket() {
   const queryClient = useQueryClient()
   const token = getToken()
 
-  const { readyState } = useWebSocket(`${WS_BASE_URL}/ws?token=${token}`, {
+  const hasShownOfflineToast = useRef(false)
+  const offlineToastId = useRef<string | number | null>(null)
+  const hasEverConnected = useRef(false)
+  const [reconnectKey, setReconnectKey] = useState(0)
+
+  const reconnect = () => setReconnectKey((prev) => prev + 1)
+
+  const { readyState } = useWebSocket(`${WS_BASE_URL}/ws?token=${token}&key=${reconnectKey}`, {
     onOpen: () => {
-      console.log("[Websocket] Connection established")
+      if (offlineToastId.current) {
+        // Dismiss the offline toast when connection is restored
+        toast.dismiss(offlineToastId.current)
+        offlineToastId.current = null
+
+        // Refetch cache on connect
+        queryClient.invalidateQueries({ queryKey: QueryKeys.plants, refetchType: "all" })
+        queryClient.invalidateQueries({ queryKey: QueryKeys.modules(), refetchType: "all" })
+        toast.success(hasEverConnected.current ? "Connection restored." : "Connected.")
+        hasEverConnected.current = true
+      }
+      hasShownOfflineToast.current = false
     },
-    onClose: () => console.log("[Websocket] Connection closed"),
-    onError: () => console.log("[Websocket] Connection error"),
+    onClose: () => {
+      // Don't show offline toast if user is not authenticated (e.g., logged out)
+      if (!getToken()) {
+        if (offlineToastId.current) {
+          toast.dismiss(offlineToastId.current)
+          offlineToastId.current = null
+        }
+        return
+      }
+
+      if (!hasShownOfflineToast.current) {
+        hasShownOfflineToast.current = true
+        offlineToastId.current = toast.error("You are currently offline.", { duration: Infinity })
+      }
+    },
     onMessage: (event) => {
+      // Check for the raw "PONG" message first
+      if (event.data === "PONG") {
+        return
+      }
+
+      // If it's not "PONG", it must be a JSON message
       const message = JSON.parse(event.data) as IncomingWebSocketMessage
 
       switch (message.type) {
@@ -43,11 +79,11 @@ export function useSystemWebSocket() {
       }
     },
     shouldReconnect: () => true,
-    reconnectAttempts: Infinity,
-    reconnectInterval: 3000,
+    reconnectAttempts: WS_RECONNECT_ATTEMPTS,
+    reconnectInterval: WS_RECONNECT_INTERVAL,
     heartbeat: {
-      message: () => JSON.stringify({ type: "PING" }),
-      interval: PING_INTERVAL,
+      message: () => "PING",
+      interval: WS_PING_INTERVAL,
       returnMessage: "PONG"
     }
   })
@@ -66,7 +102,6 @@ export function useSystemWebSocket() {
 
   function handleModuleConnectivity(message: ModuleConnectivityMessage) {
     const { moduleId, connectivity } = message.payload
-    const { isOnline, lastSeen } = connectivity
 
     let plantIdToUpdate: number | null = null
 
@@ -88,14 +123,11 @@ export function useSystemWebSocket() {
 
     // If the module was coupled, update the related plant connectivity
     if (plantIdToUpdate) {
-      const updatedConnectivity = { isOnline, lastSeen }
       queryClient.setQueryData<Plant[]>(QueryKeys.plants, (list) =>
-        list?.map((p) =>
-          p.id === plantIdToUpdate ? { ...p, module: { ...p.module, connectivity: updatedConnectivity } } : p
-        )
+        list?.map((p) => (p.id === plantIdToUpdate ? { ...p, module: { ...p.module, connectivity: connectivity } } : p))
       )
       queryClient.setQueryData<Plant>(QueryKeys.plant(plantIdToUpdate), (p) =>
-        p ? { ...p, module: { ...p.module, connectivity: updatedConnectivity } } : p
+        p ? { ...p, module: { ...p.module, connectivity: connectivity } } : p
       )
     }
   }
@@ -148,6 +180,7 @@ export function useSystemWebSocket() {
 
   return {
     isConnected: readyState === ReadyState.OPEN,
-    isReconnecting: readyState === ReadyState.CONNECTING
+    isReconnecting: readyState === ReadyState.CONNECTING,
+    reconnect
   }
 }
