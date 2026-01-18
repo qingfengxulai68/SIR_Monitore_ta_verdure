@@ -67,12 +67,28 @@ void setup() {
   float lmt87_temp = (voltage_mV - 2637) / (-13.6);
 
   // 3. Préparation des données
+  // a. Valeurs capteurs
+  // myData.id = SENSOR_ID;
+  // myData.temp = (int)lmt87_temp;
+  // myData.hum = hum;
+  // myData.moisturePercent = moisturePercent;
+  // myData.lux = (int)lux;
+  // myData.lowBattery = false;
+
+  // b. Valeurs random pour tests sans capteurs
   myData.id = SENSOR_ID;
-  myData.temp = (int)lmt87_temp;
-  myData.hum = hum;
-  myData.moisturePercent = moisturePercent;
-  myData.lux = (int)lux;
-  myData.lowBattery = false;
+  myData.temp = random(15, 30);
+  myData.hum = random(30, 90);
+  myData.moisturePercent = random(20, 80);
+  myData.lux = random(100, 1000);
+  myData.lowBattery = random(0, 2) == 1;
+  
+  Serial.println("Données lues :");
+  Serial.printf("Température: %d °C\n", myData.temp);
+  Serial.printf("Humidité: %d %%\n", myData.hum);
+  Serial.printf("Humidité du sol: %d %%\n", myData.moisturePercent);
+  Serial.printf("Luminosité: %d lux\n", myData.lux);
+  Serial.printf("Batterie faible: %s\n", myData.lowBattery ? "Oui" : "Non");
 
   // 4. Initialisation ESP-NOW
   if (esp_now_init() != ESP_OK) {
