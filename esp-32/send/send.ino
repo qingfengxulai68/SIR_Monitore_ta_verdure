@@ -2,150 +2,103 @@
 #include <WiFi.h>
 #include <BH1750.h>
 #include <DHT.h>
-// Sensor Activation
-bool lightMeterIsActivated = true;
-bool soilMoistureIsActivated = true;
-bool dhtIsActivated = true;
-bool lmt87IsActivated = true;
-////soil moisture_sensor
+#include <esp_wifi.h>
+
+// Configuration
+#define SENSOR_ID 1
+#define SLEEP_TIME_SEC 30 
+
+// Pins
 #define SOIL_MOISTURE_PIN 35
-// Air temperature
 #define LMT87_PIN 34
-// Air temperature + humidity
 #define DHT_PIN 15
-#define DHTTYPE DHT11 
-// Variables
-int t0 = 0;
-float lux; // Luminosity
-float rawValue;
-int hum; // air temp + humidity
-double lmt87_temp; // Air temperature with lmt87
-int moisturePercent;
-// Sensors
-BH1750 lightMeter; // luminosité
+#define DHTTYPE DHT11
 
-
-DHT dht(DHT_PIN, DHTTYPE); // 
-
+// Capteurs et variables
+BH1750 lightMeter;
+DHT dht(DHT_PIN, DHTTYPE);
 uint8_t broadcastAddress[] = {0x80, 0xF3, 0xDA, 0x60, 0x40, 0xB8};
 
 typedef struct struct_message {
-  int id;          // ID de la plante
-  int temp;      // Température
-  int hum;         // Humidité
-  int moisturePercent;//Pourcentage d'humidité
-  int lux;        // Luminosité
-  bool lowBattery; // Alerte batterie
+  int id;
+  int temp;
+  int hum;
+  int moisturePercent;
+  int lux;
+  bool lowBattery;
 } struct_message;
 
 struct_message myData;
-esp_now_peer_info_t peerInfo;
 
-// Fonction de rappel (callback) appelée lors de l'envoi
-void OnDataSent(const wifi_tx_info_t *info, esp_now_send_status_t status) {
-  Serial.print("\r\nStatut du dernier paquet : ");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Succès (ACK reçu)" : "Échec");
+// Callback envoi
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+  Serial.print("\r\nStatut envoi : ");
+  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Succès" : "Échec");
 }
 
 void setup() {
   Serial.begin(115200);
-  delay(200);
-  t0 = millis();
-  // Mettre le Wi-Fi en mode Station
+  
+  // 1. Initialisation des composants
   WiFi.mode(WIFI_STA);
-  // Soil moisture sensor
-  // Soil moisture sensor
-  if (soilMoistureIsActivated) {
-    pinMode(SOIL_MOISTURE_PIN, INPUT);
-  }
-  // Luminosity
-  if (lightMeterIsActivated) {
-    Wire.begin(21, 22);   // SDA=21, SCL=22
+  
+  // Forcer le canal WiFi (doit être le même que le récepteur, ex: Canal 1)
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
+  esp_wifi_set_promiscuous(false);
 
-    if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) {
-      Serial.println("BH1750 init OK");
-    } else {
-      Serial.println("BH1750 init FAILED");
-      lightMeterIsActivated = false;
-    }
-  }
+  dht.begin();
+  Wire.begin(21, 22);
+  lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE);
+  
+  // Petit délai pour laisser les capteurs se stabiliser après réveil
+  delay(1000); 
 
-  // Temperature + Humidity
-  if (dhtIsActivated) {
-    dht.begin();
-  }
-  // Initialiser ESP-NOW
+  // 2. Lecture des capteurs
+  float lux = lightMeter.readLightLevel();
+  
+  int rawMoisture = analogRead(SOIL_MOISTURE_PIN);
+  int moisturePercent = map(rawMoisture, 4095, 1950, 0, 100);
+  moisturePercent = constrain(moisturePercent, 0, 100);
+
+  int hum = dht.readHumidity();
+  
+  int voltage_mV = analogReadMilliVolts(LMT87_PIN);
+  float lmt87_temp = (voltage_mV - 2637) / (-13.6);
+
+  // 3. Préparation des données
+  myData.id = SENSOR_ID;
+  myData.temp = (int)lmt87_temp;
+  myData.hum = hum;
+  myData.moisturePercent = moisturePercent;
+  myData.lux = (int)lux;
+  myData.lowBattery = false;
+
+  // 4. Initialisation ESP-NOW
   if (esp_now_init() != ESP_OK) {
-    Serial.println("Erreur d'initialisation ESP-NOW");
-    return;
+    Serial.println("Erreur ESP-NOW");
+    esp_deep_sleep_start();
   }
 
   esp_now_register_send_cb(OnDataSent);
   
+  esp_now_peer_info_t peerInfo = {};
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-  peerInfo.channel = 0;  
+  peerInfo.channel = 1; // Canal forcé
   peerInfo.encrypt = false;
   
-  if (esp_now_add_peer(&peerInfo) != ESP_OK){
-    Serial.println("Échec de l'ajout du pair");
-    return;
+  if (esp_now_add_peer(&peerInfo) == ESP_OK) {
+    esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
   }
+
+  //Laisser un peu de temps pour que le callback d'envoi s'affiche
+  delay(200);
+
+  // 5. Mise en sommeil profond
+  Serial.println("Entrée en Deep Sleep 30 sec...");
+  esp_sleep_enable_timer_wakeup(SLEEP_TIME_SEC * 1000000ULL);
+  esp_deep_sleep_start();
 }
 
 void loop() {
-  if (millis() - t0 >= 5000) {
-    // Code inside is executed every period
-    t0 = millis();
-    // Light meter measurement
-    if (lightMeterIsActivated) {
-      lux = lightMeter.readLightLevel();
-    }
-    // Soil moisture sensor
-    if (soilMoistureIsActivated) {
-      rawValue = analogRead(SOIL_MOISTURE_PIN);
-      moisturePercent = map(rawValue, 4095, 1950, 0, 100);
-      moisturePercent = constrain(moisturePercent, 0, 100);
-    }
-
-    // DHT 
-    if (dhtIsActivated) {
-      hum = dht.readHumidity();
-    }
-
-    // LMT87 
-    if (lmt87IsActivated) {
-      int voltage_mV=analogReadMilliVolts(LMT87_PIN);
-      lmt87_temp = (voltage_mV-2637)/(-13.6);
-    }
-  // Lecture de capteurs
-  myData.id = 1;
-  myData.temp = (int)lmt87_temp;
-  myData.hum = hum;
-  myData.moisturePercent=moisturePercent;
-  myData.lux= (int)lux;
-  myData.lowBattery = false;
-
-  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
-   
-  if (result == ESP_OK) {
-    Serial.println("Trame envoyée avec succès");
-    Serial.print("ID: "); 
-    Serial.println(myData.id);
-    Serial.print("Temp: "); 
-    Serial.println(myData.temp);
-    Serial.print("Hum: "); 
-    Serial.println(myData.hum);
-    Serial.print("Soil: "); 
-    Serial.println(myData.moisturePercent);
-    Serial.print("Lux: "); 
-    Serial.println(myData.lux);
-  } else {
-    Serial.println("Erreur d'envoi");
-  }
-  }
-
-  // 4. DÉLAI ALÉATOIRE (Anti-collision)
-  // On attend 5 secondes + un petit temps aléatoire (0 à 500ms)
-  // pour éviter que deux plantes n'émettent au même millième de seconde.
-  delay(5000 + random(0, 500)); 
 }
