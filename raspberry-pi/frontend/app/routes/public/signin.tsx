@@ -80,17 +80,7 @@ export default function SignInPage() {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <div className="flex items-center">
-                          <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                          <a
-                            href="#"
-                            className="ml-auto text-sm underline-offset-4 hover:underline text-foreground"
-                            tabIndex={-1}
-                            onClick={() => toast.info("Feature not available yet")}
-                          >
-                            Forgot your password?
-                          </a>
-                        </div>
+                        <FieldLabel htmlFor={field.name}>Password</FieldLabel>
                         <Input
                           {...field}
                           id={field.name}

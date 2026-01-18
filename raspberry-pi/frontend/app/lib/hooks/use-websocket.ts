@@ -20,7 +20,6 @@ export function useSystemWebSocket() {
 
   const hasShownOfflineToast = useRef(false)
   const offlineToastId = useRef<string | number | null>(null)
-  const hasEverConnected = useRef(false)
   const [reconnectKey, setReconnectKey] = useState(0)
 
   const reconnect = () => setReconnectKey((prev) => prev + 1)
@@ -35,8 +34,7 @@ export function useSystemWebSocket() {
         // Refetch cache on connect
         queryClient.invalidateQueries({ queryKey: QueryKeys.plants, refetchType: "all" })
         queryClient.invalidateQueries({ queryKey: QueryKeys.modules(), refetchType: "all" })
-        toast.success(hasEverConnected.current ? "Connection restored." : "Connected.")
-        hasEverConnected.current = true
+        toast.success("Connected.")
       }
       hasShownOfflineToast.current = false
     },

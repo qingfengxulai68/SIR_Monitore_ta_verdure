@@ -56,7 +56,8 @@ async function apiRequest<TResponse>(config: RequestConfig): Promise<TResponse> 
 
     if (!response.ok) {
       // Special case: 401 Unauthorized → Dispatch event for logout
-      if (response.status === 401) {
+      // Only dispatch if we still have a token (otherwise it's an expected 401 during logout)
+      if (response.status === 401 && getToken()) {
         window.dispatchEvent(new CustomEvent("auth:session-expired"))
       }
 
