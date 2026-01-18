@@ -1,6 +1,7 @@
 import { Cloud, Sun, Droplets, Thermometer } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { useMemo } from "react"
 
 import type { HistoryMetrics, Plant } from "~/lib/types"
 
@@ -20,14 +21,14 @@ export function HistoryCharts({
   showGrid: boolean
   showThresholds: boolean
 }) {
-  // Format data for charts
-  const chartData = data.map((item) => ({
+  // Format data for charts - memoized to avoid recalculation on every render
+  const chartData = useMemo(() => data.map((item) => ({
     ...item,
     timestamp: new Date(item.timestamp).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit"
     })
-  }))
+  })), [data])
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">

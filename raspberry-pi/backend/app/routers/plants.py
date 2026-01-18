@@ -318,7 +318,7 @@ async def get_plant_history(
         
         if not latest:
             return HistoryResponse(
-                meta=HistoryMetaResponse(range=range, aggregation="30s_adaptive", from_time=start_time, to_time=now),
+                meta=HistoryMetaResponse(range=range, aggregation="30s", from_time=start_time, to_time=now),
                 data=[]
             )
         
@@ -348,7 +348,7 @@ async def get_plant_history(
         ).all()
         
         return HistoryResponse(
-            meta=HistoryMetaResponse(range=range, aggregation="30s_adaptive", from_time=start_time, to_time=now),
+            meta=HistoryMetaResponse(range=range, aggregation="30s", from_time=start_time, to_time=now),
             data=[
                 HistoryMetricsResponse(
                     timestamp=row.real_ts if row.real_ts else datetime.fromtimestamp(row.slot_ts, tz=timezone.utc),

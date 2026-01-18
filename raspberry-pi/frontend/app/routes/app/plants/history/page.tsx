@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import type { Route } from "./+types/page"
 import { redirect } from "react-router"
-import { Settings, Clock } from "lucide-react"
+import { Settings, Clock, CalendarIcon, Timer } from "lucide-react"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { Spinner } from "~/components/ui/spinner"
@@ -51,6 +51,27 @@ export default function PlantHistory({ params }: Route.ComponentProps) {
   const showGrid = chartOption === "cartesian"
   const showThresholds = chartOption === "thresholds"
 
+  const formatAggregation = (aggregation: string) => {
+    const seconds = parseInt(aggregation.replace("s", ""))
+    if (seconds >= 3600) {
+      const hours = Math.floor(seconds / 3600)
+      const minutes = Math.floor((seconds % 3600) / 60)
+      if (minutes > 0) {
+        return `${hours}h ${minutes}m`
+      }
+      return `${hours}h`
+    } else if (seconds >= 60) {
+      const minutes = Math.floor(seconds / 60)
+      const remainingSeconds = seconds % 60
+      if (remainingSeconds > 0) {
+        return `${minutes}m ${remainingSeconds}s`
+      }
+      return `${minutes}m`
+    } else {
+      return `${seconds}s`
+    }
+  }
+
   useEffect(() => {
     if (plant) {
       setHeaderContent({
@@ -63,7 +84,7 @@ export default function PlantHistory({ params }: Route.ComponentProps) {
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
+                <Button variant="outline" className="gap-2 rounded-full h-7.5">
                   <Clock className="size-3.5" />
                   <span className="capitalize">{timeRange}</span>
                 </Button>
@@ -114,6 +135,10 @@ export default function PlantHistory({ params }: Route.ComponentProps) {
     refetchHistory()
   }
 
+  useEffect(() => {
+    console.log(historyData)
+  }, [historyData])
+
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] p-6">
       <main className="space-y-6">
@@ -127,15 +152,19 @@ export default function PlantHistory({ params }: Route.ComponentProps) {
           <>
             {historyData && historyData.data.length > 0 ? (
               <>
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">
-                    Showing data from{" "}
-                    <span className="font-medium">{new Date(historyData.meta.from).toLocaleString()}</span> to{" "}
-                    <span className="font-medium">{new Date(historyData.meta.to).toLocaleString()}</span>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Aggregation: <span className="font-medium">{historyData.meta.aggregation}</span>
-                  </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Badge variant="secondary">
+                    <CalendarIcon className="size-3 mr-1" />
+                    From: {new Date(historyData.meta.from).toLocaleString()}
+                  </Badge>
+                  <Badge variant="secondary">
+                    <CalendarIcon className="size-3 mr-1" />
+                    To: {new Date(historyData.meta.to).toLocaleString()}
+                  </Badge>
+                  <Badge variant="outline">
+                    <Timer className="size-3 mr-1" />
+                    Aggregation: {formatAggregation(historyData.meta.aggregation)}
+                  </Badge>
                 </div>
                 <HistoryCharts
                   plant={plant!}
