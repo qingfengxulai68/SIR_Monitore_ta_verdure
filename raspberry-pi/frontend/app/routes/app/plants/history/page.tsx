@@ -135,10 +135,6 @@ export default function PlantHistory({ params }: Route.ComponentProps) {
     refetchHistory()
   }
 
-  useEffect(() => {
-    console.log(historyData)
-  }, [historyData])
-
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] p-6">
       <main className="space-y-6">
