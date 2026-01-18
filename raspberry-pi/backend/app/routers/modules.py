@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.auth.jwt import verify_jwt_user
 from app.common.utils import is_module_online
+from app.auth.jwt import verify_jwt_user
 from app.database import get_session
 from app.models.module import Module
 from app.models.plant import Plant

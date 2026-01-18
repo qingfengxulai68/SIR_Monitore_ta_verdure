@@ -1,6 +1,6 @@
 [project]
 name = "terrarium-backend"
-version = "0.1.1-beta.1"
+version = "0.1.2-beta.1"
 description = "FastAPI Backend: IoT System for Plant Monitoring"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -15,6 +15,7 @@ dependencies = [
     "httpx>=0.28.0",
     "python-dotenv>=1.2.1",
     "psycopg2-binary>=2.9.11",
+    "requests>=2.32.5",
 ]
 
 [project.optional-dependencies]

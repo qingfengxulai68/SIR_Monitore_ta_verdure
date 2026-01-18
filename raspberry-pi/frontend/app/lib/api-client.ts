@@ -1,6 +1,5 @@
 import { getToken } from "~/lib/hooks/use-auth"
-
-const API_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL as string
+import { API_BASE_URL } from "./constants"
 
 // Custom error class for API errors
 export class ApiError extends Error {
@@ -35,7 +34,10 @@ async function apiRequest<TResponse>(config: RequestConfig): Promise<TResponse> 
 
   // Inject JWT token if authentication is required
   if (requiresAuth) {
-    headers.Authorization = `Bearer ${getToken()}`
+    const token = getToken()
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
   }
 
   // Build request options

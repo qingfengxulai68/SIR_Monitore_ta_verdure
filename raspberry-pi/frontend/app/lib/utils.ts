@@ -2,7 +2,6 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { Plant } from "./types"
 import { MODULE_HB_TIMEOUT } from "./constants"
-import { pl } from "zod/v4/locales"
 
 // Utility function to merge class names
 export function cn(...inputs: ClassValue[]) {

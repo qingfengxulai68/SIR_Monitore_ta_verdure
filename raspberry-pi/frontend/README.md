@@ -52,10 +52,20 @@ frontend/
 The frontend contains a `Dockerfile` optimized for production using Nginx.
 
 1.  **Build Image**
+
+    **Bash (Linux/macOS):**
     ```bash
     docker build \
       --build-arg API_BASE_URL=http://your-api-url:8000 \
       --build-arg WS_BASE_URL=ws://your-api-url:8000/ws \
+      -t terrarium-frontend .
+    ```
+
+    **PowerShell (Windows):**
+    ```powershell
+    docker build `
+      --build-arg API_BASE_URL=http://localhost:8000 `
+      --build-arg WS_BASE_URL=ws://localhost:8000/ws `
       -t terrarium-frontend .
     ```
 

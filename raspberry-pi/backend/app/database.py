@@ -63,7 +63,7 @@ def init_settings() -> None:
     session = SessionLocal()
     try:
         if not session.execute(select(Settings)).scalars().first():
-            session.add(Settings(id=1, alerts_enabled=False))
+            session.add(Settings())
             session.commit()
     finally:
         session.close()

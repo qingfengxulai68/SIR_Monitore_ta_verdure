@@ -1,17 +1,16 @@
 "use client"
 
+import { Sprout } from "lucide-react"
 import * as React from "react"
 
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "~/components/ui/sidebar"
 
-export function SidebarTitle({
-  app
-}: {
-  app: {
-    name: string
-    logo: React.ElementType
+export function SidebarTitle() {
+  const app = {
+    name: "Terrarium",
+    logo: Sprout
   }
-}) {
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>

@@ -43,18 +43,6 @@ export function HydrateFallback() {
 }
 
 export default function App() {
-  const logout = useLogout()
-
-  // Handle session expired events
-  useEffect(() => {
-    const handleSessionExpired = () => {
-      logout()
-    }
-
-    window.addEventListener("auth:session-expired", handleSessionExpired)
-    return () => window.removeEventListener("auth:session-expired", handleSessionExpired)
-  }, [logout])
-
   // Initialize QueryClient (one instance per user session)
   const [queryClient] = useState(
     () =>

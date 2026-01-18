@@ -1,9 +1,8 @@
 """WebSocket connection management and endpoint handler."""
 
 import asyncio
-import json
 import uuid
-from typing import Annotated, Literal
+from typing import Annotated
 from fastapi import Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
@@ -106,6 +105,7 @@ async def websocket_endpoint(
     """
     # Validate authentication token
     if not token or not decode_token(token):
+        await websocket.accept()
         await websocket.close(code=4001, reason="Authentication required")
         return
 
@@ -115,15 +115,12 @@ async def websocket_endpoint(
     # Accept and register connection
     await ws_manager.connect(websocket, connection_id)
 
+    # Listen for incoming messages
     try:
         while True:
             data = await websocket.receive_text()
-            try:
-                message = json.loads(data)
-                if message.get("type") == "PING":
-                    await websocket.send_text(json.dumps({"type": "PONG"}))
-            except json.JSONDecodeError:
-                pass
+            if data == "PING":
+                await websocket.send_text("PONG")
     except WebSocketDisconnect:
         await ws_manager.disconnect(connection_id)
     except Exception:
