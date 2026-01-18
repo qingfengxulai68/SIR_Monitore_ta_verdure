@@ -40,7 +40,7 @@ def main():
     try:
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
         ser.flush()
-        print(f"--- Gateway Connectée à {API_URL} ---")
+        print(f"--- Connectée à {API_URL} ---")
     except Exception as e:
         print(f"Erreur Port Série : {e}")
         sys.exit()
@@ -49,27 +49,19 @@ def main():
         try:
             if ser.in_waiting > 0:
                 line = ser.readline().decode('utf-8', errors='ignore').strip()
-                
+
                 if line.startswith("DATA|"):
                     parts = line.split("|")
                     # On s'assure d'avoir assez de données dans la ligne série
                     if len(parts) >= 6:
                         # 1. Extraction (Attention : l'API veut moduleId en String)
-                        p_id = f"ESP32-00{parts[1]}" 
+                        p_id = f"ESP32-00{parts[1]}"
                         val_temp = float(parts[2])
                         val_hum  = float(parts[3])
                         val_soil = float(parts[4])
                         val_light = float(parts[5])
-                        
-                        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
 
-                        # # 2. Sauvegarde CSV
-                        # file_exists = os.path.isfile(CSV_FILE)
-                        # with open(CSV_FILE, mode='a', newline='') as f:
-                        #     writer = csv.writer(f)
-                        #     if not file_exists:
-                        #         writer.writerow(["Horodatage", "ID", "Temp", "Hum", "Sol", "Lux"])
-                        #     writer.writerow([timestamp, p_id, val_temp, val_hum, val_soil, val_light])
+                        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
 
                         # 3. Préparation JSON (Strictement identique au simulateur)
                         data_payload = {
@@ -79,8 +71,8 @@ def main():
                             "light": val_light,
                             "temp": val_temp
                         }
-                        
-                        print(f"[{timestamp}] ID: {p_id} | T: {val_temp}°C", end="")
+
+                        print(f"[{timestamp}] ID: {p_id} | T: {val_temp}°C | H : {val_hum}% | M : {val_soil}% | L : {val_light} lx" , end="")
                         send_data(data_payload)
 
         except KeyboardInterrupt:
