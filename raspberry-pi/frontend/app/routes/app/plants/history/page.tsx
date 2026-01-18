@@ -164,7 +164,7 @@ export default function PlantHistory({ params }: Route.ComponentProps) {
                 </div>
                 <HistoryCharts
                   plant={plant!}
-                  data={historyData.data}
+                  history={historyData}
                   showGrid={showGrid}
                   showThresholds={showThresholds}
                 />

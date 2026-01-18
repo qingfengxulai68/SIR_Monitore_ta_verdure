@@ -34,6 +34,7 @@ export function useSystemWebSocket() {
         // Refetch cache on connect
         queryClient.invalidateQueries({ queryKey: QueryKeys.plants, refetchType: "all" })
         queryClient.invalidateQueries({ queryKey: QueryKeys.modules(), refetchType: "all" })
+        queryClient.invalidateQueries({ queryKey: QueryKeys.alertsSettings })
         toast.success("Connected.")
       }
       hasShownOfflineToast.current = false
@@ -156,7 +157,7 @@ export function useSystemWebSocket() {
           refetchType: "all"
         })
 
-        // Refetch the main list (`exact: true` to prevent invalidating ALL other plant details).
+        // Refetch the main list (`exact: true` to prevent invalidating unrelated child keys).
         queryClient.invalidateQueries({
           queryKey: QueryKeys.plants,
           exact: true,

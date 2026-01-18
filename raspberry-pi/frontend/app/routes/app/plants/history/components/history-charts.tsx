@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { useMemo } from "react"
 
-import type { HistoryMetrics, Plant } from "~/lib/types"
+import type { Plant, HistoryResponse } from "~/lib/types"
 
 const getChartColor = (key: string) => {
   const style = getComputedStyle(document.documentElement)
@@ -12,26 +12,50 @@ const getChartColor = (key: string) => {
 
 export function HistoryCharts({
   plant,
-  data,
+  history,
   showGrid,
   showThresholds
 }: {
   plant: Plant
-  data: HistoryMetrics[]
+  history: HistoryResponse
   showGrid: boolean
   showThresholds: boolean
 }) {
   // Format data for charts - memoized to avoid recalculation on every render
-  const chartData = useMemo(() => data.map((item) => ({
-    ...item,
-    timestamp: new Date(item.timestamp).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit"
-    })
-  })), [data])
+  const chartData = useMemo(
+    () =>
+      history.data.map((item) => {
+        const date = new Date(item.timestamp)
+
+        return {
+          ...item,
+          timestamp:
+            history.meta.range === "hour"
+              ? date.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit"
+                })
+              : history.meta.range === "day"
+                ? date.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })
+                : date.toLocaleDateString([], {
+                    month: "short",
+                    day: "numeric"
+                  }) +
+                  " " +
+                  date.toLocaleTimeString([], {
+                    hour: "2-digit"
+                  })
+        }
+      }),
+    [history]
+  )
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-6">
       {/* Moisture Chart */}
       <Card>
         <CardHeader>
