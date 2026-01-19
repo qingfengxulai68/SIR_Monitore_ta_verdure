@@ -2,6 +2,7 @@
 
 from dotenv import load_dotenv
 import tomllib
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
@@ -54,12 +55,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown
     await module_heartbeat_checker.stop()
 
+# Environment configuration
+env = os.getenv("ENV", "dev")
+
 # Create FastAPI app
 app = FastAPI(
     title=PROJECT_NAME,
     description=PROJECT_DESCRIPTION,
     version=PROJECT_VERSION,
     lifespan=lifespan,
+    root_path="/api",
+    docs_url="/docs" if env == "dev" else None,
+    redoc_url="/redoc" if env == "dev" else None,
+    openapi_url="/openapi.json" if env == "dev" else None
 )
 
 # CORS middleware

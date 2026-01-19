@@ -6,6 +6,7 @@ import { EmailDialog } from "../dialogs/email-dialog"
 import { Spinner } from "~/components/ui/spinner"
 import { ErrorWithRetry } from "~/components/other/error-with-retry"
 import { useAlertsSettings, useUpdateDiscordAlerts, useUpdateEmailAlerts } from "~/lib/hooks/use-settings"
+import { API_BASE_URL } from "~/lib/constants"
 
 export function AlertsSection() {
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
@@ -22,7 +23,7 @@ export function AlertsSection() {
     if (checked) {
       // Open Discord OAuth in a popup
       const popup = window.open(
-        "http://localhost:8001/auth/discord/login",
+        API_BASE_URL + "/settings/alerts/discord/login",
         "discord-oauth",
         `width=${screen.width},height=${screen.height},left=0,top=0,scrollbars=yes,resizable=yes`
       )

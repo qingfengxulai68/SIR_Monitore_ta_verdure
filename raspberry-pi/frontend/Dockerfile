@@ -2,20 +2,16 @@ FROM node:24-alpine AS builder
 
 WORKDIR /app
 
-# Map build-time ARGs to Runtime VITE_ env vars
-ARG BACKEND_BASE_URL
-ENV VITE_BACKEND_BASE_URL=${BACKEND_BASE_URL}
-
 COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine-slim
+FROM alpine:latest
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/build/client /usr/share/nginx/html
+WORKDIR /app
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+COPY --from=builder /app/build/client /app/temp_build
+
+CMD ["sh", "-c", "rm -rf /app/dist/* && cp -r /app/temp_build/* /app/dist/ && tail -f /dev/null"]
