@@ -6,7 +6,7 @@ from urllib.error import URLError, HTTPError
 from concurrent.futures import ThreadPoolExecutor
 
 # --- Configuration ---
-API_URL = "http://localhost:8000/ingestion/"
+API_URL = "http://localhost/api/ingestion/"
 API_KEY = "H8XIds5mGjfMaLYA-BWmKV9r5DX2aCdyu2nBVPElEkM"
 MODULES = ["ESP32-001", "ESP32-003"]
 INTERVAL = 30

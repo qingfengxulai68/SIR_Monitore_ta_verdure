@@ -5,12 +5,27 @@ export const MODULE_HB_CHECK_INTERVAL = MODULE_HB_INTERVAL
 
 // WebSocket configuration
 export const WS_PING_INTERVAL = 30000
-export const WS_BASE_URL = (import.meta.env.VITE_BACKEND_BASE_URL as string).replace(/^http/, "ws")
+export const getWsBaseUrl = () => {
+  const backendUrl = "/api"
+  if (typeof window !== "undefined") {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
+    return `${protocol}//${window.location.host}${backendUrl}`
+  }
+  return backendUrl
+}
+export const WS_BASE_URL = getWsBaseUrl()
 export const WS_RECONNECT_ATTEMPTS = Infinity
 export const WS_RECONNECT_INTERVAL = 3000
 
 // API configuration
-export const API_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL as string
+export const getApiBaseUrl = () => {
+  const backendUrl = "/api"
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}${backendUrl}`
+  }
+  return backendUrl
+}
+export const API_BASE_URL = getApiBaseUrl()
 
 // Sensor ranges
 export const SENSOR_THRESHOLDS = {
