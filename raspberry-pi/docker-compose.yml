@@ -1,59 +1,64 @@
 services:
-    database:
-        image: postgres:18-alpine
-        container_name: monitor-database
-        restart: unless-stopped
-        environment:
-            - POSTGRES_USER=${POSTGRES_USER}
-            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-            - POSTGRES_DB=${POSTGRES_DB}
-        ports:
-            - '5432:5432'
+  database:
+    image: postgres:18-alpine
+    container_name: monitor-database
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-    backend:
-        build: ./backend
-        container_name: monitor-backend
-        restart: unless-stopped
-        ports:
-            - '8000:80'
-        environment:
-            - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
-            - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-            - API_KEY=${API_KEY}
-            - ADMIN_USERNAME=${ADMIN_USERNAME}
-            - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-            - EMAIL=${EMAIL}
-            - EMAIL_PASSWORD=${EMAIL_PASSWORD}
-        depends_on:
-            - database
+  backend:
+    build: ./backend
+    container_name: monitor-backend
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - API_KEY=${API_KEY}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - EMAIL=${EMAIL}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+    depends_on:
+      - database
 
-    discord_server:
-        build:
-            context: ./backend
-            dockerfile: Dockerfile.public
-        container_name: monitor-discord-server
-        restart: unless-stopped
-        ports:
-            - '8001:8001'
-        environment:
-            - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
-            - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-            - API_KEY=${API_KEY}
-            - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
-            - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
-            - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
-        depends_on:
-            - backend
-            - database
+  discord_server:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.public
+    container_name: monitor-discord-server
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+      - API_KEY=${API_KEY}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
+    depends_on:
+      - backend
+      - database
 
-    frontend:
-        build:
-            context: ./frontend
-            args:
-                - BACKEND_BASE_URL=${BACKEND_BASE_URL}
-        container_name: monitor-frontend
-        restart: unless-stopped
-        ports:
-            - '3000:80'
-        depends_on:
-            - backend
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - BACKEND_BASE_URL=${BACKEND_BASE_URL}
+    container_name: monitor-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
