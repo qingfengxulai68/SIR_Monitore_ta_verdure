@@ -1,122 +1,89 @@
 # 🌿 SIR - Monitore ta verdure
 
-Ce projet permet de monitorer des plantes via des capteurs (ESP32) et une interface web.
+## 🏗️ Architecture Docker
 
-Ce dossier contient toute la partie serveur (backend) et interface utilisateur (frontend), conteneurisés avec Docker pour faciliter le lancement.
+Le projet est conteneurisé avec Docker Compose et orchestre les services suivants :
 
-## 🚀 Installation et Lancement
+- **database** : Base de données PostgreSQL pour stocker les mesures, utilisateurs et configurations.
+- **backend** : API REST développée en Python (FastAPI) qui gère la logique métier, l'authentification et l'ingestion des données.
+- **frontend** : Interface utilisateur monopage (SPA) réalisée en React.
+- **proxy** : Serveur Nginx qui expose le projet sur le port `80`. Il sert l'interface frontend et redirige les requêtes API vers le backend.
+- **tunnel** : Service Ngrok permettant d'exposer votre application locale sur internet (utile pour les webhooks Discord ou l'accès à distance).
 
-Pour éviter d'avoir à installer Python, Node.js, et des bases de données sur votre machine, nous utilisons **Docker**. C'est un outil qui permet de lancer tout le système dans des "boîtes" isolées et pré-configurées.
+## ⚙️ Configuration (.env)
 
-### 1. Pré-requis
+Avant de lancer le projet, vous devez créer un fichier `.env` à la racine (au même niveau que ce README) pour configurer les services.
 
-- **Docker Desktop** : Assurez-vous d'avoir installé et lancé [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+Voici les variables d'environnement à définir :
 
-### 2. Configuration (.env)
+| Catégorie            | Variable                | Description                                                                               |
+| :------------------- | :---------------------- | :---------------------------------------------------------------------------------------- |
+| **Environnement**    | `ENV`                   | `dev` ou `prod`. (Ex: `prod`)                                                             |
+| **Base de données**  | `POSTGRES_USER`         | Identifiant de la base de données.                                                        |
+|                      | `POSTGRES_PASSWORD`     | Mot de passe de la base de données.                                                       |
+|                      | `POSTGRES_DB`           | Nom de la base de données.                                                                |
+| **Sécurité**         | `JWT_SECRET_KEY`        | Clé secrète pour signer les jetons d'authentification.                                    |
+|                      | `API_KEY`               | Clé secrète pour enregistrer des données.                                                 |
+| **Admin par défaut** | `ADMIN_USERNAME`        | Nom d'utilisateur pour le compte administrateur.                                          |
+|                      | `ADMIN_PASSWORD`        | Mot de passe pour le compte administrateur.                                               |
+| **Tunnel ngrok**     | `NGROK_AUTHTOKEN`       | Token d'authentification [ngrok](https://dashboard.ngrok.com/get-started/your-authtoken). |
+| **Notifications**    | `DISCORD_CLIENT_ID`     | ID Client pour l'intégration Discord.                                                     |
+|                      | `DISCORD_CLIENT_SECRET` | Secret Client pour l'intégration Discord.                                                 |
+|                      | `DISCORD_REDIRECT_URI`  | URL de callback pour l'OAuth2 Discord.                                                    |
+|                      | `EMAIL`                 | Adresse email pour l'envoi d'alertes.                                                     |
+|                      | `EMAIL_PASSWORD`        | Mot de passe d'application pour l'email.                                                  |
 
-Avant de lancer les "boîtes" isolées (conteneurs), il est **indispensable** de les configurer pour qu'elles puissent communiquer entre elles.
+## 🚀 Installation et Démarrage
 
-#### Signification des variables
+Une fois votre fichier `.env` prêt, suivez la méthode adaptée à votre matériel :
 
-| Variable            | Description                                                                |
-| :------------------ | :------------------------------------------------------------------------- |
-| `POSTGRES_USER`     | Nom d'utilisateur pour la base de données PostgreSQL.                      |
-| `POSTGRES_PASSWORD` | Mot de passe pour la base de données PostgreSQL.                           |
-| `POSTGRES_DB`       | Nom de la base de données PostgreSQL.                                      |
-| `JWT_SECRET_KEY`    | Clé secrète pour sécuriser générer les tokens des sessions utilisateurs.   |
-| `API_KEY`           | Clé utilisée par les ESP32 pour s'authentifier lors de l'envoi de données. |
-| `ADMIN_USERNAME`    | Nom d'utilisateur (par défaut) pour accéder au tableau de bord.            |
-| `ADMIN_PASSWORD`    | Mot de passe administrateur (par défaut).                                  |
-| `BACKEND_BASE_URL`  | Adresse du serveur (Backend) utilisée par l'interface.                     |
+### 💻 Option A : Sur Ordinateur (Windows/Mac/Linux)
 
-#### Création du fichier
+1. **Pré-requis** : Installez [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+2. **Lancement** : Dans un terminal à la racine du dossier, exécutez :
+   ```bash
+   docker compose up --build -d
+   ```
+3. **Accès** :
+   - Sur la même machine : [http://localhost](http://localhost)
+   - Depuis le réseau local : `http://<IP_DE_VOTRE_ORDI>`
 
-1. Créez un fichier nommé `.env` à la racine de ce dossier (`raspberry-pi/.env`).
-2. Voici un exemple prêt à l'emploi :
+### 🍓 Option B : Sur Raspberry Pi
 
-```env
-# Database configuration
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=password123
-POSTGRES_DB=app_db
+1. **Installation de Docker** (sur le Pi) :
 
-# JWT settings (Secret pour la sécurité)
-JWT_SECRET_KEY=dHgXvYRaWUiAY6j3q4Qora5b7Qfbg7dpgw1dwLOriq0
+   ```bash
+   curl -sSL https://get.docker.com | sh
+   sudo usermod -aG docker $USER
+   ```
 
-# API Key for ingestion endpoints (Clé pour que les ESP32 puissent parler au serveur)
-API_KEY=H8XIds5mGjfMaLYA-BWmKV9r5DX2aCdyu2nBVPElEkM
+2. **Redémarrer le Raspberry Pi**
 
-# Initial admin user credentials (Compte admin par défaut)
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=demo1234
+3. **Déploiement** (depuis votre ordinateur) :
+   Transférez le dossier du projet vers le Pi (changez `user` et l'IP selon votre configuration) :
 
-# Frontend configuration (Configuration de l'interface)
-BACKEND_BASE_URL=http://localhost:8000
-```
+   ```bash
+   scp -r ./raspberry-pi user@192.168.1.X:~/monitore-ta-verdure
+   ```
 
-### 3. Lancer l'application
-#### 3.1 Sur oridnateur
-Ouvrez un terminal dans ce dossier (`raspberry-pi`) et lancez la commande suivante :
+4. **Lancement** (sur le Pi) :
 
-```bash
-docker compose up --build -d
-```
+   ```bash
+   cd ~/monitore-ta-verdure
+   docker compose up --build -d
+   ```
 
-_Explication :_
+5. **Accès** :
+   Depuis n'importe quel appareil du réseau : `http://raspberrypi.local` (ou via l'IP du Pi).
 
-- `up` : Démarre le système.
-- `--build` : Construit les "images" (les versions du logiciel) pour être sûr d'avoir la dernière version.
-- `-d` : "Detached", lance le tout en arrière-plan pour ne pas bloquer votre terminal.
+> **Arrêter l'application :**
+>
+> ```bash
+> docker compose down
+> ```
 
-Attendez quelques instants que tout démarre.
-Vous pouvez ensuite accéder à l'interface via votre navigateur : **[http://localhost:3000](http://localhost:3000)**
+## 🌐 Accès Distant
 
-Pour se connecter :
+Une fois le conteneur lancé, grâce au service **Ngrok** intégré (conteneur `tunnel`), vous pouvez accéder à votre tableau de bord depuis n'importe où (smartphone, 4G, autre réseau) via l'adresse suivante :
 
-- Identifiant : `admin`
-- Mot de passe : `demo1234`
-
-Pour arrêter le système :
-
-```bash
-docker compose down
-```
-#### 3.2 Sur Raspberry pi
-1. Installer Docker depuis le terminal du raspberry pi :
-```bash
-curl -sSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-```
-2. Redémarrer le Raspberry pi
-3. Copier le dossier depuis le terminal de l'ordinateur vers le pi :
-```bash
-scp -r ./raspberry-pi projetsir@172.20.10.2:~/Documents/
-```
-4. Puis sur le terminal du pi dans le dossier raspberry-pi lancer Docker :
-```bash
-docker compose up --build -d
-```
-5. Sur le navigateur web de l'ordi, accéder au site avec l'url : http://172.20.10.2:3000 
-
-
-## 🧪 Bonus : Simuler un ESP32
-
-Si vous n'avez pas de capteur ESP32 sous la main mais que vous voulez voir des données arriver en temps réel sur le tableau de bord, nous avons prévu un script de simulation.
-
-### Pré-requis pour la simulation
-
-Il vous faut **Python** installé sur votre machine.
-
-### Lancer la simulation
-
-1. Assurez-vous que le site (backend) est lancé via Docker (étape précédente).
-2. Ouvrez un terminal dans ce dossier (`raspberry-pi`).
-3. Lancez le script :
-
-```bash
-python ingestion/simulate_esp32.py
-```
-
-Le script va commencer à envoyer de fausses données (température, humidité, luminosité...) toutes les 5 secondes. Vous devriez les voir apparaître sur l'interface web.
-
-Pour arrêter le script, faites simplement `Ctrl+C` dans le terminal.
+👉 **https://noriko-presentable-rowan.ngrok-free.dev/**
