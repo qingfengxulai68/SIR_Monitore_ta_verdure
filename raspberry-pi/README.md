@@ -113,32 +113,36 @@ Change la ligne CONF_SWAPSIZE=100 en CONF_SWAPSIZE=2048. Enregistre (Ctrl+O) et 
 sudo dphys-swapfile setup
 sudo dphys-swapfile swapon
 ```
-3. Redémarrer le Raspberry pi
+3. Modifier le ficher configuration pour forcer ipv4 sur Avahi
+```bash
+sudo nano /etc/avahi/avahi-daemon.conf
+```
+Cherchez la section `[server]` et modifie (ou ajoute) les lignes suivantes :
+```plaintext
+[server]
+use-ipv4=yes
+use-ipv6=no
+publish-a-on-ipv6=no
+publish-aaaa-on-ipv6=no
+```
 
-4. Copier le dossier depuis le terminal de l'ordinateur vers le pi :
+4. Sauvegardez, quittez et redémarrez le service Avahi pour appliquer le changement :
+```bash
+sudo systemctl restart avahi-daemon
+```
+
+5. Redémarrer le Raspberry pi
+
+6. Copier le dossier depuis le terminal de l'ordinateur vers le pi :
 ```bash
 scp -r ./raspberry-pi projetsir@172.20.10.2:~/Documents/
 ```
-4. Puis sur le terminal du Raspberry pi dans le dossier raspberry-pi lancer Docker :
+
+7. Puis sur le terminal du Raspberry pi dans le dossier raspberry-pi lancer Docker :
 ```bash
 docker compose up --build -d
 ```
-5. Sur le navigateur web de l'ordi, accéder au site avec l'url : http://172.20.10.2:3000 
-3. Cherchez la section `[server]` et trouvez la ligne `use-ipv6=yes`.
-
-4. Changez-la en `no` :
-
-   ```ini
-   use-ipv6=no
-   ```
-
-5. Sauvegardez (`Ctrl + O`, `Entrée`) et quittez (`Ctrl + X`).
-
-6. Redémarrez le service Avahi pour appliquer le changement :
-
-   ```bash
-   sudo systemctl restart avahi-daemon
-   ```
+8. Sur le navigateur web de l'ordi, accéder au site avec l'url : http://172.20.10.2:3000 ou http://raspberrypi.local:3000 
 
 > **Arrêter l'application :**
 >
