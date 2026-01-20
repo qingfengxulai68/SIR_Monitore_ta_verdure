@@ -12,7 +12,8 @@ export function usePlants() {
     queryFn: () => apiClient.get<Plant[]>("/plants"),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: false,
+    gcTime: Infinity
   })
 }
 
@@ -77,6 +78,10 @@ export function useDeletePlant() {
 export function usePlantHistory(plantId: number, range: "hour" | "day" | "week" | "month" = "hour") {
   return useQuery({
     queryKey: QueryKeys.plantHistory(plantId, range),
-    queryFn: () => apiClient.get<HistoryResponse>(`/plants/${plantId}/history?range=${range}`)
+    queryFn: () => apiClient.get<HistoryResponse>(`/plants/${plantId}/history?range=${range}`),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    gcTime: 0
   })
 }

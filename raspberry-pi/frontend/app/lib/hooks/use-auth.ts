@@ -91,8 +91,8 @@ export function useLogout(queryClient: QueryClient, message: string = "Logged ou
   const navigate = useNavigate()
 
   return () => {
-    queryClient.clear()
     useAuthStore.getState().logout()
+    queryClient.clear()
     toast.info(message)
     navigate("/")
   }

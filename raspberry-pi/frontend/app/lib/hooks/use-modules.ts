@@ -11,7 +11,8 @@ export function useModules() {
     queryFn: () => apiClient.get<Module[]>("/modules"),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: false,
+    gcTime: Infinity
   })
 }
 

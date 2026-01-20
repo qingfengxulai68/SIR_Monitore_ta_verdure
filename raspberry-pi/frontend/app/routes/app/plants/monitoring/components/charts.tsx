@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Cloud, Sun, Droplets, Thermometer } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
@@ -22,8 +22,14 @@ export function Charts({
   showThresholds: boolean
 }) {
   const [chartData, setChartData] = useState<Metrics[]>([])
+  const isFirstRender = useRef(true)
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+
     if (plant.lastMetricsUpdate) {
       setChartData((prev) =>
         [

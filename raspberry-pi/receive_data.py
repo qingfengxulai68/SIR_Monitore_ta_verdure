@@ -1,19 +1,15 @@
 import serial
 import time
 import sys
-import csv
-import os
 import json
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
 
 # Configuration Matérielle
 SERIAL_PORT = "/dev/ttyS0"
 BAUD_RATE = 115200
-CSV_FILE = "historique_plantes.csv"
 
 # Configuration API (Utilisez l'IP)
-API_URL = "http://localhost:8000/ingestion/"
+API_URL = "http://localhost/api/ingestion/"
 API_KEY = "H8XIds5mGjfMaLYA-BWmKV9r5DX2aCdyu2nBVPElEkM"
 
 def send_data(data: dict) -> bool:

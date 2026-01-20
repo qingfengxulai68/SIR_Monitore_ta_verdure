@@ -8,9 +8,10 @@ import AppHeader from "~/layout/header/header"
 import { useSystemWebSocket } from "~/lib/hooks/use-websocket"
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
+import type Module from "module"
 import { apiClient } from "~/lib/api-client"
-import { QueryKeys } from "~/lib/types"
-import type { Plant, Module } from "~/lib/types"
+import { QueryKeys } from "~/lib/types/query-keys"
+import type { Plant } from "~/lib/types/plant"
 
 // Client-side loader to enforce authentication
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
@@ -35,9 +36,6 @@ export default function AppLayout() {
     return () => window.removeEventListener("auth:session-expired", handleSessionExpired)
   }, [logout])
 
-  // Establish system WebSocket connection (it will close itself when unmounted)
-  useSystemWebSocket()
-
   // Prefetch plants and modules data when entering authenticated area
   useEffect(() => {
     queryClient.prefetchQuery({
@@ -50,7 +48,10 @@ export default function AppLayout() {
       queryFn: () => apiClient.get<Module[]>("/modules"),
       staleTime: Infinity
     })
-  }, [queryClient])
+  }, [])
+
+  // Establish system WebSocket connection (it will close itself when unmounted)
+  useSystemWebSocket()
 
   return (
     <SidebarProvider>

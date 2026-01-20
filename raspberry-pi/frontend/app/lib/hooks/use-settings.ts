@@ -8,7 +8,9 @@ import { QueryKeys } from "~/lib/types"
 export function useAlertsSettings() {
   return useQuery({
     queryKey: QueryKeys.alertsSettings,
-    queryFn: () => apiClient.get<AlertsSettings>("/settings/alerts")
+    queryFn: () => apiClient.get<AlertsSettings>("/settings/alerts"),
+    refetchInterval: 30000, // Refetch every 30 seconds
+    gcTime: 0
   })
 }
 
