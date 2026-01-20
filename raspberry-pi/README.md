@@ -76,6 +76,34 @@ Une fois votre fichier `.env` prêt, suivez la méthode adaptée à votre matér
 5. **Accès** :
    Depuis n'importe quel appareil du réseau : `http://raspberrypi.local` (ou via l'IP du Pi).
 
+#### 🔧 Configuration IPv4 (Requis pour raspberrypi.local)
+
+Pour que l'adresse `http://raspberrypi.local` fonctionne correctement sur tous les appareils, il est nécessaire de désactiver l'IPv6 dans le service de découverte (avahi).
+
+1. Connectez-vous à votre Pi (en SSH ou avec clavier/écran).
+
+2. Ouvrez le fichier de configuration d'Avahi :
+
+   ```bash
+   sudo nano /etc/avahi/avahi-daemon.conf
+   ```
+
+3. Cherchez la section `[server]` et trouvez la ligne `use-ipv6=yes`.
+
+4. Changez-la en `no` :
+
+   ```ini
+   use-ipv6=no
+   ```
+
+5. Sauvegardez (`Ctrl + O`, `Entrée`) et quittez (`Ctrl + X`).
+
+6. Redémarrez le service Avahi pour appliquer le changement :
+
+   ```bash
+   sudo systemctl restart avahi-daemon
+   ```
+
 > **Arrêter l'application :**
 >
 > ```bash
