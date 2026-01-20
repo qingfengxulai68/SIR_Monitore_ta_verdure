@@ -87,12 +87,29 @@ docker compose down
 curl -sSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
 ```
-2. Redémarrer le Raspberry pi
-3. Copier le dossier depuis le terminal de l'ordinateur vers le pi :
+
+2. Créer un fichier SWAP
+Si ton Raspberry Pi a 2 Go ou 4 Go de RAM, la compilation peut quand même saturer la mémoire physique. Créer un fichier d'échange (Swap) sur la carte SD permet de simuler de la RAM supplémentaire.
+
+Exécute ces commandes sur ton Raspberry Pi :
+```bash
+# Désactive le swap actuel
+sudo dpswapoff
+# Modifie la taille (passe de 100 à 2048)
+sudo nano /etc/dphys-swapfile
+```
+Change la ligne CONF_SWAPSIZE=100 en CONF_SWAPSIZE=2048. Enregistre (Ctrl+O) et quitte (Ctrl+X), puis :
+```bash
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+```
+3. Redémarrer le Raspberry pi
+
+4. Copier le dossier depuis le terminal de l'ordinateur vers le pi :
 ```bash
 scp -r ./raspberry-pi projetsir@172.20.10.2:~/Documents/
 ```
-4. Puis sur le terminal du pi dans le dossier raspberry-pi lancer Docker :
+4. Puis sur le terminal du Raspberry pi dans le dossier raspberry-pi lancer Docker :
 ```bash
 docker compose up --build -d
 ```
