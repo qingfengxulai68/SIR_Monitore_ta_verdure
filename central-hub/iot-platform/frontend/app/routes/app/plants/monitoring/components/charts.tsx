@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { Cloud, Sun, Droplets, Thermometer } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
@@ -22,26 +22,24 @@ export function Charts({
   showThresholds: boolean
 }) {
   const [chartData, setChartData] = useState<Metrics[]>([])
-  const isFirstRender = useRef(true)
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
-    }
-
     if (plant.lastMetricsUpdate) {
-      setChartData((prev) =>
-        [
+      const newTimestamp = new Date(plant.lastMetricsUpdate.timestamp).toLocaleTimeString();
+      setChartData((prev) => {
+        if (prev.length > 0 && prev[prev.length - 1].timestamp === newTimestamp) {
+          return prev;
+        }
+        return [
           ...prev,
           {
-            ...plant.lastMetricsUpdate!,
-            timestamp: new Date(plant.lastMetricsUpdate!.timestamp).toLocaleTimeString()
-          }
-        ].slice(-MAX_DATA_POINTS)
-      )
+            ...plant.lastMetricsUpdate,
+            timestamp: newTimestamp
+          } as Metrics
+        ].slice(-MAX_DATA_POINTS);
+      });
     }
-  }, [plant.lastMetricsUpdate])
+  }, [plant.lastMetricsUpdate]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
