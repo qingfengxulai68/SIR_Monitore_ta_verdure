@@ -58,7 +58,7 @@ void setup() {
   float lux = lightMeter.readLightLevel();
   
   int rawMoisture = analogRead(SOIL_MOISTURE_PIN);
-  int moisturePercent = map(rawMoisture, 4095, 1950, 0, 100);
+  int moisturePercent = map(rawMoisture, 4095, 0, 0, 100);
   moisturePercent = constrain(moisturePercent, 0, 100);
 
   int hum = dht.readHumidity();
@@ -82,7 +82,7 @@ void setup() {
   // myData.moisturePercent = random(20, 80);
   // myData.lux = random(100, 1000);
   // myData.lowBattery = random(0, 2) == 1;
-  
+    
   Serial.println("Données lues :");
   Serial.printf("Température: %d °C\n", myData.temp);
   Serial.printf("Humidité: %d %%\n", myData.hum);
