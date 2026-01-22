@@ -1,22 +1,12 @@
 #include <esp_now.h>
 #include <WiFi.h>
-#include <BH1750.h>
-#include <DHT.h>
 #include <esp_wifi.h>
 
 // Configuration
 #define SENSOR_ID 2
 #define SLEEP_TIME_SEC 30 
 
-// Pins
-#define SOIL_MOISTURE_PIN 35
-#define LMT87_PIN 34
-#define DHT_PIN 15
-#define DHTTYPE DHT11
-
 // Capteurs et variables
-BH1750 lightMeter;
-DHT dht(DHT_PIN, DHTTYPE);
 uint8_t broadcastAddress[] = {0x80, 0xF3, 0xDA, 0x60, 0x40, 0xB8};
 
 typedef struct struct_message {
@@ -47,32 +37,16 @@ void setup() {
   esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
   esp_wifi_set_promiscuous(false);
 
-  dht.begin();
-  Wire.begin(21, 22);
-  lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE);
-  
-  // Petit délai pour laisser les capteurs se stabiliser après réveil
-  delay(1000); 
-
   // 2. Lecture des capteurs
-  float lux = lightMeter.readLightLevel();
-  
-  int rawMoisture = analogRead(SOIL_MOISTURE_PIN);
-  int moisturePercent = map(rawMoisture, 4095, 1950, 0, 100);
-  moisturePercent = constrain(moisturePercent, 0, 100);
-
-  int hum = dht.readHumidity();
-  
-  int voltage_mV = analogReadMilliVolts(LMT87_PIN);
-  float lmt87_temp = (voltage_mV - 2637) / (-13.6);
-
+  // &
   // 3. Préparation des données
+  // Valeurs random pour tests sans capteurs
   myData.id = SENSOR_ID;
-  myData.temp = (int)lmt87_temp;
-  myData.hum = hum;
-  myData.moisturePercent = moisturePercent;
-  myData.lux = (int)lux;
-  myData.lowBattery = false;
+  myData.temp = random(15, 30);
+  myData.hum = random(30, 90);
+  myData.moisturePercent = random(20, 80);
+  myData.lux = random(100, 1000);
+  myData.lowBattery = random(0, 2) == 1;
   
   Serial.println("Données lues :");
   Serial.printf("Température: %d °C\n", myData.temp);
