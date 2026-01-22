@@ -29,6 +29,7 @@ async function apiRequest<TResponse>(config: RequestConfig): Promise<TResponse> 
   // Build headers
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "ngrok-skip-browser-warning": "true",
     ...customHeaders
   }
 
