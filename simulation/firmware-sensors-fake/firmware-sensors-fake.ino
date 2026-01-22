@@ -37,8 +37,6 @@ void setup() {
   esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
   esp_wifi_set_promiscuous(false);
 
-  // 2. Lecture des capteurs
-  // &
   // 3. Préparation des données
   // Valeurs random pour tests sans capteurs
   myData.id = SENSOR_ID;
