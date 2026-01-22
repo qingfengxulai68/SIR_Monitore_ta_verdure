@@ -5,7 +5,7 @@ set -e
 
 # 1. Aller dans le dossier iot-platform
 echo "--- Accès au dossier iot-platform ---"
-cd SIR_Monitore_ta_verdure/central-hub/iot-platform
+cd ~/SIR_Monitore_ta_verdure/central-hub/iot-platform
 
 # 2. Créer et remplir le fichier .env
 echo "--- Configuration du fichier .env ---"
@@ -39,7 +39,7 @@ sleep 10
 
 # 4. Aller dans data-bridge
 echo "--- Accès au dossier data-bridge ---"
-cd SIR_Monitore_ta_verdure/central-hub/data-bridge
+cd ~/SIR_Monitore_ta_verdure/central-hub/data-bridge
 
 # 5. Lancer le script Python
 echo "--- Lancement du data-bridge ---"
