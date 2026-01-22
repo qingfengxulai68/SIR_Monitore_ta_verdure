@@ -4,9 +4,7 @@ import os
 from collections.abc import Generator
 from unittest.mock import Base
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session, sessionmaker
-
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import Session, sessionmaker, DeclarativeBase
 
 
 # Create the PostgreSQL engine
@@ -84,6 +82,7 @@ def init_modules() -> None:
             Module(id="ESP32-001", coupled=False, last_seen=None),
             Module(id="ESP32-002", coupled=False, last_seen=None),
             Module(id="ESP32-003", coupled=False, last_seen=None),
+            Module(id="ESP32-004", coupled=False, last_seen=None),
         ]
         for module in sample_modules:
             session.add(module)
