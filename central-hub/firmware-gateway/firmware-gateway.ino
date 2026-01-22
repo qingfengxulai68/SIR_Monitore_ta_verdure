@@ -3,11 +3,11 @@
 
 // La structure doit être EXACTEMENT la même que celle de l'émetteur
 typedef struct struct_message {
-  int id;          
-  float temp;      
-  int hum;      
-  int moist;
-  int light;   
+  uint8_t id;          
+  int8_t temp;      
+  uint8_t hum;      
+  uint8_t moist;
+  uint light;   
   bool lowBattery; 
 } struct_message;
 

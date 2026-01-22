@@ -5,7 +5,7 @@
 #include <esp_wifi.h>
 
 // Configuration
-#define SENSOR_ID 1
+#define SENSOR_ID 2
 #define SLEEP_TIME_SEC 30 
 
 // Pins
@@ -20,11 +20,11 @@ DHT dht(DHT_PIN, DHTTYPE);
 uint8_t broadcastAddress[] = {0x80, 0xF3, 0xDA, 0x60, 0x40, 0xB8};
 
 typedef struct struct_message {
-  int id;
-  int temp;
-  int hum;
-  int moisturePercent;
-  int lux;
+  uint8_t id;
+  int8_t temp;
+  uint8_t hum; 
+  uint8_t moisturePercent;
+  uint lux;
   bool lowBattery;
 } struct_message;
 
@@ -68,20 +68,20 @@ void setup() {
 
   // 3. Préparation des données
   // a. Valeurs capteurs
-  // myData.id = SENSOR_ID;
-  // myData.temp = (int)lmt87_temp;
-  // myData.hum = hum;
-  // myData.moisturePercent = moisturePercent;
-  // myData.lux = (int)lux;
-  // myData.lowBattery = false;
+  myData.id = SENSOR_ID;
+  myData.temp = (int)lmt87_temp;
+  myData.hum = hum;
+  myData.moisturePercent = moisturePercent;
+  myData.lux = (int)lux;
+  myData.lowBattery = false;
 
   // b. Valeurs random pour tests sans capteurs
-  myData.id = SENSOR_ID;
-  myData.temp = random(15, 30);
-  myData.hum = random(30, 90);
-  myData.moisturePercent = random(20, 80);
-  myData.lux = random(100, 1000);
-  myData.lowBattery = random(0, 2) == 1;
+  // myData.id = SENSOR_ID;
+  // myData.temp = random(15, 30);
+  // myData.hum = random(30, 90);
+  // myData.moisturePercent = random(20, 80);
+  // myData.lux = random(100, 1000);
+  // myData.lowBattery = random(0, 2) == 1;
   
   Serial.println("Données lues :");
   Serial.printf("Température: %d °C\n", myData.temp);
