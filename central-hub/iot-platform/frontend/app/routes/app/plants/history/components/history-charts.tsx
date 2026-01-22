@@ -5,6 +5,8 @@ import { useMemo } from "react"
 
 import type { Plant, HistoryResponse } from "~/lib/types"
 
+import { SENSOR_THRESHOLDS } from "~/lib/constants"
+
 const getChartColor = (key: string) => {
   const style = getComputedStyle(document.documentElement)
   return style.getPropertyValue(`--${key}`).trim()
@@ -69,7 +71,7 @@ export function HistoryCharts({
             <LineChart data={chartData} margin={{ left: -30, right: 10 }}>
               {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.3} />}
               <XAxis dataKey="timestamp" fontSize={12} />
-              <YAxis domain={[0, 100]} fontSize={12} />
+              <YAxis domain={[SENSOR_THRESHOLDS.SOIL_MOIST.MIN, SENSOR_THRESHOLDS.SOIL_MOIST.MAX]} fontSize={12} />
               <Tooltip content={<CustomTooltip />} />
               {showThresholds && (
                 <>
@@ -112,7 +114,7 @@ export function HistoryCharts({
             <LineChart data={chartData} margin={{ left: -30, right: 10 }}>
               {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.3} />}
               <XAxis dataKey="timestamp" fontSize={12} />
-              <YAxis domain={[0, 100]} fontSize={12} />
+              <YAxis domain={[SENSOR_THRESHOLDS.HUMIDITY.MIN, SENSOR_THRESHOLDS.HUMIDITY.MAX]} fontSize={12} />
               <Tooltip content={<CustomTooltip />} />
               {showThresholds && (
                 <>
@@ -155,7 +157,7 @@ export function HistoryCharts({
             <LineChart data={chartData} margin={{ left: -30, right: 10 }}>
               {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.3} />}
               <XAxis dataKey="timestamp" fontSize={12} />
-              <YAxis domain={[0, 50]} fontSize={12} />
+              <YAxis fontSize={12} />
               <Tooltip content={<CustomTooltip />} />
               {showThresholds && (
                 <>
@@ -198,7 +200,7 @@ export function HistoryCharts({
             <LineChart data={chartData} margin={{ left: -10, right: 10 }}>
               {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.3} />}
               <XAxis dataKey="timestamp" fontSize={12} />
-              <YAxis domain={[0, 20000]} fontSize={12} />
+              <YAxis fontSize={12} />
               <Tooltip content={<CustomTooltip />} />
               {showThresholds && (
                 <>

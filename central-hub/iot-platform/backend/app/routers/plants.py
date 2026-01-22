@@ -288,7 +288,7 @@ async def delete_plant(
 async def get_plant_history(
     plant_id: int,
     session: Annotated[Session, Depends(get_session)],
-    range: Literal["hour", "day", "week", "month"] = Query(default="hour"),
+    time_range : Literal["hour", "day", "week", "month"] = Query(default="hour"),
 ) -> HistoryResponse:
     """Get plant metrics history with time-series bucketing."""
     
@@ -300,64 +300,78 @@ async def get_plant_history(
         "month": (timedelta(days=30), 14400),
     }
     
-    time_delta, interval = config[range]
+    time_delta, interval = config[time_range ]
     start_time = now - time_delta
     start_ts = int(start_time.timestamp())
     now_ts = int(now.timestamp())
     aligned_start = (start_ts // interval) * interval
 
     # Special case: hour range with adaptive rhythm (preserves real timestamps)
-    if range == "hour":
-        # Get latest timestamp to detect rhythm
-        latest = session.execute(
-            select(Metrics.timestamp)
+    if time_range  == "hour":
+        # Retrieve all actual measurements, ordered
+        measurements = session.execute(
+            select(
+                Metrics.timestamp,
+                Metrics.soil_moist,
+                Metrics.temp,
+                Metrics.light,
+                Metrics.humidity
+            )
             .where(Metrics.plant_id == plant_id, Metrics.timestamp >= start_time)
-            .order_by(Metrics.timestamp.desc())
-            .limit(1)
-        ).scalar()
+            .order_by(Metrics.timestamp)
+        ).all()
         
-        if not latest:
+        if not measurements:
             return HistoryResponse(
-                meta=HistoryMetaResponse(range=range, aggregation="30s", from_time=start_time, to_time=now),
+                meta=HistoryMetaResponse(range=time_range, aggregation="30s", from_time=start_time, to_time=now),
                 data=[]
             )
         
-        # Generate time grid from latest measurement
-        latest_ts = int(latest.timestamp())
-        time_grid = select(func.generate_series(aligned_start, latest_ts, interval).label('slot_ts')).subquery()
+        # Build the data by detecting gaps
+        result_data = []
         
-        # Find closest measurement for each slot (±15s tolerance)
-        epoch = func.extract('epoch', Metrics.timestamp)
-        distance = func.abs(epoch - time_grid.c.slot_ts)
-        
-        ranked = select(
-            time_grid.c.slot_ts,
-            Metrics.timestamp.label('real_ts'),
-            Metrics.soil_moist,
-            Metrics.temp,
-            Metrics.light,
-            Metrics.humidity,
-            func.row_number().over(partition_by=time_grid.c.slot_ts, order_by=distance).label('rn')
-        ).select_from(time_grid).outerjoin(
-            Metrics, 
-            and_(Metrics.plant_id == plant_id, distance <= 15)
-        ).subquery()
-        
-        result = session.execute(
-            select(ranked).where(or_(ranked.c.rn == 1, ranked.c.rn.is_(None))).order_by(ranked.c.slot_ts)
-        ).all()
-        
-        return HistoryResponse(
-            meta=HistoryMetaResponse(range=range, aggregation="30s", from_time=start_time, to_time=now),
-            data=[
+        for i, row in enumerate(measurements):
+            # Add the current measurement
+            result_data.append(
                 HistoryMetricsResponse(
-                    timestamp=row.real_ts if row.real_ts else datetime.fromtimestamp(row.slot_ts, tz=timezone.utc),
+                    timestamp=row.timestamp,
                     soilMoist=round(row.soil_moist, 2) if row.soil_moist is not None else None,
                     temp=round(row.temp, 2) if row.temp is not None else None,
                     light=round(row.light, 0) if row.light is not None else None,
                     humidity=round(row.humidity, 2) if row.humidity is not None else None
-                ) for row in result
-            ]
+                )
+            )
+            
+            # Check if there's a gap before the next measurement
+            if i < len(measurements) - 1:
+                current_ts = int(row.timestamp.timestamp())
+                next_ts = int(measurements[i + 1].timestamp.timestamp())
+                gap = next_ts - current_ts
+                
+                # If the gap is > 45 seconds (1.5x the normal interval), there's an outage
+                if gap > 45:
+                    # Calculate how many slots are missing
+                    missing_slots = (gap // interval) - 1
+                    
+                    # Insert null values for each missing slot
+                    for slot in range(1, int(missing_slots) + 1):
+                        null_timestamp = datetime.fromtimestamp(
+                            current_ts + (slot * interval), 
+                            tz=timezone.utc
+                        )
+                        result_data.append(
+                            HistoryMetricsResponse(
+                                timestamp=null_timestamp,
+                                soilMoist=None,
+                                temp=None,
+                                light=None,
+                                humidity=None
+                            )
+                        )
+        
+        return HistoryResponse(
+            meta=HistoryMetaResponse(range=time_range, aggregation="30s", from_time=start_time, to_time=now),
+            data=result_data
         )
     
     # General case: fixed bucket aggregation (day/week/month)
@@ -386,7 +400,7 @@ async def get_plant_history(
     ).all()
     
     return HistoryResponse(
-        meta=HistoryMetaResponse(range=range, aggregation=f"{interval}s", from_time=start_time, to_time=now),
+        meta=HistoryMetaResponse(range=time_range , aggregation=f"{interval}s", from_time=start_time, to_time=now),
         data=[
             HistoryMetricsResponse(
                 timestamp=datetime.fromtimestamp(row.bucket_ts, tz=timezone.utc),

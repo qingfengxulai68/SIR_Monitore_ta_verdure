@@ -78,7 +78,7 @@ export function useDeletePlant() {
 export function usePlantHistory(plantId: number, range: "hour" | "day" | "week" | "month" = "hour") {
   return useQuery({
     queryKey: QueryKeys.plantHistory(plantId, range),
-    queryFn: () => apiClient.get<HistoryResponse>(`/plants/${plantId}/history?range=${range}`),
+    queryFn: () => apiClient.get<HistoryResponse>(`/plants/${plantId}/history?time_range=${range}`),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
