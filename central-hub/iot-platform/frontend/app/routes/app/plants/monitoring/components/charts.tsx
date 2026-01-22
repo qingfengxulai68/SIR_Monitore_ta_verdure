@@ -27,7 +27,6 @@ export function Charts({
     if (plant.lastMetricsUpdate) {
       const newTimestamp = new Date(plant.lastMetricsUpdate.timestamp).toLocaleTimeString();
       setChartData((prev) => {
-        // Éviter la duplication si le dernier point a le même timestamp
         if (prev.length > 0 && prev[prev.length - 1].timestamp === newTimestamp) {
           return prev;
         }
